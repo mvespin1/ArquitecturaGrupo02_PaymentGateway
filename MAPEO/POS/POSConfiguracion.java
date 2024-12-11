@@ -7,15 +7,10 @@ import java.util.Date;
 
 @Entity
 @Table(name = "POS_CONFIGURACION")
-@IdClass(PosConfiguracionPK.class)
 public class POSConfiguracion implements Serializable {
-    @Id
-    @Column(name = "CODIGO_POS", length = 10, nullable = false)
-    private String codigo;
 
-    @Id
-    @Column(name = "MODELO", length = 10, nullable = false)
-    private String modelo;
+    @EmbeddedId
+    private POSConfiguracionPK pk;
 
     @Column(name = "DIRECCION_MAC", length = 32, nullable = false)
     private String direccionMac;
@@ -30,25 +25,16 @@ public class POSConfiguracion implements Serializable {
     public POSConfiguracion() {
     }
 
-    public POSConfiguracion(String codigo, String modelo) {
-        this.codigo = codigo;
-        this.modelo = modelo;
+    public POSConfiguracion(POSConfiguracionPK pk) {
+        this.pk = pk;
     }
 
-    public String getcodigo() {
-        return codigo;
+    public POSConfiguracionPK getPk() {
+        return pk;
     }
 
-    public void setcodigo(String codigo) {
-        this.codigo = codigo;
-    }
-
-    public String getModelo() {
-        return modelo;
-    }
-
-    public void setModelo(String modelo) {
-        this.modelo = modelo;
+    public void setPk(POSConfiguracionPK pk) {
+        this.pk = pk;
     }
 
     public String getDireccionMac() {
@@ -74,13 +60,12 @@ public class POSConfiguracion implements Serializable {
     public void setFechaActivacion(Date fechaActivacion) {
         this.fechaActivacion = fechaActivacion;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((codigo == null) ? 0 : codigo.hashCode());
-        result = prime * result + ((modelo == null) ? 0 : modelo.hashCode());
+        result = prime * result + ((pk == null) ? 0 : pk.hashCode());
         return result;
     }
 
@@ -93,27 +78,18 @@ public class POSConfiguracion implements Serializable {
         if (getClass() != obj.getClass())
             return false;
         POSConfiguracion other = (POSConfiguracion) obj;
-        if (codigo == null) {
-            if (other.codigo != null)
+        if (pk == null) {
+            if (other.pk != null)
                 return false;
-        } else if (!codigo.equals(other.codigo))
-            return false;
-        if (modelo == null) {
-            if (other.modelo != null)
-                return false;
-        } else if (!modelo.equals(other.modelo))
+        } else if (!pk.equals(other.pk))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "POSConfiguracion{" +
-                "codigo='" + codigo + '\'' +
-                ", modelo='" + modelo + '\'' +
-                ", direccionMac='" + direccionMac + '\'' +
-                ", codigoComercio='" + codigoComercio + '\'' +
-                ", fechaActivacion=" + fechaActivacion +
-                '}';
+        return "POSConfiguracion [pk=" + pk + ", direccionMac=" + direccionMac + ", codigoComercio=" + codigoComercio
+                + ", fechaActivacion=" + fechaActivacion + "]";
     }
+
 }
