@@ -6,11 +6,11 @@ import ec.edu.espe.pos.model.POSConfiguracion;
 import ec.edu.espe.pos.repository.POSConfiguracionRepository;
 import ec.edu.espe.pos.model.PosConfiguracionPK;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Optional;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
-
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class POSConfiguracionService {
@@ -25,11 +25,12 @@ public class POSConfiguracionService {
         return posConfiguracionRepository.findAll();
     }
 
-    public POSConfiguracion update(PosConfiguracionPK id, String codigoComercio, LocalDateTime fechaActivacion) {
+    @Transactional
+    public POSConfiguracion update(PosConfiguracionPK id, String codigoComercio, LocalDate fechaActivacion) {
         return posConfiguracionRepository.findById(id)
                 .map(configExistente -> {
                     configExistente.setCodigoComercio(codigoComercio);
-                    configExistente.setFechaActivacion(fechaActivacion.toLocalDate());
+                    configExistente.setFechaActivacion(fechaActivacion);
                     return posConfiguracionRepository.save(configExistente);
                 })
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -40,10 +41,12 @@ public class POSConfiguracionService {
         return posConfiguracionRepository.findById(id);
     }
 
+    @Transactional
     public POSConfiguracion save(POSConfiguracion posConfiguracion) {
         return posConfiguracionRepository.save(posConfiguracion);
     }
 
+    @Transactional
     public void deleteById(PosConfiguracionPK id) {
         posConfiguracionRepository.deleteById(id);
     }

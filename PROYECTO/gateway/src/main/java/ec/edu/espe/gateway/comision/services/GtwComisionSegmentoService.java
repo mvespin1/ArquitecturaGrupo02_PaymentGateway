@@ -1,6 +1,7 @@
 package ec.edu.espe.gateway.comision.services;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -23,32 +24,69 @@ public class GtwComisionSegmentoService {
         return segmentoRepository.findAll();
     }
 
-    public Optional<GtwComisionSegmento> findById(GtwComisionSegmentoPK id) {
-        return segmentoRepository.findById(id);
+    public Optional<GtwComisionSegmento> findById(Integer comision, BigDecimal transaccionesDesde) {
+        GtwComisionSegmentoPK pk = new GtwComisionSegmentoPK(comision, transaccionesDesde);
+        return segmentoRepository.findById(pk);
     }
 
+    @Transactional
     public GtwComisionSegmento save(GtwComisionSegmento segmento) {
+        validarSegmento(segmento);
         return segmentoRepository.save(segmento);
     }
 
-    public GtwComisionSegmento update(GtwComisionSegmentoPK id, BigDecimal transaccionesHasta, BigDecimal monto) {
-        return segmentoRepository.findById(id)
+    @Transactional
+    public GtwComisionSegmento update(Integer comision, BigDecimal transaccionesDesde, 
+                                    BigDecimal transaccionesHasta, BigDecimal monto) {
+        GtwComisionSegmentoPK pk = new GtwComisionSegmentoPK(comision, transaccionesDesde);
+        return segmentoRepository.findById(pk)
                 .map(segmentoExistente -> {
+                    validarRangoTransacciones(transaccionesDesde, transaccionesHasta);
                     segmentoExistente.setTransaccionesHasta(transaccionesHasta);
                     segmentoExistente.setMonto(monto);
                     return segmentoRepository.save(segmentoExistente);
                 })
-                .orElseThrow(() -> new EntityNotFoundException("Segmento con ID " + id + " no encontrado."));
+                .orElseThrow(() -> new EntityNotFoundException(
+                    "Segmento no encontrado para comisión " + comision + 
+                    " y transacciones desde " + transaccionesDesde));
     }
 
-    public void deleteById(GtwComisionSegmentoPK id) {
-        GtwComisionSegmento segmento = segmentoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Segmento con ID " + id + " no encontrado."));
+    @Transactional
+    public void deleteById(Integer comision, BigDecimal transaccionesDesde) {
+        GtwComisionSegmentoPK pk = new GtwComisionSegmentoPK(comision, transaccionesDesde);
+        GtwComisionSegmento segmento = segmentoRepository.findById(pk)
+                .orElseThrow(() -> new EntityNotFoundException(
+                    "Segmento no encontrado para comisión " + comision + 
+                    " y transacciones desde " + transaccionesDesde));
 
         if (segmento.getMonto().compareTo(BigDecimal.ZERO) == 0) {
-            segmentoRepository.deleteById(id);
+            segmentoRepository.deleteById(pk);
         } else {
-            throw new RuntimeException("No se puede eliminar el segmento con monto diferente a 0.");
+            throw new IllegalStateException("No se puede eliminar un segmento con monto diferente a 0.");
+        }
+    }
+
+    private void validarSegmento(GtwComisionSegmento segmento) {
+        if (segmento.getPk() == null) {
+            throw new IllegalArgumentException("La clave primaria no puede ser nula");
+        }
+        if (segmento.getTransaccionesHasta() == null) {
+            throw new IllegalArgumentException("El número de transacciones hasta no puede ser nulo");
+        }
+        if (segmento.getMonto() == null) {
+            throw new IllegalArgumentException("El monto no puede ser nulo");
+        }
+        validarRangoTransacciones(segmento.getPk().getTransaccionesDesde(), segmento.getTransaccionesHasta());
+    }
+
+    private void validarRangoTransacciones(BigDecimal desde, BigDecimal hasta) {
+        if (desde.compareTo(hasta) >= 0) {
+            throw new IllegalArgumentException(
+                "El rango de transacciones es inválido. 'Desde' debe ser menor que 'Hasta'");
+        }
+        if (desde.compareTo(BigDecimal.ZERO) < 0 || hasta.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(
+                "El número de transacciones no puede ser negativo");
         }
     }
 }

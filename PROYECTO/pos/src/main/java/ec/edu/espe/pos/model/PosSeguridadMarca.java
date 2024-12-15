@@ -18,7 +18,6 @@ public class PosSeguridadMarca implements Serializable {
     @Column(name = "CLAVE", length = 128, nullable = false)
     private String clave;
     @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "FECHA_ACTUALIZACION", nullable = false)
     private LocalDate fechaActualizacion;
 

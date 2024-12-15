@@ -14,56 +14,64 @@ import ec.edu.espe.gateway.comercio.model.GtwComercio;
 @Table(name = "GTW_TRANSACCION")
 public class GtwTransaccion implements Serializable {
 
-    @NotNull
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "COD_TRANSACCION", nullable = false)
     private Integer codigo;
+
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "COD_COMERCIO", referencedColumnName = "COD_COMERCIO", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "COD_COMERCIO", nullable = false)
     private GtwComercio comercio;
+
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "COD_FACTURACION_COMERCIO", referencedColumnName = "COD_FACTURACION_COMERCIO", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "COD_FACTURACION_COMERCIO", nullable = false)
     private GtwFacturacionComercio facturacionComercio;
+
     @NotNull
     @Column(name = "TIPO", length = 3, nullable = false)
     private String tipo;
+
     @NotNull
     @Column(name = "MARCA", length = 4, nullable = false)
     private String marca;
+
     @NotNull
     @Column(name = "DETALLE", length = 50, nullable = false)
     private String detalle;
+
     @NotNull
     @Column(name = "MONTO", precision = 20, scale = 2, nullable = false)
     private BigDecimal monto;
+
     @NotNull
     @Column(name = "CODIGO_UNICO_TRANSACCION", length = 64, nullable = false)
     private String codigoUnicoTransaccion;
+
     @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "FECHA", nullable = false)
     private LocalDate fecha;
+
     @NotNull
     @Column(name = "ESTADO", length = 3, nullable = false)
     private String estado;
+
     @NotNull
     @Column(name = "MONEDA", length = 3, nullable = false)
     private String moneda;
+
     @NotNull
     @Column(name = "PAIS", length = 2, nullable = false)
     private String pais;
+
     @NotNull
     @Column(name = "TARJETA", length = 256, nullable = false)
     private String tarjeta;
-    @NotNull
-    @Temporal(TemporalType.DATE)
+
     @Column(name = "FECHA_EJECUCION_RECURRENCIA")
     private LocalDate fechaEjecucionRecurrencia;
-    @NotNull
-    @Temporal(TemporalType.DATE)
+
     @Column(name = "FECHA_FIN_RECURRENCIA")
     private LocalDate fechaFinRecurrencia;
 

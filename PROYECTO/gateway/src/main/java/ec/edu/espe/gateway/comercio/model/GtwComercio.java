@@ -12,7 +12,6 @@ import ec.edu.espe.gateway.comision.model.GtwComision;
 @Table(name = "GTW_COMERCIO")
 public class GtwComercio implements Serializable {
     
-    @NotNull
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "COD_COMERCIO", nullable = false)
@@ -30,7 +29,6 @@ public class GtwComercio implements Serializable {
     @Column(name = "NOMBRE_COMERCIAL", length = 100, nullable = false)
     private String nombreComercial;
     @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "FECHA_CREACION", nullable = false)
     private LocalDate fechaCreacion;
     @NotNull
@@ -43,12 +41,8 @@ public class GtwComercio implements Serializable {
     @NotNull
     @Column(name = "ESTADO", length = 3, nullable = false)
     private String estado;
-    @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "FECHA_ACTIVACION")
     private LocalDate fechaActivacion;
-    @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "FECHA_SUSPENSION")
     private LocalDate fechaSuspension;
 

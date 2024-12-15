@@ -27,7 +27,7 @@ public class GtwComercioController {
 
     @GetMapping("/{codigo}")
     public ResponseEntity<GtwComercio> getById(@PathVariable int codigo) {
-        return gtwComercioService.obterComercioPorId(codigo)
+        return gtwComercioService.findById(codigo)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -50,7 +50,11 @@ public class GtwComercioController {
 
     @DeleteMapping("/{codigo}")
     public ResponseEntity<Void> delete(@PathVariable int codigo) {
-        gtwComercioService.deleteById(codigo);
-        return ResponseEntity.noContent().build();
+        try {
+            gtwComercioService.deleteById(codigo);
+            return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

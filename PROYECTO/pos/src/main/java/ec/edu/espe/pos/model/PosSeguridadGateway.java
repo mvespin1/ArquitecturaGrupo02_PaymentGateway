@@ -19,11 +19,9 @@ public class PosSeguridadGateway implements Serializable {
     @Column(name = "CLAVE", length = 128, nullable = false)
     private String clave;
     @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "FECHA_ACTUALIZACION", nullable = false)
     private LocalDate fechaActualizacion;
     @NotNull
-    @Temporal(TemporalType.DATE)
     @Column(name = "FECHA_ACTIVACION", nullable = false)
     private LocalDate fechaActivacion;
     @NotNull

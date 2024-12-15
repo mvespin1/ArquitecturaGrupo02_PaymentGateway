@@ -19,7 +19,6 @@ public class POSConfiguracion implements Serializable {
     @Column(name = "CODIGO_COMERCIO", length = 10, nullable = false)
     private String codigoComercio;
     @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "FECHA_ACTIVACION", nullable = false)
     private LocalDate fechaActivacion;
 

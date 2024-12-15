@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ec.edu.espe.gateway.comision.model.GtwComisionSegmento;
-import ec.edu.espe.gateway.comision.model.GtwComisionSegmentoPK;
 import ec.edu.espe.gateway.comision.services.GtwComisionSegmentoService;
 import jakarta.persistence.EntityNotFoundException;
 
@@ -35,8 +34,7 @@ public class GtwComisionSegmentoController {
     public ResponseEntity<GtwComisionSegmento> getById(
             @PathVariable Integer comision,
             @PathVariable BigDecimal transaccionesDesde) {
-        GtwComisionSegmentoPK id = new GtwComisionSegmentoPK(comision, transaccionesDesde);
-        return segmentoService.findById(id)
+        return segmentoService.findById(comision, transaccionesDesde)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -46,8 +44,12 @@ public class GtwComisionSegmentoController {
      */
     @PostMapping
     public ResponseEntity<GtwComisionSegmento> create(@RequestBody GtwComisionSegmento segmento) {
-        GtwComisionSegmento savedSegmento = segmentoService.save(segmento);
-        return ResponseEntity.ok(savedSegmento);
+        try {
+            GtwComisionSegmento savedSegmento = segmentoService.save(segmento);
+            return ResponseEntity.ok(savedSegmento);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     /**
@@ -59,12 +61,14 @@ public class GtwComisionSegmentoController {
             @PathVariable BigDecimal transaccionesDesde,
             @RequestParam BigDecimal transaccionesHasta,
             @RequestParam BigDecimal monto) {
-        GtwComisionSegmentoPK id = new GtwComisionSegmentoPK(comision, transaccionesDesde);
         try {
-            GtwComisionSegmento updatedSegmento = segmentoService.update(id, transaccionesHasta, monto);
+            GtwComisionSegmento updatedSegmento = segmentoService.update(
+                comision, transaccionesDesde, transaccionesHasta, monto);
             return ResponseEntity.ok(updatedSegmento);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -76,13 +80,12 @@ public class GtwComisionSegmentoController {
     public ResponseEntity<Void> delete(
             @PathVariable Integer comision,
             @PathVariable BigDecimal transaccionesDesde) {
-        GtwComisionSegmentoPK id = new GtwComisionSegmentoPK(comision, transaccionesDesde);
         try {
-            segmentoService.deleteById(id);
+            segmentoService.deleteById(comision, transaccionesDesde);
             return ResponseEntity.noContent().build();
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
-        } catch (RuntimeException e) {
+        } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().build();
         }
     }

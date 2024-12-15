@@ -12,17 +12,14 @@ import ec.edu.espe.gateway.comision.model.GtwComision;
 @Entity
 @Table(name = "GTW_FACTURACION_COMERCIO")
 public class GtwFacturacionComercio {
-    @NotNull
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "COD_FACTURACION_COMERCIO", nullable = false)
     private Integer codigo;
     @NotNull
-    @Temporal(TemporalType.DATE)
     @Column(name = "FECHA_INICIO", nullable = false)
     private LocalDate fechaInicio;
     @NotNull
-    @Temporal(TemporalType.DATE)
     @Column(name = "FECHA_FIN", nullable = false)
     private LocalDate fechaFin;
     @NotNull
@@ -47,11 +44,9 @@ public class GtwFacturacionComercio {
     @Column(name = "CODIGO_FACTURACION", length = 20, nullable = false)
     private String codigoFacturacion;
     @NotNull
-    @Temporal(TemporalType.DATE)
     @Column(name = "FECHA_FACTURACION", nullable = false)
     private LocalDate fechaFacturacion;
     @NotNull
-    @Temporal(TemporalType.DATE)
     @Column(name = "FECHA_PAGO", nullable = false)
     private LocalDate fechaPago;
     @NotNull

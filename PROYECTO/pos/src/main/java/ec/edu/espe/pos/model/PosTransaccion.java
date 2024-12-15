@@ -11,40 +11,46 @@ import jakarta.validation.constraints.NotNull;
 @Table(name = "POS_TRANSACCION")
 public class PosTransaccion implements Serializable {
 
-    @NotNull
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "COD_TRANSACCION", nullable = false)
     private Integer codigo;
-    @NotNull
+    
+    @NotNull(message = "El tipo de transacción no puede ser nulo")
     @Column(name = "TIPO", length = 3, nullable = false)
     private String tipo;
-    @NotNull
+    
+    @NotNull(message = "La marca no puede ser nula")
     @Column(name = "MARCA", length = 4, nullable = false)
     private String marca;
-    @NotNull
+    
+    @NotNull(message = "La modalidad no puede ser nula")
     @Column(name = "MODALIDAD", length = 3, nullable = false)
     private String modalidad;
-    @NotNull
+    
+    @NotNull(message = "El detalle no puede ser nulo")
     @Column(name = "DETALLE", length = 50, nullable = false)
     private String detalle;
-    @NotNull
+    
+    @NotNull(message = "El monto no puede ser nulo")
     @Column(name = "MONTO", precision = 20, scale = 2, nullable = false)
     private BigDecimal monto;
-    @NotNull
+    
+    @NotNull(message = "El código único de transacción no puede ser nulo")
     @Column(name = "CODIGO_UNICO_TRANSACCION", length = 64, nullable = false)
     private String codigoUnicoTransaccion;
-    @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
+    
+    @NotNull(message = "La fecha no puede ser nula")
     @Column(name = "FECHA", nullable = false)
     private LocalDate fecha;
-    @NotNull
-    @Column(name = "ESTADO", length = 3, nullable = false)
+    
+    @Column(name = "ESTADO", length = 3)
     private String estado;
-    @NotNull
-    @Column(name = "ESTADO_RECIBO", length = 3, nullable = false)
+    
+    @Column(name = "ESTADO_RECIBO", length = 3)
     private String estadoRecibo;
-    @NotNull
+    
+    @NotNull(message = "La moneda no puede ser nula")
     @Column(name = "MONEDA", length = 3, nullable = false)
     private String moneda;
 

@@ -20,11 +20,9 @@ public class GtwPosComercio implements Serializable {
     @Column(name = "ESTADO", length = 3, nullable = false)
     private String estado;
     @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "FECHA_ACTIVACION", nullable = false)
     private LocalDate fechaActivacion;
     @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "ULTIMO_USO", nullable = false)
     private LocalDate ultimoUso;
     @NotNull

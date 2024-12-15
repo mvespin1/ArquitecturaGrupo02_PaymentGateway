@@ -19,11 +19,9 @@ public class GtwSeguridadGateway implements Serializable {
     private String clave;
     @NotNull
     @Column(name = "FECHA_CREACION", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
     private LocalDate fechaCreacion;
     @NotNull
     @Column(name = "FECHA_ACTIVACION", nullable = false)
-    @Temporal(TemporalType.DATE)
     private LocalDate fechaActivacion;
     @NotNull
     @Column(name = "ESTADO", length = 3, nullable = false)
