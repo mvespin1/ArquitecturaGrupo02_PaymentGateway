@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 import java.io.Serializable;
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "GTW_SEGURIDAD_GATEWAY")

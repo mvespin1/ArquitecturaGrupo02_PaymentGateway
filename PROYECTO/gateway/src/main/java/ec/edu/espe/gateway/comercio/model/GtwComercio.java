@@ -122,6 +122,9 @@ public class GtwComercio implements Serializable {
     }
 
     public void setPagosAceptados(String pagosAceptados) {
+        if (!"SIM".equals(pagosAceptados) && !"REC".equals(pagosAceptados) && !"DOS".equals(pagosAceptados)) {
+            throw new IllegalArgumentException("PAGOS_ACEPTADOS debe ser SIM, REC o DOS.");
+        }
         this.pagosAceptados = pagosAceptados;
     }
 
@@ -130,6 +133,9 @@ public class GtwComercio implements Serializable {
     }
 
     public void setEstado(String estado) {
+        if (!"PEN".equals(estado) && !"ACT".equals(estado) && !"INA".equals(estado) && !"SUS".equals(estado)) {
+            throw new IllegalArgumentException("ESTADO debe ser PEN, ACT, INA o SUS.");
+        }
         this.estado = estado;
     }
 

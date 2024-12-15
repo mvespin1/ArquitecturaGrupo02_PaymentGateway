@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "GTW_POS_COMERCIO")
 public class GtwPosComercio implements Serializable {
-    
+
     @NotNull
     @EmbeddedId
     private GtwPosComercioPK pk;
@@ -61,6 +61,9 @@ public class GtwPosComercio implements Serializable {
     }
 
     public void setEstado(String estado) {
+        if (!"ACT".equals(estado) && !"INA".equals(estado)) {
+            throw new IllegalArgumentException("El estado debe ser 'ACT' o 'INA'.");
+        }
         this.estado = estado;
     }
 

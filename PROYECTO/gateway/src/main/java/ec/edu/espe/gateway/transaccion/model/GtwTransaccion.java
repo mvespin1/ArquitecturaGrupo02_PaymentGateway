@@ -107,6 +107,9 @@ public class GtwTransaccion implements Serializable {
     }
 
     public void setTipo(String tipo) {
+        if (!"SIM".equals(tipo) && !"REC".equals(tipo)) {
+            throw new IllegalArgumentException("Tipo debe ser 'SIM' o 'REC'.");
+        }
         this.tipo = tipo;
     }
 
@@ -155,6 +158,9 @@ public class GtwTransaccion implements Serializable {
     }
 
     public void setEstado(String estado) {
+        if (!"ENV".equals(estado) && !"AUT".equals(estado) && !"REC".equals(estado) && !"REV".equals(estado)) {
+            throw new IllegalArgumentException("Estado debe ser 'ENV', 'AUT', 'REC' o 'REV'.");
+        }
         this.estado = estado;
     }
 

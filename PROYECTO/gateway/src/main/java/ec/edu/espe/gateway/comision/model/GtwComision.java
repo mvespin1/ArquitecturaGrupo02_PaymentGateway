@@ -49,6 +49,9 @@ public class GtwComision implements Serializable {
     }
 
     public void setTipo(String tipo) {
+        if (!"POR".equals(tipo) && !"FIJ".equals(tipo)) {
+            throw new IllegalArgumentException("El tipo de comisión debe ser 'POR' o 'FIJ'.");
+        }
         this.tipo = tipo;
     }
 

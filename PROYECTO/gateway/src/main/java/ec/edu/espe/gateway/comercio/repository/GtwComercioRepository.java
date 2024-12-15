@@ -7,4 +7,5 @@ public interface GtwComercioRepository extends JpaRepository<GtwComercio, Intege
     void Save(GtwComercio gtwComercio);
     void deleteById(Integer id);
     void delete(GtwComercio gtwComercio);
+    
 }
