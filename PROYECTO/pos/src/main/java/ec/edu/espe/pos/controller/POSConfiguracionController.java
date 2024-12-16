@@ -1,21 +1,16 @@
 package ec.edu.espe.pos.controller;
 
-import org.springframework.http.HttpStatus;
+import ec.edu.espe.pos.model.POSConfiguracion;
+import ec.edu.espe.pos.model.PosConfiguracionPK;
+import ec.edu.espe.pos.service.POSConfiguracionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import ec.edu.espe.pos.model.POSConfiguracion;
-import ec.edu.espe.pos.model.PosConfiguracionPK;
-import ec.edu.espe.pos.services.POSConfiguracionService;
-
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
-
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pos/configuraciones")
-@CrossOrigin(origins = "*")
+@RequestMapping("/api/pos-configuracion")
 public class POSConfiguracionController {
 
     private final POSConfiguracionService posConfiguracionService;
@@ -25,56 +20,38 @@ public class POSConfiguracionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<POSConfiguracion>> findAll() {
-        return ResponseEntity.ok(posConfiguracionService.findAll());
+    public ResponseEntity<List<POSConfiguracion>> listarTodos() {
+        return ResponseEntity.ok(this.posConfiguracionService.obtenerTodos());
     }
 
     @GetMapping("/{codigo}/{modelo}")
-    public ResponseEntity<POSConfiguracion> findById(@PathVariable String codigo, @PathVariable String modelo) {
-        PosConfiguracionPK id = new PosConfiguracionPK(codigo, modelo);
-        return posConfiguracionService.findById(id)
+    public ResponseEntity<POSConfiguracion> obtenerPorId(
+            @PathVariable String codigo,
+            @PathVariable String modelo) {
+        return this.posConfiguracionService.obtenerPorId(new PosConfiguracionPK(codigo, modelo))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<POSConfiguracion> create(@Valid @RequestBody POSConfiguracion posConfiguracion) {
-        try {
-            POSConfiguracion savedConfig = posConfiguracionService.save(posConfiguracion);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedConfig);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<POSConfiguracion> crear(@RequestBody POSConfiguracion posConfiguracion) {
+        return ResponseEntity.ok(this.posConfiguracionService.crear(posConfiguracion));
     }
 
-    @PutMapping("/{codigo}/{modelo}")
-    public ResponseEntity<POSConfiguracion> update(
+    @PatchMapping("/{codigo}/{modelo}")
+    public ResponseEntity<POSConfiguracion> actualizarCampos(
             @PathVariable String codigo,
             @PathVariable String modelo,
-            @Valid @RequestBody POSConfiguracion posConfiguracion) {
+            @RequestParam String codigoComercio,
+            @RequestParam LocalDate fechaActivacion) {
         try {
-            PosConfiguracionPK id = new PosConfiguracionPK(codigo, modelo);
-            if (!posConfiguracionService.findById(id).isPresent()) {
-                return ResponseEntity.notFound().build();
-            }
-            posConfiguracion.setPk(id);
-            return ResponseEntity.ok(posConfiguracionService.save(posConfiguracion));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            POSConfiguracion actualizado = this.posConfiguracionService.actualizar(
+                    new PosConfiguracionPK(codigo, modelo),
+                    codigoComercio,
+                    fechaActivacion);
+            return ResponseEntity.ok(actualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
     }
-
-    @DeleteMapping("/{codigo}/{modelo}")
-    public ResponseEntity<Void> delete(@PathVariable String codigo, @PathVariable String modelo) {
-        try {
-            PosConfiguracionPK id = new PosConfiguracionPK(codigo, modelo);
-            if (!posConfiguracionService.findById(id).isPresent()) {
-                return ResponseEntity.notFound().build();
-            }
-            posConfiguracionService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-}
+} 

@@ -1,18 +1,14 @@
 package ec.edu.espe.pos.controller;
 
 import ec.edu.espe.pos.model.PosTransaccion;
-import ec.edu.espe.pos.services.PosTransaccionService;
-import org.springframework.http.HttpStatus;
+import ec.edu.espe.pos.service.PosTransaccionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pos/transacciones")
-@CrossOrigin(origins = "*")
+@RequestMapping("/api/transacciones")
 public class PosTransaccionController {
 
     private final PosTransaccionService posTransaccionService;
@@ -22,50 +18,32 @@ public class PosTransaccionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PosTransaccion>> obtenerTodasLasTransacciones() {
-        return ResponseEntity.ok(posTransaccionService.obtenerTodasLasTransacciones());
+    public ResponseEntity<List<PosTransaccion>> listarTodas() {
+        return ResponseEntity.ok(this.posTransaccionService.obtenerTodas());
     }
 
-    @GetMapping("/{codigo}")
-    public ResponseEntity<PosTransaccion> obtenerTransaccion(@PathVariable Integer codigo) {
-        return posTransaccionService.obtenerTransaccionPorCodigo(codigo)
+    @GetMapping("/{id}")
+    public ResponseEntity<PosTransaccion> obtenerPorId(@PathVariable Integer id) {
+        return this.posTransaccionService.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<PosTransaccion> crearTransaccion(@Valid @RequestBody PosTransaccion posTransaccion) {
-        try {
-            PosTransaccion nuevaTransaccion = posTransaccionService.crearTransaccion(posTransaccion);
-            return ResponseEntity.status(HttpStatus.CREATED).body(nuevaTransaccion);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<PosTransaccion> crear(@RequestBody PosTransaccion posTransaccion) {
+        return ResponseEntity.ok(this.posTransaccionService.crear(posTransaccion));
     }
 
-    @PutMapping("/{codigo}")
-    public ResponseEntity<PosTransaccion> actualizarTransaccion(
-            @PathVariable Integer codigo,
-            @Valid @RequestBody PosTransaccion posTransaccion) {
+    @PatchMapping("/{id}/estados")
+    public ResponseEntity<PosTransaccion> actualizarEstados(
+            @PathVariable Integer id,
+            @RequestParam String estado,
+            @RequestParam String estadoRecibo) {
         try {
-            PosTransaccion transaccionActualizada = posTransaccionService.actualizarTransaccion(codigo, posTransaccion);
-            return ResponseEntity.ok(transaccionActualizada);
-        } catch (EntityNotFoundException e) {
+            PosTransaccion actualizada = this.posTransaccionService.actualizarEstados(id, estado, estadoRecibo);
+            return ResponseEntity.ok(actualizada);
+        } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-    @DeleteMapping("/{codigo}")
-    public ResponseEntity<Void> eliminarTransaccion(@PathVariable Integer codigo) {
-        try {
-            posTransaccionService.eliminarTransaccion(codigo);
-            return ResponseEntity.noContent().build();
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-}
+} 

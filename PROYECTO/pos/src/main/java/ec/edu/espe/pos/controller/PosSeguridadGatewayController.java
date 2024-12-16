@@ -1,64 +1,49 @@
 package ec.edu.espe.pos.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import ec.edu.espe.pos.model.PosSeguridadGateway;
+import ec.edu.espe.pos.service.PosSeguridadGatewayService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import ec.edu.espe.pos.model.PosSeguridadGateway;
-import ec.edu.espe.pos.services.PosSeguridadGatewayService;
-
-import java.time.LocalDate;
-import java.util.Optional;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/seguridad-gateway")
 public class PosSeguridadGatewayController {
 
-    @Autowired
-    private PosSeguridadGatewayService posSeguridadGatewayService;
+    private final PosSeguridadGatewayService posSeguridadGatewayService;
 
-    @GetMapping("/{codigo}")
-    public ResponseEntity<PosSeguridadGateway> obtenerSeguridad(@PathVariable Integer codigo) {
-        Optional<PosSeguridadGateway> seguridad = posSeguridadGatewayService.obtenerSeguridadPorCodigo(codigo);
-
-        if (seguridad.isPresent()) {
-            return ResponseEntity.ok(seguridad.get());
-        }
-
-        return ResponseEntity.notFound().build();
+    public PosSeguridadGatewayController(PosSeguridadGatewayService posSeguridadGatewayService) {
+        this.posSeguridadGatewayService = posSeguridadGatewayService;
     }
 
-    @PostMapping("/{codigo}")
-    public ResponseEntity<PosSeguridadGateway> configurarSeguridad(
-            @PathVariable Integer codigo,
+    @GetMapping
+    public ResponseEntity<List<PosSeguridadGateway>> listarTodos() {
+        return ResponseEntity.ok(this.posSeguridadGatewayService.obtenerTodos());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PosSeguridadGateway> obtenerPorId(@PathVariable Integer id) {
+        return this.posSeguridadGatewayService.obtenerPorId(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<PosSeguridadGateway> crear(@RequestBody PosSeguridadGateway posSeguridadGateway) {
+        return ResponseEntity.ok(this.posSeguridadGatewayService.crear(posSeguridadGateway));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<PosSeguridadGateway> actualizar(
+            @PathVariable Integer id,
             @RequestParam String clave,
-            @RequestParam LocalDate fechaActivacion) {
-
-        PosSeguridadGateway posSeguridadGateway = posSeguridadGatewayService.configurarSeguridad(
-                codigo, clave, fechaActivacion, "ACT");
-
-        return ResponseEntity.ok(posSeguridadGateway);
-    }
-
-    @PatchMapping("/activar/{codigo}")
-    public ResponseEntity<PosSeguridadGateway> activarSeguridad(@PathVariable Integer codigo) {
-        PosSeguridadGateway posSeguridadGateway = posSeguridadGatewayService.activarSeguridad(codigo);
-
-        if (posSeguridadGateway != null) {
-            return ResponseEntity.ok(posSeguridadGateway);
+            @RequestParam String estado) {
+        try {
+            PosSeguridadGateway actualizado = this.posSeguridadGatewayService.actualizar(id, clave, estado);
+            return ResponseEntity.ok(actualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
-
-        return ResponseEntity.notFound().build();
     }
-
-    @PatchMapping("/desactivar/{codigo}")
-    public ResponseEntity<PosSeguridadGateway> desactivarSeguridad(@PathVariable Integer codigo) {
-        PosSeguridadGateway posSeguridadGateway = posSeguridadGatewayService.desactivarSeguridad(codigo);
-
-        if (posSeguridadGateway != null) {
-            return ResponseEntity.ok(posSeguridadGateway);
-        }
-
-        return ResponseEntity.notFound().build();
-    }
-}
+} 

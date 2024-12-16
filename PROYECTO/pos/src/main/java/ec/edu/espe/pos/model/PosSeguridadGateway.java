@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotNull;
 @Table(name = "POS_SEGURIDAD_GATEWAY")
 public class PosSeguridadGateway implements Serializable {
 
-    @NotNull
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "COD_CLAVE_GATEWAY", nullable = false)
