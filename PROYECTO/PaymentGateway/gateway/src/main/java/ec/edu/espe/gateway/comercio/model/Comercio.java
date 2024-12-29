@@ -11,7 +11,7 @@ import ec.edu.espe.gateway.comision.model.Comision;
 @Entity
 @Table(name = "GTW_COMERCIO")
 public class Comercio implements Serializable {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "COD_COMERCIO", nullable = false)

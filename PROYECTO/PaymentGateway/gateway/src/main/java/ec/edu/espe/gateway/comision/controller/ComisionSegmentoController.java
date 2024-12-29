@@ -63,7 +63,7 @@ public class ComisionSegmentoController {
             @RequestParam BigDecimal monto) {
         try {
             ComisionSegmento updatedSegmento = segmentoService.update(
-                comision, transaccionesDesde, transaccionesHasta, monto);
+                    comision, transaccionesDesde, transaccionesHasta, monto);
             return ResponseEntity.ok(updatedSegmento);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();

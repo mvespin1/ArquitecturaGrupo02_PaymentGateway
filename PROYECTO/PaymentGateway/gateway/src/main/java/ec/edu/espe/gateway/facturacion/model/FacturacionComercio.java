@@ -12,7 +12,7 @@ import ec.edu.espe.gateway.comision.model.Comision;
 @Entity
 @Table(name = "GTW_FACTURACION_COMERCIO")
 public class FacturacionComercio {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "COD_FACTURACION_COMERCIO", nullable = false)
@@ -25,16 +25,16 @@ public class FacturacionComercio {
     private LocalDate fechaFin;
     @NotNull
     @Column(name = "TRANSACCIONES_PROCESADAS", precision = 9, nullable = false)
-    private BigDecimal transaccionesProcesadas;
+    private Integer transaccionesProcesadas;
     @NotNull
     @Column(name = "TRANSACCIONES_AUTORIZADAS", precision = 9, nullable = false)
-    private BigDecimal transaccionesAutorizadas;
+    private Integer transaccionesAutorizadas;
     @NotNull
     @Column(name = "TRANSACCIONES_RECHAZADAS", precision = 9, nullable = false)
-    private BigDecimal transaccionesRechazadas;
+    private Integer transaccionesRechazadas;
     @NotNull
     @Column(name = "TRANSACCIONES_REVERSADAS", precision = 9, nullable = false)
-    private BigDecimal transaccionesReversadas;
+    private Integer transaccionesReversadas;
     @NotNull
     @Column(name = "VALOR", precision = 20, scale = 4, nullable = false)
     private BigDecimal valor;
@@ -93,35 +93,35 @@ public class FacturacionComercio {
         this.fechaFin = fechaFin;
     }
 
-    public BigDecimal getTransaccionesProcesadas() {
+    public Integer getTransaccionesProcesadas() {
         return transaccionesProcesadas;
     }
 
-    public void setTransaccionesProcesadas(BigDecimal transaccionesProcesadas) {
+    public void setTransaccionesProcesadas(Integer transaccionesProcesadas) {
         this.transaccionesProcesadas = transaccionesProcesadas;
     }
 
-    public BigDecimal getTransaccionesAutorizadas() {
+    public Integer getTransaccionesAutorizadas() {
         return transaccionesAutorizadas;
     }
 
-    public void setTransaccionesAutorizadas(BigDecimal transaccionesAutorizadas) {
+    public void setTransaccionesAutorizadas(Integer transaccionesAutorizadas) {
         this.transaccionesAutorizadas = transaccionesAutorizadas;
     }
 
-    public BigDecimal getTransaccionesRechazadas() {
+    public Integer getTransaccionesRechazadas() {
         return transaccionesRechazadas;
     }
 
-    public void setTransaccionesRechazadas(BigDecimal transaccionesRechazadas) {
+    public void setTransaccionesRechazadas(Integer transaccionesRechazadas) {
         this.transaccionesRechazadas = transaccionesRechazadas;
     }
 
-    public BigDecimal getTransaccionesReversadas() {
+    public Integer getTransaccionesReversadas() {
         return transaccionesReversadas;
     }
 
-    public void setTransaccionesReversadas(BigDecimal transaccionesReversadas) {
+    public void setTransaccionesReversadas(Integer transaccionesReversadas) {
         this.transaccionesReversadas = transaccionesReversadas;
     }
 

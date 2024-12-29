@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 @Embeddable
 public class ComisionSegmentoPK implements Serializable {
-    
+
     @NotNull
     @Column(name = "COD_COMISION", nullable = false)
     private Integer comision;
@@ -38,7 +38,7 @@ public class ComisionSegmentoPK implements Serializable {
     }
 
     public void setTransaccionesDesde(Integer transaccionesDesde) {
-            this.transaccionesDesde = transaccionesDesde;
+        this.transaccionesDesde = transaccionesDesde;
     }
 
     // ToString
