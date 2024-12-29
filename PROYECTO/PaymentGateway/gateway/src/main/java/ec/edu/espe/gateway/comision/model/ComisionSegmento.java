@@ -12,8 +12,8 @@ public class ComisionSegmento implements Serializable {
     @EmbeddedId
     private ComisionSegmentoPK pk;
     @NotNull
-    @Column(name = "TRANSACCIONES_HASTA", precision = 9, nullable = false)
-    private BigDecimal transaccionesHasta;
+    @Column(name = "TRANSACCIONES_HASTA", nullable = false)
+    private Integer transaccionesHasta;
     @NotNull
     @Column(name = "MONTO", precision = 20, scale = 4, nullable = false)
     private BigDecimal monto;
@@ -39,11 +39,11 @@ public class ComisionSegmento implements Serializable {
         this.pk = pk;
     }
 
-    public BigDecimal getTransaccionesHasta() {
+    public Integer getTransaccionesHasta() {
         return transaccionesHasta;
     }
 
-    public void setTransaccionesHasta(BigDecimal transaccionesHasta) {
+    public void setTransaccionesHasta(Integer transaccionesHasta) {
         this.transaccionesHasta = transaccionesHasta;
     }
 

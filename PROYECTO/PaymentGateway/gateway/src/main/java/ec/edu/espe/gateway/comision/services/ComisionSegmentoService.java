@@ -24,7 +24,7 @@ public class ComisionSegmentoService {
         return segmentoRepository.findAll();
     }
 
-    public Optional<ComisionSegmento> findById(Integer comision, BigDecimal transaccionesDesde) {
+    public Optional<ComisionSegmento> findById(Integer comision, Integer transaccionesDesde) {
         ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
         return segmentoRepository.findById(pk);
     }
@@ -36,9 +36,9 @@ public class ComisionSegmentoService {
     }
 
     @Transactional
-    public ComisionSegmento update(Integer comision, BigDecimal transaccionesDesde,
-                                   BigDecimal transaccionesHasta, BigDecimal monto) {
-        ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
+    public ComisionSegmento update(Integer comision, Integer transaccionesDesde,
+                                   Integer transaccionesHasta, BigDecimal monto) {
+            ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
         return segmentoRepository.findById(pk)
                 .map(segmentoExistente -> {
                     validarRangoTransacciones(transaccionesDesde, transaccionesHasta);
@@ -52,7 +52,7 @@ public class ComisionSegmentoService {
     }
 
     @Transactional
-    public void deleteById(Integer comision, BigDecimal transaccionesDesde) {
+        public void deleteById(Integer comision, Integer transaccionesDesde) {
         ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
         ComisionSegmento segmento = segmentoRepository.findById(pk)
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -79,12 +79,12 @@ public class ComisionSegmentoService {
         validarRangoTransacciones(segmento.getPk().getTransaccionesDesde(), segmento.getTransaccionesHasta());
     }
 
-    private void validarRangoTransacciones(BigDecimal desde, BigDecimal hasta) {
+    private void validarRangoTransacciones(Integer desde, Integer hasta) {
         if (desde.compareTo(hasta) >= 0) {
             throw new IllegalArgumentException(
                 "El rango de transacciones es inválido. 'Desde' debe ser menor que 'Hasta'");
         }
-        if (desde.compareTo(BigDecimal.ZERO) < 0 || hasta.compareTo(BigDecimal.ZERO) < 0) {
+            if (desde.compareTo(0) < 0 || hasta.compareTo(0) < 0) {
             throw new IllegalArgumentException(
                 "El número de transacciones no puede ser negativo");
         }
