@@ -21,7 +21,7 @@ public class Comision implements Serializable {
     private BigDecimal montoBase;
     @NotNull
     @Column(name = "TRANSACCIONES_BASE", precision = 9, nullable = false)
-    private BigDecimal transaccionesBase;
+    private Integer transaccionesBase;
     @NotNull
     @Column(name = "MANEJA_SEGMENTOS", nullable = false)
     private Boolean manejaSegmentos;
@@ -63,11 +63,11 @@ public class Comision implements Serializable {
         this.montoBase = montoBase;
     }
 
-    public BigDecimal getTransaccionesBase() {
+    public Integer getTransaccionesBase() {
         return transaccionesBase;
     }
 
-    public void setTransaccionesBase(BigDecimal transaccionesBase) {
+    public void setTransaccionesBase(Integer transaccionesBase) {
         this.transaccionesBase = transaccionesBase;
     }
 

@@ -33,7 +33,7 @@ public class ComisionSegmentoController {
     @GetMapping("/{comision}/{transaccionesDesde}")
     public ResponseEntity<ComisionSegmento> getById(
             @PathVariable Integer comision,
-            @PathVariable BigDecimal transaccionesDesde) {
+            @PathVariable Integer transaccionesDesde) {
         return segmentoService.findById(comision, transaccionesDesde)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -58,12 +58,12 @@ public class ComisionSegmentoController {
     @PutMapping("/{comision}/{transaccionesDesde}")
     public ResponseEntity<ComisionSegmento> update(
             @PathVariable Integer comision,
-            @PathVariable BigDecimal transaccionesDesde,
-            @RequestParam BigDecimal transaccionesHasta,
+            @PathVariable Integer transaccionesDesde,
+            @RequestParam Integer transaccionesHasta,
             @RequestParam BigDecimal monto) {
         try {
             ComisionSegmento updatedSegmento = segmentoService.update(
-                comision, transaccionesDesde, transaccionesHasta, monto);
+                    comision, transaccionesDesde, transaccionesHasta, monto);
             return ResponseEntity.ok(updatedSegmento);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
@@ -79,7 +79,7 @@ public class ComisionSegmentoController {
     @DeleteMapping("/{comision}/{transaccionesDesde}")
     public ResponseEntity<Void> delete(
             @PathVariable Integer comision,
-            @PathVariable BigDecimal transaccionesDesde) {
+            @PathVariable Integer transaccionesDesde) {
         try {
             segmentoService.deleteById(comision, transaccionesDesde);
             return ResponseEntity.noContent().build();

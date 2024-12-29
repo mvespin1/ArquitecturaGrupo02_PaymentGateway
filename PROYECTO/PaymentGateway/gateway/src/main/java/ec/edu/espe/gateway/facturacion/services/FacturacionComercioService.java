@@ -35,26 +35,20 @@ public class FacturacionComercioService {
                     facturacionComercioExistente.setComision(facturacionComercio.getComision());
                     facturacionComercioExistente.setValor(facturacionComercio.getValor());
                     facturacionComercioExistente.setEstado(facturacionComercio.getEstado()); // ACT, FAC, PAG
-                    facturacionComercioExistente.setTransaccionesProcesadas(facturacionComercio.getTransaccionesProcesadas());
-                    facturacionComercioExistente.setTransaccionesAutorizadas(facturacionComercio.getTransaccionesAutorizadas());
-                    facturacionComercioExistente.setTransaccionesRechazadas(facturacionComercio.getTransaccionesRechazadas());
-                    facturacionComercioExistente.setTransaccionesReversadas(facturacionComercio.getTransaccionesReversadas());
+                    facturacionComercioExistente
+                            .setTransaccionesProcesadas(facturacionComercio.getTransaccionesProcesadas());
+                    facturacionComercioExistente
+                            .setTransaccionesAutorizadas(facturacionComercio.getTransaccionesAutorizadas());
+                    facturacionComercioExistente
+                            .setTransaccionesRechazadas(facturacionComercio.getTransaccionesRechazadas());
+                    facturacionComercioExistente
+                            .setTransaccionesReversadas(facturacionComercio.getTransaccionesReversadas());
                     facturacionComercioExistente.setFechaFacturacion(facturacionComercio.getFechaFacturacion());
-                    
+
                     return facturacionComercioRepository.save(facturacionComercioExistente);
                 })
-                .orElseThrow(() -> new EntityNotFoundException("Facturación de Comercio con código " + codigo + " no encontrada."));
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Facturación de Comercio con código " + codigo + " no encontrada."));
     }
 
-    /* public void deleteById(Integer codigo) {
-        GtwFacturacionComercio facturacionComercio = gtwFacturacionComercioRepository.findById(codigo)
-                .orElseThrow(() -> new EntityNotFoundException("Facturación de Comercio con código " + codigo + " no encontrada."));
-
-        if ("INA".equals(facturacionComercio.getEstado())) {
-            gtwFacturacionComercioRepository.deleteById(codigo);
-        } else {
-            throw new RuntimeException("No se puede eliminar una Facturación de Comercio con estado diferente a 'INA'.");
-        }
-    } */
 }
-

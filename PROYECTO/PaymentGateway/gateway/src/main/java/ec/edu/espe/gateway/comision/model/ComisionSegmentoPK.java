@@ -1,26 +1,25 @@
 package ec.edu.espe.gateway.comision.model;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Embeddable
 public class ComisionSegmentoPK implements Serializable {
-    
+
     @NotNull
     @Column(name = "COD_COMISION", nullable = false)
     private Integer comision;
     @NotNull
-    @Column(name = "TRANSACCIONES_DESDE", precision = 9, nullable = false)
-    private BigDecimal transaccionesDesde;
+    @Column(name = "TRANSACCIONES_DESDE", nullable = false)
+    private Integer transaccionesDesde;
 
     // Empty constructor
     public ComisionSegmentoPK() {
     }
 
     // Constructor
-    public ComisionSegmentoPK(Integer comision, BigDecimal transaccionesDesde) {
+    public ComisionSegmentoPK(Integer comision, Integer transaccionesDesde) {
         this.comision = comision;
         this.transaccionesDesde = transaccionesDesde;
     }
@@ -34,11 +33,11 @@ public class ComisionSegmentoPK implements Serializable {
         this.comision = comision;
     }
 
-    public BigDecimal getTransaccionesDesde() {
+    public Integer getTransaccionesDesde() {
         return this.transaccionesDesde;
     }
 
-    public void setTransaccionesDesde(BigDecimal transaccionesDesde) {
+    public void setTransaccionesDesde(Integer transaccionesDesde) {
         this.transaccionesDesde = transaccionesDesde;
     }
 
