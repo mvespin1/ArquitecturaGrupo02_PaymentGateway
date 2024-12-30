@@ -10,13 +10,13 @@ const MainPage = () => {
     { id: 1, name: "GtwFacturacionComercio", route: "/GtwFacturacionComercio/components" },
     { id: 2, name: "Tabla 2 - Productos", route: "/Productos" },
     { id: 3, name: "Tabla 3 - Clientes", route: "/Clientes" },
-    { id: 4, name: "Tabla 4 - Pedidos", route: "/Pedidos" },
-    { id: 5, name: "Tabla 5 - Inventario", route: "/Inventario" },
-    { id: 6, name: "Tabla 6 - Ventas", route: "/Ventas" },
+    { id: 4, name: "Comercio", route: "/GtwComercio/components" },
+    { id: 5, name: "Seguridad Gateway", route: "/GtwSeguridadGateway/components" },
+    { id: 6, name: "Comision Segmento", route: "/GtwComisionSegmento/components" },
     { id: 7, name: "Tabla 7 - Usuarios", route: "/Usuarios" },
     { id: 8, name: "Tabla 8 - Reportes", route: "/Reportes" },
     { id: 9, name: "Tabla 9 - Configuración", route: "/Configuracion" },
-    { id: 10, name: "Tabla 10 - Historial", route: "/Historial" },
+    
   ];
 
   const handleNavigate = (route) => {
