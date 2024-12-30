@@ -34,7 +34,7 @@ const CreatePage = () => {
   };
 
   const handleCancel = () => {
-    router.push("/GtwFacturacionComercio/components"); // Redirige a la página principal sin guardar
+    router.push("/GtwComercio/components"); // Redirige a la página principal sin guardar
   };
 
   return (

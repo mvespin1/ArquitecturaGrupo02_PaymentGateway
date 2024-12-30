@@ -19,7 +19,7 @@ const UpdatePage = () => {
    
   });
 
-  const router = useRouter(); // Inicializamos el router para redirigir
+  const router = useRouter(); // Inicializamos el router para Redirigir
 
   const handleChange = (e) => {
     const { name, value } = e.target;
