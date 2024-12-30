@@ -141,4 +141,18 @@ public class TransaccionService {
     public List<Transaccion> findRecurrentTransactionsToProcess(LocalDate fechaActual) {
         return repository.findRecurrentTransactionsToProcess(fechaActual);
     }
+
+    public List<Transaccion> findByComercioAndFecha(Integer codigoComercio, LocalDate fechaInicio, LocalDate fechaFin) {
+        if (codigoComercio == null) {
+            throw new IllegalArgumentException("El código de comercio es requerido");
+        }
+        if (fechaInicio == null || fechaFin == null) {
+            throw new IllegalArgumentException("Las fechas de inicio y fin son requeridas");
+        }
+        if (fechaInicio.isAfter(fechaFin)) {
+            throw new IllegalArgumentException("La fecha de inicio debe ser anterior o igual a la fecha fin");
+        }
+        
+        return repository.findByComercio_CodigoAndFechaBetween(codigoComercio, fechaInicio, fechaFin);
+    }
 }

@@ -14,4 +14,6 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Intege
     List<Transaccion> findRecurrentTransactionsToProcess(@Param("fechaActual") LocalDate fechaActual);
     
     List<Transaccion> findByEstado(String estado);
+    
+    List<Transaccion> findByComercio_CodigoAndFechaBetween(Integer codigoComercio, LocalDate fechaInicio, LocalDate fechaFin);
 }

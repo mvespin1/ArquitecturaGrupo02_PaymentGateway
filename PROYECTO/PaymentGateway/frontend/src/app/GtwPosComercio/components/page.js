@@ -7,25 +7,24 @@ import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
 const CrudTable = () => {
   const [data, setData] = useState([
     {
-      id: 1,
-      facturacionComercio: "FC001",
-      comercio: "Comercio A",
-      fechaInicio: "2023-01-01",
-      fechaFin: "2023-12-31",
-      comision: "5%",
-      valor: "$500",
-      estado: "Activo",
+      modelo: 1,
+      codigoPos: "FC001",
+      codComercio: "Comercio A",
+      direccionMac: "2023-01-01",
+      estado: "2023-12-31",
+      fechaActivacion: "5%",
+      ultimoUso: "$500",
     },
   ]);
 
   const router = useRouter(); // Inicializa el router para redirigir
 
   const handleCreate = () => {
-    router.push("/GtwFacturacionComercio/create");
+    router.push("/GtwPosComercio/create");
   };
 
   const handleView = (id) => {
-    router.push(`/GtwFacturacionComercio/read`); // Redirige a la página de visualización
+    router.push(`/GtwPosComercio/read`); // Redirige a la página de visualización
   };
 
   const handleBackToHome = () => {
@@ -34,9 +33,9 @@ const CrudTable = () => {
 
   return (
     <main>
-      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Facturación</h1>
+      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de POS Comercio</h1>
       <div>
-        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Facturación por Comercio</h2>
+        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>POS Comercio</h2>
         <button
           className="crear-factura"
           style={{
@@ -55,31 +54,31 @@ const CrudTable = () => {
           onClick={handleCreate}
         >
           <FaPlus />
-          Crear Factura
+          Crear POS Comercio
         </button>
         <table>
           <thead>
             <tr>
-              <th>Facturación Comercio</th>
+              <th>Modelo</th>
+              <th>Código POS</th>
               <th>Comercio</th>
-              <th>Fecha Inicio</th>
-              <th>Fecha Fin</th>
-              <th>Comisión</th>
-              <th>Valor</th>
+              <th>Dirección MAC</th>
               <th>Estado</th>
+              <th>Fecha Activación</th>
+              <th>Último Uso</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {data.map((item, index) => (
               <tr key={item.id || index}>
-                <td>{item.facturacionComercio}</td>
-                <td>{item.comercio}</td>
-                <td>{item.fechaInicio}</td>
-                <td>{item.fechaFin}</td>
-                <td>{item.comision}</td>
-                <td>{item.valor}</td>
+                <td>{item.modelo}</td>
+                <td>{item.codigoPos}</td>
+                <td>{item.codComercio}</td>
+                <td>{item.direccionMac}</td>
                 <td>{item.estado}</td>
+                <td>{item.fechaActivacion}</td>
+                <td>{item.ultimoUso}</td>
                 <td>
                   <div
                     style={{
