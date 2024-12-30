@@ -8,15 +8,14 @@ const MainPage = () => {
   // Lista de tablas con sus rutas correspondientes
   const tables = [
     { id: 1, name: "GtwFacturacionComercio", route: "/GtwFacturacionComercio/components" },
-    { id: 2, name: "Tabla 2 - Productos", route: "/Productos" },
-    { id: 3, name: "Tabla 3 - Clientes", route: "/Clientes" },
+    { id: 2, name: "GtwSeguridadMarca", route: "/GtwSeguridadMarca/components" },
+    { id: 3, name: "GtwPosComercio", route: "/GtwPosComercio/components" },
     { id: 4, name: "GtwComercio", route: "/GtwComercio/components" },
     { id: 5, name: "GtwSeguridadGateway", route: "/GtwSeguridadGateway/components" },
     { id: 6, name: "GtwComisionSegmento", route: "/GtwComisionSegmento/components" },
-    { id: 7, name: "Tabla 7 - Usuarios", route: "/Usuarios" },
-    { id: 8, name: "Tabla 8 - Reportes", route: "/Reportes" },
+    { id: 7, name: "GtwTransaccion", route: "/GtwTransaccion/components" },
+    { id: 8, name: "GtwComision", route: "/GtwComision/components" },
     { id: 9, name: "Tabla 9 - Configuración", route: "/Configuracion" },
-    
   ];
 
   const handleNavigate = (route) => {
