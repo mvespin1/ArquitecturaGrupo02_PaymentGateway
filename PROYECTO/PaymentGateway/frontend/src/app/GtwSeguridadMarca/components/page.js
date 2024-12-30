@@ -7,25 +7,20 @@ import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
 const CrudTable = () => {
   const [data, setData] = useState([
     {
-      id: 1,
-      facturacionComercio: "FC001",
-      comercio: "Comercio A",
-      fechaInicio: "2023-01-01",
-      fechaFin: "2023-12-31",
-      comision: "5%",
-      valor: "$500",
-      estado: "Activo",
+      marca: "VISA",
+      clave: "123456789",
+      fechaActualizacion: "2023-01-01",
     },
   ]);
 
   const router = useRouter(); // Inicializa el router para redirigir
 
   const handleCreate = () => {
-    router.push("/GtwFacturacionComercio/create");
+    router.push("/GtwSeguridadMarca/create");
   };
 
   const handleView = (id) => {
-    router.push(`/GtwFacturacionComercio/read`); // Redirige a la página de visualización
+    router.push(`/GtwSeguridadMarca/read`); // Redirige a la página de visualización
   };
 
   const handleBackToHome = () => {
@@ -34,9 +29,9 @@ const CrudTable = () => {
 
   return (
     <main>
-      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Facturación</h1>
+      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Seguridad Marca</h1>
       <div>
-        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Facturación por Comercio</h2>
+        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Seguridad Marca</h2>
         <button
           className="crear-factura"
           style={{
@@ -55,31 +50,23 @@ const CrudTable = () => {
           onClick={handleCreate}
         >
           <FaPlus />
-          Crear Factura
+          Crear Seguridad Marca
         </button>
         <table>
           <thead>
             <tr>
-              <th>Facturación Comercio</th>
-              <th>Comercio</th>
-              <th>Fecha Inicio</th>
-              <th>Fecha Fin</th>
-              <th>Comisión</th>
-              <th>Valor</th>
-              <th>Estado</th>
+              <th>Marca</th>
+              <th>Clave</th>
+              <th>Fecha Actualización</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {data.map((item, index) => (
               <tr key={item.id || index}>
-                <td>{item.facturacionComercio}</td>
-                <td>{item.comercio}</td>
-                <td>{item.fechaInicio}</td>
-                <td>{item.fechaFin}</td>
-                <td>{item.comision}</td>
-                <td>{item.valor}</td>
-                <td>{item.estado}</td>
+                <td>{item.marca}</td>
+                <td>{item.clave}</td>
+                <td>{item.fechaActualizacion}</td>                
                 <td>
                   <div
                     style={{
