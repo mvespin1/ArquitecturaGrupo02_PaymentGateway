@@ -32,7 +32,7 @@ const CreatePage = () => {
   };
 
   const handleCancel = () => {
-    router.push("/GtwComercio/components"); // Redirige a la página principal sin guardar
+    router.push("/Comercio/components"); // Redirige a la página principal sin guardar
   };
 
   return (

@@ -14,22 +14,17 @@ const CrudTable = () => {
       RazonSocial: "AA",
       NombreComercial: "Ab",
       FechaCreacion: "99999999",
-      CodComision: "1412",
-      PagoAceptado: "si",
-      estado: "actiivo",
-      FechaActivacion: "2023-01-01",
-      FechaSuspension: "2023-12-25",
     },
   ]);
 
   const router = useRouter(); // Inicializa el router para redirigir
 
   const handleCreate = () => {
-    router.push("/GtwComercio/create");
+    router.push("/Comercio/create");
   };
 
   const handleView = (id) => {
-    router.push(`/GtwComercio/read`); // Redirige a la página de visualización
+    router.push(`/Comercio/read`); // Redirige a la página de visualización
   };
 
   const handleBackToHome = () => {
@@ -70,11 +65,6 @@ const CrudTable = () => {
               <th>RazonSocial</th>
               <th>NombreComercial</th>
               <th>FechaCreacion</th>
-              <th>CodComision</th>
-              <th>PagoAceptado</th>
-              <th>estado</th>
-              <th>FechaActivacion</th> 
-              <th>FechaSuspencion</th>
             </tr>
           </thead>
           <tbody>
@@ -86,11 +76,6 @@ const CrudTable = () => {
                 <td>{item.RazonSocial}</td>
                 <td>{item.NombreComercial}</td>
                 <td>{item.FechaCreacion}</td>
-                <td>{item.CodComision}</td>
-                <td>{item.PagoAceptado}</td>
-                <td>{item.estado}</td>
-                <td>{item.FechaActivacion}</td>
-                <td>{item.FechaSuspension}</td>
                 <td>
                   <div
                     style={{

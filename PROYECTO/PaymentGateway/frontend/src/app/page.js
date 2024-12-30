@@ -10,7 +10,7 @@ const MainPage = () => {
     { id: 1, name: "GtwFacturacionComercio", route: "/GtwFacturacionComercio/components" },
     { id: 2, name: "Tabla 2 - Productos", route: "/Productos" },
     { id: 3, name: "Tabla 3 - Clientes", route: "/Clientes" },
-    { id: 4, name: "GtwComercio", route: "/Gtw/components" },
+    { id: 4, name: "GtwComercio", route: "/Comercio/components" },
     { id: 5, name: "Tabla 5 - Inventario", route: "/Inventario" },
     { id: 6, name: "Tabla 6 - Ventas", route: "/Ventas" },
     { id: 7, name: "GtwTransaccion", route: "/GtwTransaccion/components" },
