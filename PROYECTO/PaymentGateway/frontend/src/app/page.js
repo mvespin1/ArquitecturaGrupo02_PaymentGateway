@@ -14,7 +14,7 @@ const MainPage = () => {
     { id: 5, name: "Tabla 5 - Inventario", route: "/Inventario" },
     { id: 6, name: "Tabla 6 - Ventas", route: "/Ventas" },
     { id: 7, name: "GtwTransaccion", route: "/GtwTransaccion/components" },
-    { id: 8, name: "Tabla 8 - Reportes", route: "/Reportes" },
+    { id: 8, name: "GtwComision", route: "/GtwComision/components" },
     { id: 9, name: "Tabla 9 - Configuración", route: "/Configuracion" },
   ];
 

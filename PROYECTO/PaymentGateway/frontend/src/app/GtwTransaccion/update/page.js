@@ -12,7 +12,7 @@ const UpdatePage = () => {
     Marca: "",
     Detalle: "",
     Monto: "",
-    COdigoUnicoTransaccion: "",
+    CodigoUnicoTransaccion: "",
     Fecha: "",
     Estado: "",
     Moneda: "",

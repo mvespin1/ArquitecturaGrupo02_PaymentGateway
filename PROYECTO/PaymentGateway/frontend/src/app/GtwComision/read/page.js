@@ -8,25 +8,15 @@ const ViewPage = () => {
 
   // Datos de ejemplo
   const mockData = {
-    CodigoTransaccion: "001",
-    CodigoComercio: "CC001",
-    FacturacionComercio: "FC001",
-    Tipo: "Factura",
-    Marca: "Visa",
-    Detalle: "Pago de servicios",
-    Monto: "$100",
-    CodigoUnicoTransaccion: "CUT001",
-    Fecha: "2023-01-01",
-    Estado: "Aprobado",
-    Moneda: "USD",
-    Pais: "Ecuador",
-    Tarjeta: "**** **** **** 1234",
-    FechaEjecucionRecurrencia: "2023-01-01",
-    FechaFinRecurrencia: "2023-12-31",
+      CodigoComision: "001",
+      Tipo: "Comision",
+      MontoBase: "$100",
+      TransaccionesBase: "10",
+      ManejaSegmenos: "Si",
   };
 
   const handleCancel = () => {
-    router.push("/GtwTransaccion/components"); // Redirige a la página principal sin guardar
+    router.push("/GtwComision/components"); // Redirige a la página principal sin guardar
   };
 
   return (
@@ -41,7 +31,7 @@ const ViewPage = () => {
       }}
     >
       <h1 style={{ textAlign: "center", color: "#1e40af", marginBottom: "1.5rem" }}>
-        Visualizar Factura
+        Visualizar Comisiones
       </h1>
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         {Object.entries(mockData).map(([key, value]) => (
