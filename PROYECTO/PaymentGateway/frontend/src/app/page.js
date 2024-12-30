@@ -15,7 +15,7 @@ const MainPage = () => {
     { id: 6, name: "Tabla 6 - Ventas", route: "/Ventas" },
     { id: 7, name: "GtwTransaccion", route: "/GtwTransaccion/components" },
     { id: 8, name: "GtwComision", route: "/GtwComision/components" },
-    { id: 9, name: "Tabla 9 - Configuración", route: "/Configuracion" },
+    { id: 9, name: "GtwSeguridad", route: "/GtwSeguridad/components" },
   ];
 
   const handleNavigate = (route) => {
