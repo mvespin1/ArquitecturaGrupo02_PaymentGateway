@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation"; // Importamos useRouter para navega
 
 const UpdatePage = () => {
   const [form, setForm] = useState({
-    Comercio: "",
-    CodigoInterno: "",
-    Ruc: "",
-    RazonSocial: "",
-    NombreComercial: "",
-    FechaCreacion: "",
-    Comision: "",
-    PagosAceptados:"",
-    Estado: "",
-    FechaActivacion:"",
-    FechaSuspencion: "",
+    CodComercio: "",
+      CodInterno: "",
+      Ruc: "",
+      RazonSocial: "",
+      NombreComercial: "",
+      FechaCreacion: "",
+      CodComision: "",
+      PagoAceptado: "",
+      estado: "",
+      FechaActivacion: "",
+      FechaSuspension: "",
    
   });
 

@@ -8,14 +8,17 @@ const CrudTable = () => {
   const [data, setData] = useState([
     {
       id: 1,
-      CódigoComercio: "FC002",
+      CodComercio: "FC001",
+      CodInterno: "Comercio A",
       Ruc: "99999999",
-      RazónSocial: "Matias",
-      NombreComercial: "Vicky",
-      fechaCreación: "2024-01-01",
-      codigocomisión: "1412",
-      estado: "activo",
-      fechaActivación: "...",
+      RazonSocial: "AA",
+      NombreComercial: "Ab",
+      FechaCreacion: "99999999",
+      CodComision: "1412",
+      PagoAceptado: "si",
+      estado: "actiivo",
+      FechaActivacion: "2023-01-01",
+      FechaSuspension: "2023-12-25",
     },
   ]);
 
@@ -35,9 +38,9 @@ const CrudTable = () => {
 
   return (
     <main>
-      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Comercio</h1>
+      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Comercio</h1>
       <div>
-        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Gtw Comercio</h2>
+        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>GtwComercio</h2>
         <button
           className="crear-factura"
           style={{
@@ -61,27 +64,33 @@ const CrudTable = () => {
         <table>
           <thead>
             <tr>
-              <th>Codigo Comercio</th>
+              <th>CodComercio</th>
+              <th>CodInterno</th>
               <th>Ruc</th>
-              <th>Razon Social</th>
-              <th>Nombre Comercial</th>
-              <th>Fecha Creación</th>
-              <th>Codigo Comisión</th>
-              <th>Estado</th>
-              <th>Fecha fechaActivacion</th>
+              <th>RazonSocial</th>
+              <th>NombreComercial</th>
+              <th>FechaCreacion</th>
+              <th>CodComision</th>
+              <th>PagoAceptado</th>
+              <th>estado</th>
+              <th>FechaActivacion</th> 
+              <th>FechaSuspencion</th>
             </tr>
           </thead>
           <tbody>
-            {data.map((item, index) => (
-              <tr key={item.id || index}>
-                <td>{item.CódigoComercio}</td>
+            {data.map((item) => (
+              <tr key={item.id}>
+                <td>{item.CodComercio}</td>
+                <td>{item.CodInterno}</td>
                 <td>{item.Ruc}</td>
-                <td>{item.RazónSocial}</td>
+                <td>{item.RazonSocial}</td>
                 <td>{item.NombreComercial}</td>
-                <td>{item.fechaCreación}</td>
-                <td>{item.codigocomisión}</td>
+                <td>{item.FechaCreacion}</td>
+                <td>{item.CodComision}</td>
+                <td>{item.PagoAceptado}</td>
                 <td>{item.estado}</td>
-                <td>{item.fechaActivación}</td>
+                <td>{item.FechaActivacion}</td>
+                <td>{item.FechaSuspension}</td>
                 <td>
                   <div
                     style={{

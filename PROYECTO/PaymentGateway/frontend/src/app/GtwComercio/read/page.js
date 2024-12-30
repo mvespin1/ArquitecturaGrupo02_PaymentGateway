@@ -8,17 +8,17 @@ const ViewPage = () => {
 
   // Datos de ejemplo
   const mockData = {
-    Comercio: "",
-    CodigoInterno: "",
-    Ruc: "",
-    RazonSocial: "",
-    NombreComercial: "",
-    FechaCreacion: "",
-    Comision: "",
-    PagosAceptados:"",
-    Estado: "",
-    FechaActivacion:"",
-    FechaSuspencion: "",
+    CodComercio: "",
+      CodInterno: "",
+      Ruc: "",
+      RazonSocial: "",
+      NombreComercial: "",
+      FechaCreacion: "",
+      CodComision: "",
+      PagoAceptado: "",
+      estado: "",
+      FechaActivacion: "",
+      FechaSuspension: "",
   };
 
   const handleCancel = () => {

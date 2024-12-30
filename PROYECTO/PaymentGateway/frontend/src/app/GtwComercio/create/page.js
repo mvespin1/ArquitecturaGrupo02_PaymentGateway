@@ -5,19 +5,18 @@ import { useRouter } from "next/navigation"; // Importamos useRouter para navega
 
 const CreatePage = () => {
   const [form, setForm] = useState({
-    codFacturacionComercio: "",
-    codComercio: "",
-    Comercio: "",
-    CodigoInterno: "",
-    Ruc: "",
-    RazonSocial: "",
-    NombreComercial: "",
-    FechaCreacion: "",
-    Comision: "",
-    PagosAceptados:"",
-    Estado: "",
-    FechaActivacion:"",
-    FechaSuspencion: "",
+    
+      CodComercio: "",
+      CodInterno: "",
+      Ruc: "",
+      RazonSocial: "",
+      NombreComercial: "",
+      FechaCreacion: "",
+      CodComision: "",
+      PagoAceptado: "",
+      estado: "",
+      FechaActivacion: "",
+      FechaSuspension: "",
   });
 
   const router = useRouter(); // Inicializamos el router para redirigir
