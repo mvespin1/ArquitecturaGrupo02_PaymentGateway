@@ -11,7 +11,7 @@ const MainPage = () => {
     { id: 2, name: "GtwSeguridadMarca", route: "/GtwSeguridadMarca/components" },
     { id: 3, name: "GtwPosComercio", route: "/GtwPosComercio/components" },
     { id: 4, name: "GtwComercio", route: "/GtwComercio/components" },
-    { id: 5, name: "Tabla 5 - Inventario", route: "/Inventario" },
+    { id: 5, name: "GtwSeguridadProcesador", route: "/GtwSeguridadProcesador/components" },
     { id: 6, name: "GtwComisionSegmento", route: "GtwComisionSegmento/components" },
     { id: 7, name: "GtwTransaccion", route: "/GtwTransaccion/components" },
     { id: 8, name: "GtwComision", route: "/GtwComision/components" },
