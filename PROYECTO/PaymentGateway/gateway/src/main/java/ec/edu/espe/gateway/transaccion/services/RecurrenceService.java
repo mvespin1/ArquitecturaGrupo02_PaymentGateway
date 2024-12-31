@@ -2,63 +2,151 @@ package ec.edu.espe.gateway.transaccion.services;
 
 import ec.edu.espe.gateway.transaccion.model.Transaccion;
 import ec.edu.espe.gateway.transaccion.repository.TransaccionRepository;
+import ec.edu.espe.gateway.comercio.model.Comercio;
+import ec.edu.espe.gateway.comercio.repository.ComercioRepository;
+import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
+import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityNotFoundException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class RecurrenceService {
 
     private final TransaccionRepository transaccionRepository;
+    private final ComercioRepository comercioRepository;
+    private final FacturacionComercioRepository facturacionComercioRepository;
 
-    public RecurrenceService(TransaccionRepository transaccionRepository) {
+    public RecurrenceService(TransaccionRepository transaccionRepository,
+                           ComercioRepository comercioRepository,
+                           FacturacionComercioRepository facturacionComercioRepository) {
         this.transaccionRepository = transaccionRepository;
+        this.comercioRepository = comercioRepository;
+        this.facturacionComercioRepository = facturacionComercioRepository;
     }
 
-    /**
-     * Identifica y ejecuta transacciones recurrentes.
-     */
     @Transactional
-    public void processRecurrentTransactions() {
-        // Identificar transacciones recurrentes que deben ejecutarse hoy
-        LocalDate today = LocalDate.now();
-        List<Transaccion> recurrentTransactions = transaccionRepository.findRecurrentTransactionsToProcess(today);
+    public void procesarTransaccionesRecurrentes() {
+        LocalDate fechaActual = LocalDate.now();
+        List<Transaccion> transaccionesRecurrentes = transaccionRepository.findRecurrentTransactionsToProcess(fechaActual);
 
-        for (Transaccion transaccion : recurrentTransactions) {
+        for (Transaccion transaccionRecurrente : transaccionesRecurrentes) {
             try {
-                // Generar nueva transacción
-                Transaccion newTransaction = new Transaccion();
-                newTransaction.setComercio(transaccion.getComercio());
-                newTransaction.setFacturacionComercio(transaccion.getFacturacionComercio());
-                newTransaction.setTipo("SIM"); // Transacción simple generada
-                newTransaction.setMarca(transaccion.getMarca());
-                newTransaction.setDetalle("Pago recurrente generado automáticamente");
-                newTransaction.setMonto(transaccion.getMonto());
-                newTransaction.setCodigoUnicoTransaccion(generateUniqueCode());
-                newTransaction.setFecha(today);
-                newTransaction.setEstado("AUT"); // Estado inicial "AUTORIZADO"
-                newTransaction.setMoneda(transaccion.getMoneda());
-                newTransaction.setPais(transaccion.getPais());
-                newTransaction.setTarjeta(transaccion.getTarjeta());
-                transaccionRepository.save(newTransaction);
-
-                // Notificación o registro de éxito
-                System.out.println("Transacción recurrente generada exitosamente: " + newTransaction.getCodigo());
+                procesarTransaccionRecurrente(transaccionRecurrente, fechaActual);
             } catch (Exception e) {
-                // Manejo de fallos en la transacción
-                transaccion.setEstado("REC"); // Actualizar a estado fallido
-                transaccionRepository.save(transaccion);
-                System.err.println("Error al procesar transacción recurrente: " + transaccion.getCodigo());
+                System.err.println("Error al procesar transacción recurrente " + 
+                                 transaccionRecurrente.getCodigo() + ": " + e.getMessage());
             }
         }
     }
 
-    /**
-     * Genera un código único para la nueva transacción.
-     */
-    private String generateUniqueCode() {
-        return "TX-" + System.currentTimeMillis();
+    private void procesarTransaccionRecurrente(Transaccion transaccionRecurrente, LocalDate fechaActual) {
+        // Validar estado del comercio
+        Comercio comercio = transaccionRecurrente.getComercio();
+        if (!"ACT".equals(comercio.getEstado())) {
+            detenerRecurrencia(transaccionRecurrente, "Comercio inactivo o suspendido");
+            return;
+        }
+
+        // Obtener facturación activa
+        FacturacionComercio facturacionActiva = facturacionComercioRepository
+                .findByComercioAndEstado(comercio, "ACT")
+                .stream()
+                .findFirst()
+                .orElse(null);
+
+        if (facturacionActiva == null) {
+            detenerRecurrencia(transaccionRecurrente, "No existe facturación activa");
+            return;
+        }
+
+        // Crear nueva transacción
+        Transaccion nuevaTransaccion = new Transaccion();
+        copiarDatosTransaccion(transaccionRecurrente, nuevaTransaccion);
+        nuevaTransaccion.setFacturacionComercio(facturacionActiva);
+        nuevaTransaccion.setFecha(fechaActual);
+        nuevaTransaccion.setCodigoUnicoTransaccion(generarCodigoUnico());
+        nuevaTransaccion.setTipo("SIM");
+        nuevaTransaccion.setEstado("ENV");
+
+        // Registrar referencia a la transacción recurrente original
+        nuevaTransaccion.setDetalle(String.format("Pago recurrente - %s (Origen: %s)", 
+            transaccionRecurrente.getDetalle(), 
+            transaccionRecurrente.getCodigoUnicoTransaccion()));
+
+        transaccionRepository.save(nuevaTransaccion);
+
+        // Actualizar próxima fecha de ejecución y registro histórico
+        actualizarFechaEjecucion(transaccionRecurrente, nuevaTransaccion);
+    }
+
+    private void detenerRecurrencia(Transaccion transaccion, String motivo) {
+        transaccion.setEstado("REC");
+        transaccion.setDetalle(transaccion.getDetalle() + " - Detenida: " + motivo);
+        transaccion.setFechaFinRecurrencia(LocalDate.now());
+        transaccionRepository.save(transaccion);
+    }
+
+    private void copiarDatosTransaccion(Transaccion origen, Transaccion destino) {
+        destino.setComercio(origen.getComercio());
+        destino.setMarca(origen.getMarca());
+        destino.setDetalle("Pago recurrente - " + origen.getDetalle());
+        destino.setMonto(origen.getMonto());
+        destino.setMoneda(origen.getMoneda());
+        destino.setPais(origen.getPais());
+        destino.setTarjeta(origen.getTarjeta());
+    }
+
+    private void actualizarFechaEjecucion(Transaccion transaccionRecurrente, Transaccion nuevaTransaccion) {
+        LocalDate fechaActual = LocalDate.now();
+        LocalDate nuevaFechaEjecucion = transaccionRecurrente.getFechaEjecucionRecurrencia().plusMonths(1);
+        
+        // Actualizar historial en la transacción recurrente
+        String historialActual = transaccionRecurrente.getDetalle();
+        String nuevaEjecucion = String.format("\nEjecutada: %s - Transacción: %s", 
+            fechaActual, 
+            nuevaTransaccion.getCodigoUnicoTransaccion());
+        
+        transaccionRecurrente.setDetalle(historialActual + nuevaEjecucion);
+        
+        if (nuevaFechaEjecucion.isAfter(transaccionRecurrente.getFechaFinRecurrencia())) {
+            detenerRecurrencia(transaccionRecurrente, "Fecha fin alcanzada");
+        } else {
+            transaccionRecurrente.setFechaEjecucionRecurrencia(nuevaFechaEjecucion);
+            transaccionRepository.save(transaccionRecurrente);
+        }
+    }
+
+    private String generarCodigoUnico() {
+        return "REC-" + UUID.randomUUID().toString();
+    }
+
+    @Transactional
+    public void detenerRecurrenciasPorComercio(Integer codigoComercio) {
+        try {
+            // Validar estado del comercio
+            Comercio comercio = comercioRepository.findById(codigoComercio)
+                    .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
+
+            if (!"INA".equals(comercio.getEstado()) && !"SUS".equals(comercio.getEstado())) {
+                throw new IllegalStateException(
+                    "Solo se pueden detener recurrencias de comercios inactivos o suspendidos");
+            }
+
+            List<Transaccion> transaccionesRecurrentes = 
+                transaccionRepository.findActiveRecurrentTransactionsByComercio(codigoComercio);
+
+            for (Transaccion transaccion : transaccionesRecurrentes) {
+                detenerRecurrencia(transaccion, 
+                    String.format("Comercio en estado %s", comercio.getEstado()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error al detener recurrencias: " + e.getMessage());
+        }
     }
 }
