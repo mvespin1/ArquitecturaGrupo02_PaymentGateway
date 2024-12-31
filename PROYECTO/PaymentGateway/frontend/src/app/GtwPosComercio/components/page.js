@@ -7,13 +7,14 @@ import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
 const CrudTable = () => {
   const [data, setData] = useState([
     {
-      modelo: 1,
+      id: 1,
+      modelo: "Modelo A",
       codigoPos: "FC001",
       codComercio: "Comercio A",
-      direccionMac: "2023-01-01",
-      estado: "2023-12-31",
-      fechaActivacion: "5%",
-      ultimoUso: "$500",
+      direccionMac: "00:1B:44:11:3A:B7",
+      estado: "Activo",
+      fechaActivacion: "2023-01-01",
+      ultimoUso: "2023-12-31",
     },
   ]);
 
@@ -21,6 +22,10 @@ const CrudTable = () => {
 
   const handleCreate = () => {
     router.push("/GtwPosComercio/create");
+  };
+
+  const handleUpdate = (id) => {
+    router.push(`/GtwPosComercio/update/`); // Redirige al formulario de actualización
   };
 
   const handleView = (id) => {
@@ -35,27 +40,7 @@ const CrudTable = () => {
     <main>
       <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de POS Comercio</h1>
       <div>
-        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>POS Comercio</h2>
-        <button
-          className="crear-factura"
-          style={{
-            marginBottom: "1rem",
-            backgroundColor: "#22c55e",
-            color: "#ffffff",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            justifyContent: "center",
-          }}
-          onClick={handleCreate}
-        >
-          <FaPlus />
-          Crear POS Comercio
-        </button>
+        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>POS Comercio</h2>      
         <table>
           <thead>
             <tr>
@@ -70,8 +55,8 @@ const CrudTable = () => {
             </tr>
           </thead>
           <tbody>
-            {data.map((item, index) => (
-              <tr key={item.id || index}>
+            {data.map((item) => (
+              <tr key={item.id}>
                 <td>{item.modelo}</td>
                 <td>{item.codigoPos}</td>
                 <td>{item.codComercio}</td>
@@ -96,6 +81,7 @@ const CrudTable = () => {
                         borderRadius: "4px",
                         cursor: "pointer",
                       }}
+                      onClick={() => handleUpdate(item.id)} // Redirige al formulario de actualización
                     >
                       <FaEdit />
                     </button>
