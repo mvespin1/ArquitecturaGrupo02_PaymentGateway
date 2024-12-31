@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation"; // Importamos useRouter para navega
 
 const UpdatePage = () => {
   const [form, setForm] = useState({
-    modelo: "",
-    codigoPos: "",
-    codComercio: "",
-    direccionMac: "",
-    estado: "",
-    fechaActivacion: "",
-    ultimoUso: "",
+    modelo: "Modelo X",
+    codigoPos: "123456",
+    codComercio: "COM123",
+    direccionMac: "00:1B:44:11:3A:B7",
+    estado: "Activo", // Valor inicial del estado
+    fechaActivacion: "2023-01-01",
+    ultimoUso: "2023-12-01",
   });
 
   const router = useRouter(); // Inicializamos el router para redirigir
@@ -28,7 +28,7 @@ const UpdatePage = () => {
   };
 
   const handleCancel = () => {
-    router.push("/GtwPosComercio/create"); // Redirige a la página principal sin guardar
+    router.push("/GtwPosComercio/components"); // Redirige a la página principal sin guardar
   };
 
   return (
@@ -59,42 +59,113 @@ const UpdatePage = () => {
           gap: "1rem",
         }}
       >
-        {Object.keys(form).map((field) => (
-          <div
-            key={field}
-            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-          >
-            <label
-              htmlFor={field}
+        {Object.keys(form).map((field) =>
+          field === "estado" ? (
+            <div
+              key={field}
               style={{
-                fontWeight: "bold",
-                color: "#1f2937",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
               }}
             >
-              {field
-                .replace(/([A-Z])/g, " $1")
-                .replace(/^./, (str) => str.toUpperCase())}{" "}
-              {/* Formatea los nombres */}
-            </label>
-            <input
-              id={field}
-              type={field.includes("fecha") ? "date" : "text"}
-              name={field}
-              value={form[field]}
-              onChange={handleChange}
+              <label
+                htmlFor={field}
+                style={{
+                  fontWeight: "bold",
+                  color: "#1f2937",
+                }}
+              >
+                Estado
+              </label>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "1.5rem",
+                  alignItems: "center",
+                }}
+              >
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    color: "#1f2937", // Color del texto (negro oscuro)
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="estado"
+                    value="Activo"
+                    checked={form.estado === "Activo"}
+                    onChange={handleChange}
+                    style={{
+                      accentColor: "#22c55e", // Verde para la opción seleccionada
+                    }}
+                  />
+                  Activo
+                </label>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    color: "#1f2937", // Color del texto (negro oscuro)
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="estado"
+                    value="Inactivo"
+                    checked={form.estado === "Inactivo"}
+                    onChange={handleChange}
+                    style={{
+                      accentColor: "#ef4444", // Rojo para la opción seleccionada
+                    }}
+                  />
+                  Inactivo
+                </label>
+              </div>
+            </div>
+          ) : (
+            <div
+              key={field}
               style={{
-                padding: "10px",
-                fontSize: "1rem",
-                borderRadius: "4px",
-                border: "1px solid #d1d5db",
-                backgroundColor: "#ffffff",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
               }}
-              placeholder={`Ingrese ${field
-                .replace(/([A-Z])/g, " $1")
-                .toLowerCase()}`}
-            />
-          </div>
-        ))}
+            >
+              <label
+                htmlFor={field}
+                style={{
+                  fontWeight: "bold",
+                  color: "#1f2937",
+                }}
+              >
+                {field
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/^./, (str) => str.toUpperCase())}
+              </label>
+              <input
+                id={field}
+                type={field.includes("fecha") ? "date" : "text"}
+                name={field}
+                value={form[field]}
+                onChange={handleChange}
+                disabled={field !== "estado"} // Todos los campos excepto "estado" están deshabilitados
+                style={{
+                  padding: "10px",
+                  fontSize: "1rem",
+                  borderRadius: "4px",
+                  border: "1px solid #d1d5db",
+                  backgroundColor: field !== "estado" ? "#e5e7eb" : "#ffffff", // Fondo gris para deshabilitados
+                  color: field !== "estado" ? "#6b7280" : "#000000", // Texto gris para deshabilitados
+                }}
+              />
+            </div>
+          )
+        )}
         <div
           style={{
             display: "flex",

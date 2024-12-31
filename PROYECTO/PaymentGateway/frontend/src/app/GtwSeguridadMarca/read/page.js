@@ -29,7 +29,7 @@ const ViewPage = () => {
       }}
     >
       <h1 style={{ textAlign: "center", color: "#1e40af", marginBottom: "1.5rem" }}>
-        Visualizar Marca
+        Visualizar Seguridad Marca
       </h1>
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         {Object.entries(mockData).map(([key, value]) => (
