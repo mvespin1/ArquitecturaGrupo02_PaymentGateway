@@ -3,23 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // Importamos useRouter para navegación
 
-const CreatePage = () => {
+const UpdatePage = () => {
   const [form, setForm] = useState({
-    CodigoTransaccion: "",
-    CodigoComercio: "",
-    FacturacionComercio: "",
-    Tipo: "",
-    Marca: "",
-    Detalle: "",
-    Monto: "",
-    CodigoUnicoTransaccion: "",
-    Fecha: "",
-    Estado: "",
-    Moneda: "",
-    Pais: "",
-    Tarjeta: "",
-    FechaEjecucionRecurrencia: "",
-    FechaFinRecurrencia: "",
+      CodigoClaveGateway: "",
+      Clave: "",
+      FechasCreacion: "",
+      FechaActivacion: "",
+      Estado: "",
   });
 
   const router = useRouter(); // Inicializamos el router para redirigir
@@ -31,12 +21,12 @@ const CreatePage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Registro creado:", form);
+    console.log("Registro actualizado:", form);
     router.push("/"); // Redirige a la página principal después de guardar
   };
 
   const handleCancel = () => {
-    router.push("/GtwTransaccion/components"); // Redirige a la página principal sin guardar
+    router.push("/"); // Redirige a la página principal sin guardar
   };
 
   return (
@@ -57,7 +47,7 @@ const CreatePage = () => {
           marginBottom: "1.5rem",
         }}
       >
-        Crear Nueva Transaccion
+        Actualizar Seguridad
       </h1>
       <form
         onSubmit={handleSubmit}
@@ -145,4 +135,4 @@ const CreatePage = () => {
   );
 };
 
-export default CreatePage;
+export default UpdatePage;

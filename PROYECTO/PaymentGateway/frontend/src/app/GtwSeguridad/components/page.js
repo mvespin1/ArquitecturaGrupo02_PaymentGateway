@@ -7,32 +7,22 @@ import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
 const CrudTable = () => {
   const [data, setData] = useState([
     {
-      CodigoTransaccion: "001",
-      CodigoComercio: "CC001",
-      FacturacionComercio: "FC001",
-      Tipo: "Factura",
-      Marca: "Visa",
-      Detalle: "Pago de servicios",
-      Monto: "$100",
-      COdigoUnicoTransaccion: "CUT001",
-      Fecha: "2023-01-01",
-      Estado: "Aprobado",
-      Moneda: "USD",
-      Pais: "Ecuador",
-      Tarjeta: "**** **** **** 1234",
-      FechaEjecucionRecurrencia: "2023-01-01",
-      FechaFinRecurrencia: "2023-12-31",
+      CodigoClaveGateway: "001",
+      Clave: "1234567890",
+      FechasCreacion: "2023-01-01",
+      FechaActivacion: "2023-01-01",
+      Estado: "Activo",
     },
   ]);
 
   const router = useRouter(); // Inicializa el router para redirigir
 
   const handleCreate = () => {
-    router.push("/GtwTransaccion/create");
+    router.push("/GtwSeguridad/create");
   };
 
   const handleView = (id) => {
-    router.push(`/GtwTransaccion/read`); // Redirige a la página de visualización
+    router.push(`/GtwSeguridad/read`); // Redirige a la página de visualización
   };
 
   const handleBackToHome = () => {
@@ -41,11 +31,11 @@ const CrudTable = () => {
 
   return (
     <main>
-      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Transacciones</h1>
+      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Seguridad</h1>
       <div>
-        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Transacciones</h2>
+        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Seguridad</h2>
         <button
-          className="crear-transaccion"
+          className="crear-factura"
           style={{
             marginBottom: "1rem",
             backgroundColor: "#22c55e",
@@ -62,28 +52,26 @@ const CrudTable = () => {
           onClick={handleCreate}
         >
           <FaPlus />
-          Crear Transaccion
+          Crear Seguridad
         </button>
         <table>
           <thead>
             <tr>
-              <th>Codigo Transaccion</th>
-              <th>Codigo Comercio</th>
-              <th>Facturacion Comercio</th>
-              <th>Marca</th>
+              <th>Codigo Clave Gateway</th>
+              <th>Clave</th>
+              <th>Fechas Creacion</th>
+              <th>Fecha Activacion</th>
               <th>Estado</th>
-              <th>Monto</th>
             </tr>
           </thead>
           <tbody>
             {data.map((item, index) => (
               <tr key={item.id || index}>
-                <td>{item.CodigoTransaccion}</td>
-                <td>{item.CodigoComercio}</td>
-                <td>{item.FacturacionComercio}</td>
-                <td>{item.Marca}</td>
+                <td>{item.CodigoClaveGateway}</td>
+                <td>{item.Clave}</td>
+                <td>{item.FechasCreacion}</td>
+                <td>{item.FechaActivacion}</td>
                 <td>{item.Estado}</td>
-                <td>{item.Monto}</td>
                 <td>
                   <div
                     style={{
