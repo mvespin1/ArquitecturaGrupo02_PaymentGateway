@@ -20,6 +20,7 @@ public class ConfiguracionService {
     private final ConfiguracionRepository configuracionRepository;
     private static final Pattern MAC_ADDRESS_PATTERN = Pattern.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$");
     private static final int CODIGO_POS_LENGTH = 10;
+    private static final int MODELO_LENGTH = 10;
 
     public ConfiguracionService(ConfiguracionRepository configuracionRepository) {
         this.configuracionRepository = configuracionRepository;
@@ -61,7 +62,8 @@ public class ConfiguracionService {
     }
 
     private void validarConfiguracion(Configuracion configuracion) {
-        validarCodigoPOS(configuracion.getPk().getCodigoPos());
+        validarCodigoPOS(configuracion.getPk().getCodigo());
+        validarModelo(configuracion.getPk().getModelo());
         validarDireccionMAC(configuracion.getDireccionMac());
         validarFechaActivacion(configuracion.getFechaActivacion());
         validarCodigoComercio(configuracion.getCodigoComercio());
@@ -74,6 +76,15 @@ public class ConfiguracionService {
         }
         if (!codigoPos.matches("^[A-Za-z0-9]{10}$")) {
             throw new IllegalArgumentException("El código POS solo puede contener letras y números");
+        }
+    }
+
+    private void validarModelo(String modelo) {
+        if (modelo == null || modelo.length() > MODELO_LENGTH) {
+            throw new IllegalArgumentException("El modelo debe tener un máximo de 10 caracteres");
+        }
+        if (!modelo.matches("^[A-Za-z0-9]{1,10}$")) {
+            throw new IllegalArgumentException("El modelo solo puede contener letras y números");
         }
     }
 
