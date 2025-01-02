@@ -17,6 +17,11 @@ public class FacturacionComercioService {
     public static final String ESTADO_ACTIVO = "ACT";
     public static final String ESTADO_FACTURADO = "FAC";
     public static final String ESTADO_PAGADO = "PAG";
+    private static final int MAX_TRANSACCIONES_DIGITOS = 9;
+    private static final int MAX_VALOR_ENTERO = 16;
+    private static final int MAX_VALOR_DECIMAL = 4;
+    private static final int MAX_CODIGO_FACTURACION = 20;
+    private static final String REGEX_CODIGO_FACTURACION = "^[a-zA-Z0-9]{1," + MAX_CODIGO_FACTURACION + "}$";
 
     private final FacturacionComercioRepository facturacionComercioRepository;
 
@@ -77,11 +82,26 @@ public class FacturacionComercioService {
         if (facturacionComercio.getValor().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("El valor de la facturación debe ser mayor a cero.");
         }
-        if (facturacionComercio.getTransaccionesProcesadas() < 0 ||
-                facturacionComercio.getTransaccionesAutorizadas() < 0 ||
-                facturacionComercio.getTransaccionesRechazadas() < 0 ||
-                facturacionComercio.getTransaccionesReversadas() < 0) {
-            throw new IllegalArgumentException("El número de transacciones no puede ser negativo.");
+        if (facturacionComercio.getValor().scale() > MAX_VALOR_DECIMAL) {
+            throw new IllegalArgumentException("El valor de la facturación no puede tener más de " + MAX_VALOR_DECIMAL + " decimales.");
+        }
+        if (facturacionComercio.getValor().precision() - facturacionComercio.getValor().scale() > MAX_VALOR_ENTERO) {
+            throw new IllegalArgumentException("El valor de la facturación no puede tener más de " + MAX_VALOR_ENTERO + " dígitos antes del punto decimal.");
+        }
+        if (!facturacionComercio.getCodigoFacturacion().matches(REGEX_CODIGO_FACTURACION)) {
+            throw new IllegalArgumentException("El código de facturación debe ser alfanumérico y no exceder los " + MAX_CODIGO_FACTURACION + " caracteres.");
+        }
+        if (facturacionComercio.getTransaccionesProcesadas() < 0 || facturacionComercio.getTransaccionesProcesadas() > MAX_TRANSACCIONES_DIGITOS) {
+            throw new IllegalArgumentException("El número de transacciones procesadas no puede ser negativo ni exceder los 9 dígitos.");
+        }
+        if (facturacionComercio.getTransaccionesAutorizadas() < 0 || facturacionComercio.getTransaccionesAutorizadas() > MAX_TRANSACCIONES_DIGITOS) {
+            throw new IllegalArgumentException("El número de transacciones autorizadas no puede ser negativo ni exceder los 9 dígitos.");
+        }
+        if (facturacionComercio.getTransaccionesRechazadas() < 0 || facturacionComercio.getTransaccionesRechazadas() > MAX_TRANSACCIONES_DIGITOS) {
+            throw new IllegalArgumentException("El número de transacciones rechazadas no puede ser negativo ni exceder los 9 dígitos.");
+        }
+        if (facturacionComercio.getTransaccionesReversadas() < 0 || facturacionComercio.getTransaccionesReversadas() > MAX_TRANSACCIONES_DIGITOS) {
+            throw new IllegalArgumentException("El número de transacciones reversadas no puede ser negativo ni exceder los 9 dígitos.");
         }
     }
 

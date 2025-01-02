@@ -19,6 +19,13 @@ public class ComisionService {
     private final ComisionRepository comisionRepository;
     private final ComisionSegmentoRepository segmentoRepository;
 
+    private static final int MAX_DIGITOS_MONTO_BASE = 20;
+    private static final int MAX_DIGITOS_ENTERO_MONTO_BASE = 16;
+    private static final int MAX_DIGITOS_DECIMAL_MONTO_BASE = 4;
+    private static final int MAX_DIGITOS_TRANSACCION_BASE = 9;
+    public static final String TIPO_COMISION_POR = "POR";
+    public static final String TIPO_COMISION_FIJ = "FIJ";
+
     public ComisionService(ComisionRepository comisionRepository, ComisionSegmentoRepository segmentoRepository) {
         this.comisionRepository = comisionRepository;
         this.segmentoRepository = segmentoRepository;
@@ -80,14 +87,30 @@ public class ComisionService {
     }
 
     private void validarComision(Comision comision) {
-        if (!"POR".equals(comision.getTipo()) && !"FIJ".equals(comision.getTipo())) {
+        if (!TIPO_COMISION_POR.equals(comision.getTipo()) && !TIPO_COMISION_FIJ.equals(comision.getTipo())) {
             throw new IllegalArgumentException("El tipo de comisión debe ser 'POR' o 'FIJ'.");
         }
         if (comision.getMontoBase() == null || comision.getMontoBase().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("El monto base debe ser mayor a 0.");
         }
+        if (comision.getMontoBase().precision() - comision.getMontoBase().scale() > MAX_DIGITOS_ENTERO_MONTO_BASE) {
+            throw new IllegalArgumentException("El monto base no puede tener más de " + MAX_DIGITOS_ENTERO_MONTO_BASE
+                    + " dígitos antes del punto decimal.");
+        }
+        if (comision.getMontoBase().scale() > MAX_DIGITOS_DECIMAL_MONTO_BASE) {
+            throw new IllegalArgumentException("El monto base no puede tener más de " + MAX_DIGITOS_DECIMAL_MONTO_BASE
+                    + " dígitos después del punto decimal.");
+        }
+        if (comision.getMontoBase().precision() > MAX_DIGITOS_MONTO_BASE) {
+            throw new IllegalArgumentException(
+                    "El monto base no puede tener más de " + MAX_DIGITOS_MONTO_BASE + " dígitos en total.");
+        }
         if (comision.getTransaccionesBase() == null || comision.getTransaccionesBase() <= 0) {
             throw new IllegalArgumentException("Las transacciones base deben ser mayores a 0.");
+        }
+        if (comision.getTransaccionesBase() > MAX_DIGITOS_TRANSACCION_BASE) {
+            throw new IllegalArgumentException(
+                    "Las transacciones base no pueden exceder los " + MAX_DIGITOS_TRANSACCION_BASE + " dígitos.");
         }
     }
 

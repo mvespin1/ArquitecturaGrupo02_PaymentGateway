@@ -16,6 +16,11 @@ public class ComisionSegmentoService {
 
     private final ComisionSegmentoRepository segmentoRepository;
 
+    private static final int MAX_DIGITOS_TRANSACCION_HASTA = 9;
+    private static final int MAX_DIGITOS_MONTO = 20;
+    private static final int MAX_DIGITOS_ENTERO_MONTO = 16;
+    private static final int MAX_DIGITOS_DECIMAL_MONTO = 4;
+
     public ComisionSegmentoService(ComisionSegmentoRepository segmentoRepository) {
         this.segmentoRepository = segmentoRepository;
     }
@@ -56,6 +61,7 @@ public class ComisionSegmentoService {
             return segmentoRepository.findById(pk)
                     .map(segmentoExistente -> {
                         validarRangoTransacciones(transaccionesDesde, transaccionesHasta);
+                        validarMonto(monto);
                         segmentoExistente.setTransaccionesHasta(transaccionesHasta);
                         segmentoExistente.setMonto(monto);
                         return segmentoRepository.save(segmentoExistente);
@@ -98,6 +104,7 @@ public class ComisionSegmentoService {
             throw new IllegalArgumentException("El monto no puede ser nulo");
         }
         validarRangoTransacciones(segmento.getPk().getTransaccionesDesde(), segmento.getTransaccionesHasta());
+        validarMonto(segmento.getMonto());
     }
 
     private void validarRangoTransacciones(Integer desde, Integer hasta) {
@@ -108,6 +115,25 @@ public class ComisionSegmentoService {
         if (desde.compareTo(0) < 0 || hasta.compareTo(0) < 0) {
             throw new IllegalArgumentException(
                     "El número de transacciones no puede ser negativo");
+        }
+        if (hasta > Math.pow(10, MAX_DIGITOS_TRANSACCION_HASTA) - 1) {
+            throw new IllegalArgumentException("El número de transacciones hasta no puede exceder los "
+                    + MAX_DIGITOS_TRANSACCION_HASTA + " dígitos.");
+        }
+    }
+
+    private void validarMonto(BigDecimal monto) {
+        if (monto.precision() - monto.scale() > MAX_DIGITOS_ENTERO_MONTO) {
+            throw new IllegalArgumentException("El monto no puede tener más de " + MAX_DIGITOS_ENTERO_MONTO
+                    + " dígitos antes del punto decimal.");
+        }
+        if (monto.scale() > MAX_DIGITOS_DECIMAL_MONTO) {
+            throw new IllegalArgumentException("El monto no puede tener más de " + MAX_DIGITOS_DECIMAL_MONTO
+                    + " dígitos después del punto decimal.");
+        }
+        if (monto.precision() > MAX_DIGITOS_MONTO) {
+            throw new IllegalArgumentException("El monto no puede tener más de " + MAX_DIGITOS_MONTO
+                    + " dígitos en total.");
         }
     }
 }
