@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation"; // Importamos useRouter para navega
 
 const UpdatePage = () => {
   const [form, setForm] = useState({
-    CodigoComercio: "",
-    CodigoInterno: "",
-    Ruc: "",
-    RazoSocial: "",
-    NombreComercial: "",
-    FechaCreacion: "",
-    CodigoComision: "",
-    PagosAceptados: "",
-    Estado: "",
-    FechaActivacion: "",
-    FechaSuspension: "",
+    CodigoComercio: "001",
+    CodigoInterno: "0009",
+    Ruc: "9999999999999",
+    RazoSocial: "Razon Social de Prueba",
+    NombreComercial: "Nombre Comercial",
+    FechaCreacion: "2024-01-01",
+    CodigoComision: "1",
+    PagosAceptados: "$100",
+    Estado: "Pendiente",
+    FechaActivacion: "2024-02-01",
+    FechaSuspension: "2024-12-20",
   });
 
   const router = useRouter(); // Inicializamos el router para redirigir
@@ -63,42 +63,124 @@ const UpdatePage = () => {
           gap: "1rem",
         }}
       >
-        {Object.keys(form).map((field) => (
-          <div
-            key={field}
-            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-          >
-            <label
-              htmlFor={field}
-              style={{
-                fontWeight: "bold",
-                color: "#1f2937",
-              }}
-            >
-              {field
-                .replace(/([A-Z])/g, " $1")
-                .replace(/^./, (str) => str.toUpperCase())}{" "}
-              {/* Formatea los nombres */}
-            </label>
-            <input
-              id={field}
-              type={field.includes("fecha") ? "date" : "text"}
-              name={field}
-              value={form[field]}
-              onChange={handleChange}
-              style={{
-                padding: "10px",
-                fontSize: "1rem",
-                borderRadius: "4px",
-                border: "1px solid #d1d5db",
-                backgroundColor: "#ffffff",
-              }}
-              placeholder={`Ingrese ${field
-                .replace(/([A-Z])/g, " $1")
-                .toLowerCase()}`}
-            />
-          </div>
-        ))}
+        {Object.keys(form).map((field) => {
+          if (field === "Estado") {
+            return (
+              <div
+                key={field}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.5rem",
+                }}
+              >
+                <label
+                  htmlFor={field}
+                  style={{
+                    fontWeight: "bold",
+                    color: "#1f2937",
+                  }}
+                >
+                  Estado
+                </label>
+                <select
+                  id={field}
+                  name={field}
+                  value={form[field]}
+                  onChange={handleChange}
+                  style={{
+                    padding: "10px",
+                    fontSize: "1rem",
+                    borderRadius: "4px",
+                    border: "1px solid #d1d5db",
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  <option value="Activo">Activo</option>
+                  <option value="Inactivo">Inactivo</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Suspendido">Suspendido</option>
+                </select>
+              </div>
+            );
+          } else if (field === "CodigoComision") {
+            return (
+              <div
+                key={field}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.5rem",
+                }}
+              >
+                <label
+                  htmlFor={field}
+                  style={{
+                    fontWeight: "bold",
+                    color: "#1f2937",
+                  }}
+                >
+                  Código Comisión
+                </label>
+                <select
+                  id={field}
+                  name={field}
+                  value={form[field]}
+                  onChange={handleChange}
+                  style={{
+                    padding: "10px",
+                    fontSize: "1rem",
+                    borderRadius: "4px",
+                    border: "1px solid #d1d5db",
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  <option value="1">Comisión 1</option>
+                  <option value="2">Comisión 2</option>
+                  <option value="3">Comisión 3</option>
+                </select>
+              </div>
+            );
+          } else {
+            return (
+              <div
+                key={field}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.5rem",
+                }}
+              >
+                <label
+                  htmlFor={field}
+                  style={{
+                    fontWeight: "bold",
+                    color: "#1f2937",
+                  }}
+                >
+                  {field
+                    .replace(/([A-Z])/g, " $1")
+                    .replace(/^./, (str) => str.toUpperCase())}
+                </label>
+                <input
+                  id={field}
+                  type={field.includes("Fecha") ? "date" : "text"}
+                  name={field}
+                  value={form[field]}
+                  onChange={handleChange}
+                  disabled // Deshabilita todos los campos excepto Estado y CodigoComision
+                  style={{
+                    padding: "10px",
+                    fontSize: "1rem",
+                    borderRadius: "4px",
+                    border: "1px solid #d1d5db",
+                    backgroundColor: "#e5e7eb", // Fondo gris claro para campos deshabilitados
+                  }}
+                />
+              </div>
+            );
+          }
+        })}
         <div
           style={{
             display: "flex",
