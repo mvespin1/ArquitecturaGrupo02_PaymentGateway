@@ -20,16 +20,16 @@ const CrudTable = () => {
 
   const router = useRouter(); // Inicializa el router para redirigir
 
-  const handleCreate = () => {
-    router.push("/GtwFacturacionComercio/create");
+  const handleUpdate = (id) => {
+    router.push(`/GtwFacturacionComercio/update/`); // Redirige al formulario de actualización
   };
 
   const handleView = (id) => {
-    router.push(`/GtwFacturacionComercio/read`); // Redirige a la página de visualización
+    router.push(`/GtwFacturacionComercio/read/`); // Redirige a la página de visualización
   };
 
   const handleBackToHome = () => {
-    router.push("/"); // Redirige al inicio
+    router.push("/GtwFacturacionComercio/components/"); // Redirige al inicio
   };
 
   return (
@@ -37,26 +37,6 @@ const CrudTable = () => {
       <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Facturación</h1>
       <div>
         <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Facturación por Comercio</h2>
-        <button
-          className="crear-factura"
-          style={{
-            marginBottom: "1rem",
-            backgroundColor: "#22c55e",
-            color: "#ffffff",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            justifyContent: "center",
-          }}
-          onClick={handleCreate}
-        >
-          <FaPlus />
-          Crear Factura
-        </button>
         <table>
           <thead>
             <tr>
@@ -97,20 +77,9 @@ const CrudTable = () => {
                         borderRadius: "4px",
                         cursor: "pointer",
                       }}
+                      onClick={() => handleUpdate(item.id)} // Redirige al formulario de actualización
                     >
                       <FaEdit />
-                    </button>
-                    <button
-                      style={{
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <FaTrash />
                     </button>
                     <button
                       style={{

@@ -4,40 +4,106 @@ import ec.edu.espe.pos.model.Configuracion;
 import ec.edu.espe.pos.model.ConfiguracionPK;
 import ec.edu.espe.pos.repository.ConfiguracionRepository;
 import org.springframework.stereotype.Service;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
+@Transactional
 public class ConfiguracionService {
 
     private final ConfiguracionRepository configuracionRepository;
+    private static final Pattern MAC_ADDRESS_PATTERN = Pattern.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$");
+    private static final int CODIGO_POS_LENGTH = 10;
 
     public ConfiguracionService(ConfiguracionRepository configuracionRepository) {
         this.configuracionRepository = configuracionRepository;
     }
 
+    @Transactional(value = TxType.NEVER)
     public List<Configuracion> obtenerTodos() {
         return this.configuracionRepository.findAll();
     }
 
-    public Optional<Configuracion> obtenerPorId(ConfiguracionPK id) {
-        return this.configuracionRepository.findById(id);
+    @Transactional(value = TxType.NEVER)
+    public Configuracion obtenerPorId(ConfiguracionPK id) {
+        Optional<Configuracion> configuracionOpt = this.configuracionRepository.findById(id);
+        if (configuracionOpt.isPresent()) {
+            return configuracionOpt.get();
+        }
+        throw new EntityNotFoundException("No existe configuración POS con el ID proporcionado");
     }
 
     public Configuracion crear(Configuracion configuracion) {
-        return this.configuracionRepository.save(configuracion);
+        try {
+            validarConfiguracion(configuracion);
+            configuracion.setFechaActivacion(LocalDate.now());
+            return this.configuracionRepository.save(configuracion);
+        } catch (Exception ex) {
+            throw new RuntimeException("No se pudo crear la configuración POS. Motivo: " + ex.getMessage());
+        }
     }
 
-    public Configuracion actualizar(ConfiguracionPK id, String codigoComercio, LocalDate fechaActivacion) {
-        Optional<Configuracion> posConfiguracionOpt = this.configuracionRepository.findById(id);
-        if (posConfiguracionOpt.isPresent()) {
-            Configuracion configuracion = posConfiguracionOpt.get();
-            configuracion.setCodigoComercio(codigoComercio);
-            configuracion.setFechaActivacion(fechaActivacion);
+    public Configuracion actualizarFechaActivacion(ConfiguracionPK id, LocalDate nuevaFechaActivacion) {
+        try {
+            Configuracion configuracion = obtenerPorId(id);
+            validarFechaActivacion(nuevaFechaActivacion);
+            configuracion.setFechaActivacion(nuevaFechaActivacion);
             return this.configuracionRepository.save(configuracion);
+        } catch (Exception ex) {
+            throw new RuntimeException("No se pudo actualizar la fecha de activación. Motivo: " + ex.getMessage());
         }
-        throw new RuntimeException("No se encontró la configuración POS con el ID proporcionado");
     }
-} 
+
+    private void validarConfiguracion(Configuracion configuracion) {
+        validarCodigoPOS(configuracion.getPk().getCodigoPos());
+        validarDireccionMAC(configuracion.getDireccionMac());
+        validarFechaActivacion(configuracion.getFechaActivacion());
+        validarCodigoComercio(configuracion.getCodigoComercio());
+        validarDuplicados(configuracion);
+    }
+
+    private void validarCodigoPOS(String codigoPos) {
+        if (codigoPos == null || codigoPos.length() != CODIGO_POS_LENGTH) {
+            throw new IllegalArgumentException("El código POS debe tener exactamente 10 caracteres");
+        }
+        if (!codigoPos.matches("^[A-Za-z0-9]{10}$")) {
+            throw new IllegalArgumentException("El código POS solo puede contener letras y números");
+        }
+    }
+
+    private void validarDireccionMAC(String direccionMac) {
+        if (direccionMac == null || !MAC_ADDRESS_PATTERN.matcher(direccionMac).matches()) {
+            throw new IllegalArgumentException("La dirección MAC no cumple con el formato válido (XX:XX:XX:XX:XX:XX)");
+        }
+    }
+
+    private void validarFechaActivacion(LocalDate fechaActivacion) {
+        if (fechaActivacion != null && fechaActivacion.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("La fecha de activación no puede ser anterior a la fecha actual");
+        }
+    }
+
+    private void validarCodigoComercio(String codigoComercio) {
+        if (codigoComercio == null || codigoComercio.trim().isEmpty()) {
+            throw new IllegalArgumentException("El código de comercio no puede estar vacío");
+        }
+    }
+
+    private void validarDuplicados(Configuracion configuracion) {
+        // Validar MAC duplicada
+        configuracionRepository.findAll().stream()
+                .filter(config -> !config.getPk().equals(configuracion.getPk()))
+                .forEach(config -> {
+                    if (config.getDireccionMac().equals(configuracion.getDireccionMac())) {
+                        throw new IllegalArgumentException(
+                                "Ya existe una configuración con la dirección MAC proporcionada");
+                    }
+                });
+    }
+}

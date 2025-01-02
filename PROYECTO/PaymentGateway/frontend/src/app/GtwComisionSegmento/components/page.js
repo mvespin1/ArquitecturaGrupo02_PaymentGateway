@@ -7,29 +7,21 @@ import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
 const CrudTable = () => {
   const [data, setData] = useState([
     {
-      id: 1,
-      modelo: "Modelo A",
-      codigoPos: "FC001",
-      codComercio: "Comercio A",
-      direccionMac: "00:1B:44:11:3A:B7",
-      estado: "Activo",
-      fechaActivacion: "2023-01-01",
-      ultimoUso: "2023-12-31",
+      CodigoComision: "001",
+      TransaccionDesde: "xxx",
+      TransaciionHasta: "xxx",
+      Monto: "10",
     },
   ]);
 
   const router = useRouter(); // Inicializa el router para redirigir
 
   const handleCreate = () => {
-    router.push("/GtwPosComercio/create");
-  };
-
-  const handleUpdate = (id) => {
-    router.push(`/GtwPosComercio/update/`); // Redirige al formulario de actualización
+    router.push("/GtwComisionSegmento/create");
   };
 
   const handleView = (id) => {
-    router.push(`/GtwPosComercio/read`); // Redirige a la página de visualización
+    router.push(`/GtwComisionSegmento/read`); // Redirige a la página de visualización
   };
 
   const handleBackToHome = () => {
@@ -38,32 +30,45 @@ const CrudTable = () => {
 
   return (
     <main>
-      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de POS Comercio</h1>
+      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Comisiones</h1>
       <div>
-        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>POS Comercio</h2>      
+        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Comisiones por Comercio</h2>
+        <button
+          className="crear-factura"
+          style={{
+            marginBottom: "1rem",
+            backgroundColor: "#22c55e",
+            color: "#ffffff",
+            padding: "10px 20px",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            justifyContent: "center",
+          }}
+          onClick={handleCreate}
+        >
+          <FaPlus />
+          Crear Comision
+        </button>
         <table>
           <thead>
             <tr>
-              <th>Modelo</th>
-              <th>Código POS</th>
-              <th>Comercio</th>
-              <th>Dirección MAC</th>
-              <th>Estado</th>
-              <th>Fecha Activación</th>
-              <th>Último Uso</th>
-              <th>Acciones</th>
+              <th>Codigo Comision</th>
+              <th>Transaccion Desde</th>
+              <th>Transaccion Hasta</th>
+              <th>Monto </th>
             </tr>
           </thead>
           <tbody>
-            {data.map((item) => (
-              <tr key={item.id}>
-                <td>{item.modelo}</td>
-                <td>{item.codigoPos}</td>
-                <td>{item.codComercio}</td>
-                <td>{item.direccionMac}</td>
-                <td>{item.estado}</td>
-                <td>{item.fechaActivacion}</td>
-                <td>{item.ultimoUso}</td>
+            {data.map((item, index) => (
+              <tr key={item.id || index}>
+                <td>{item.CodigoComision}</td>
+                <td>{item.TransaccionDesde}</td>
+                <td>{item.TransaccionHasta}</td>
+                <td>{item.Monto}</td>
                 <td>
                   <div
                     style={{
@@ -81,7 +86,6 @@ const CrudTable = () => {
                         borderRadius: "4px",
                         cursor: "pointer",
                       }}
-                      onClick={() => handleUpdate(item.id)} // Redirige al formulario de actualización
                     >
                       <FaEdit />
                     </button>

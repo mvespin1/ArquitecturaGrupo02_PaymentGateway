@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation"; // Importamos useRouter para navega
 
 const CreatePage = () => {
   const [form, setForm] = useState({
-    marca: "",
-    clave: "",
-    fechaActualizacion: "",    
+    CodigoSeguridadProcesador: "",
+    Clave: "",
+    FechaActualizacion: "",
+    FechaActivacion: "",
+    Estado: "",
   });
 
   const router = useRouter(); // Inicializamos el router para redirigir
@@ -24,7 +26,7 @@ const CreatePage = () => {
   };
 
   const handleCancel = () => {
-    router.push("/GtwSeguridadMarca/components"); // Redirige a la página principal sin guardar
+    router.push("/GtwSeguridadProcesador/components"); // Redirige a la página principal sin guardar
   };
 
   return (
@@ -45,7 +47,7 @@ const CreatePage = () => {
           marginBottom: "1.5rem",
         }}
       >
-        Crear Nueva Seguridad Marca
+        Crear Nueva Comision
       </h1>
       <form
         onSubmit={handleSubmit}

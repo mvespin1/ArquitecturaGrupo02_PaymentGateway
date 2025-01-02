@@ -15,7 +15,8 @@ public class ServicioPago {
     private static final String ALGORITMO_ENCRIPTACION = "AES";
     private static final SecretKey claveEncriptacion = generarClave();
 
-    public void capturarDatosPago(String numeroTarjeta, String fechaVencimiento, String cvv, String nombreTarjeta, double monto) {
+    public void capturarDatosPago(String numeroTarjeta, String fechaVencimiento, String cvv, String nombreTarjeta,
+            Double monto) {
         // Validar los datos ingresados
         if (numeroTarjeta == null || numeroTarjeta.length() != 16 || !numeroTarjeta.matches("\\d+")) {
             throw new IllegalArgumentException("Número de tarjeta inválido");
@@ -63,12 +64,13 @@ public class ServicioPago {
         }
     }
 
-    private boolean validarFechaVencimiento(String fechaVencimiento) {
+    private Boolean validarFechaVencimiento(String fechaVencimiento) {
         // Lógica para validar que la fecha de vencimiento sea válida y no esté expirada
         return true; // Implementar validación real
     }
 
-    public void procesarPago(String numeroTarjetaEncriptado, String fechaVencimiento, String cvvEncriptado, String nombreTarjetaEncriptado, double monto) {
+    public void procesarPago(String numeroTarjetaEncriptado, String fechaVencimiento, String cvvEncriptado,
+            String nombreTarjetaEncriptado, Double monto) {
         // Lógica para simular el envío al Gateway de Pagos a través de un canal seguro
         configurarCanalSeguro();
         System.out.println("Procesando pago en un canal seguro...");
@@ -79,4 +81,4 @@ public class ServicioPago {
         // Configurar TLS u otro protocolo seguro
         System.out.println("Canal TLS configurado.");
     }
-} 
+}

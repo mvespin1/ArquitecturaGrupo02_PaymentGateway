@@ -8,8 +8,8 @@ const MainPage = () => {
   // Lista de tablas con sus rutas correspondientes
   const tables = [
     { id: 1, name: "GtwFacturacionComercio", route: "/GtwFacturacionComercio/components" },
-    { id: 2, name: "Tabla 2 - Productos", route: "/Productos" },
-    { id: 3, name: "Tabla 3 - Clientes", route: "/Clientes" },
+    { id: 2, name: "GtwSeguridadMarca", route: "/GtwSeguridadMarca/components" },
+    { id: 3, name: "GtwPosComercio", route: "/GtwPosComercio/components" },
     { id: 4, name: "Tabla 4 - Pedidos", route: "/Pedidos" },
     { id: 5, name: "Tabla 5 - Inventario", route: "/Inventario" },
     { id: 6, name: "Tabla 6 - Ventas", route: "/Ventas" },

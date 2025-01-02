@@ -32,26 +32,6 @@ const CrudTable = () => {
       <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Seguridad Marca</h1>
       <div>
         <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Seguridad Marca</h2>
-        <button
-          className="crear-factura"
-          style={{
-            marginBottom: "1rem",
-            backgroundColor: "#22c55e",
-            color: "#ffffff",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            justifyContent: "center",
-          }}
-          onClick={handleCreate}
-        >
-          <FaPlus />
-          Crear Seguridad Marca
-        </button>
         <table>
           <thead>
             <tr>
@@ -74,31 +54,7 @@ const CrudTable = () => {
                       gap: "10px",
                       justifyContent: "center",
                     }}
-                  >
-                    <button
-                      style={{
-                        backgroundColor: "#3b82f6",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      style={{
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <FaTrash />
-                    </button>
+                  >                    
                     <button
                       style={{
                         backgroundColor: "#38bdf8",

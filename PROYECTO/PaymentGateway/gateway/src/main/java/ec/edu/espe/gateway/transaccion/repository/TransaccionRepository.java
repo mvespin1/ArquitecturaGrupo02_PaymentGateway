@@ -1,6 +1,7 @@
 package ec.edu.espe.gateway.transaccion.repository;
 
 import ec.edu.espe.gateway.transaccion.model.Transaccion;
+import ec.edu.espe.gateway.comercio.model.Comercio;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,4 +17,14 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Intege
     List<Transaccion> findByEstado(String estado);
     
     List<Transaccion> findByComercio_CodigoAndFechaBetween(Integer codigoComercio, LocalDate fechaInicio, LocalDate fechaFin);
+
+    List<Transaccion> findByComercioAndEstado(Comercio comercio, String estado);
+    
+    @Query("SELECT t FROM Transaccion t WHERE t.tipo = 'REC' AND t.comercio.codigo = :codigoComercio AND t.estado = 'ENV'")
+    List<Transaccion> findActiveRecurrentTransactionsByComercio(@Param("codigoComercio") Integer codigoComercio);
+
+    Boolean existsByCodigoUnicoTransaccion(String codigoUnicoTransaccion);
+    
+    @Query("SELECT t FROM Transaccion t WHERE t.facturacionComercio.codigo = :codigoFacturacion")
+    List<Transaccion> findByFacturacionComercio(@Param("codigoFacturacion") Integer codigoFacturacion);
 }

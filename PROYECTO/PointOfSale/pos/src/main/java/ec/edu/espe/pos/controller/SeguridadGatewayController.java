@@ -17,33 +17,38 @@ public class SeguridadGatewayController {
         this.seguridadGatewayService = seguridadGatewayService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<SeguridadGateway>> listarTodos() {
-        return ResponseEntity.ok(this.seguridadGatewayService.obtenerTodos());
-    }
-
     @GetMapping("/{id}")
-    public ResponseEntity<SeguridadGateway> obtenerPorId(@PathVariable Integer id) {
-        return this.seguridadGatewayService.obtenerPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    public ResponseEntity<SeguridadGateway> crear(@RequestBody SeguridadGateway seguridadGateway) {
-        return ResponseEntity.ok(this.seguridadGatewayService.crear(seguridadGateway));
-    }
-
-    @PatchMapping("/{id}")
-    public ResponseEntity<SeguridadGateway> actualizar(
-            @PathVariable Integer id,
-            @RequestParam String clave,
-            @RequestParam String estado) {
+    public ResponseEntity<Object> obtenerPorId(@PathVariable Integer id) {
         try {
-            SeguridadGateway actualizado = this.seguridadGatewayService.actualizar(id, clave, estado);
-            return ResponseEntity.ok(actualizado);
-        } catch (RuntimeException e) {
+            return ResponseEntity.ok(this.seguridadGatewayService.obtenerPorId(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/estado/{estado}")
+    public ResponseEntity<Object> obtenerPorEstado(@PathVariable String estado) {
+        try {
+            List<SeguridadGateway> gateways = this.seguridadGatewayService.obtenerPorEstado(estado);
+            return ResponseEntity.ok(gateways);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error al obtener gateways por estado: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/actualizar-automatico")
+    public ResponseEntity<Object> procesarActualizacionAutomatica(@RequestBody SeguridadGateway seguridadGateway) {
+        try {
+            return ResponseEntity.ok(this.seguridadGatewayService.procesarActualizacionAutomatica(seguridadGateway));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body("Error al procesar la actualización automática: " + e.getMessage());
         }
     }
 } 

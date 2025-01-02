@@ -8,13 +8,21 @@ const ViewPage = () => {
 
   // Datos de ejemplo
   const mockData = {
-    Marca: "VISA",
-    Clave: "1234567",
-    FechaActualizacion: "2023-01-01",
+    CodigoComercio: "",
+    CodigoInterno: "",
+    Ruc: "",
+    RazoSocial: "",
+    NombreComercial: "",
+    FechaCreacion: "",
+    CodigoComision: "",
+    PagosAceptados: "",
+    Estado: "",
+    FechaActivacion: "",
+    FechaSuspension: "",
   };
 
   const handleCancel = () => {
-    router.push("/GtwSeguridadMarca/components"); // Redirige a la página principal sin guardar
+    router.push("/GtwComercio/components"); // Redirige a la página principal sin guardar
   };
 
   return (
@@ -29,7 +37,7 @@ const ViewPage = () => {
       }}
     >
       <h1 style={{ textAlign: "center", color: "#1e40af", marginBottom: "1.5rem" }}>
-        Visualizar Seguridad Marca
+        Visualizar Comisiones
       </h1>
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         {Object.entries(mockData).map(([key, value]) => (

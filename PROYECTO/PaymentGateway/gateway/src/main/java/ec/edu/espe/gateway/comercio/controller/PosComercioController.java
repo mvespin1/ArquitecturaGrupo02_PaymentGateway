@@ -2,16 +2,15 @@ package ec.edu.espe.gateway.comercio.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import ec.edu.espe.gateway.comercio.model.PosComercio;
 import ec.edu.espe.gateway.comercio.model.PosComercioPK;
 import ec.edu.espe.gateway.comercio.services.PosComercioService;
 import jakarta.persistence.EntityNotFoundException;
-
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/posComercios")
+@RequestMapping("/api/pos-comercios")
 public class PosComercioController {
 
     private final PosComercioService posComercioService;
@@ -21,46 +20,79 @@ public class PosComercioController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PosComercio>> getAll() {
-        List<PosComercio> posComercios = posComercioService.findAll();
+    public ResponseEntity<List<PosComercio>> obtenerTodos() {
+        List<PosComercio> posComercios = posComercioService.obtenerTodos();
         return ResponseEntity.ok(posComercios);
     }
 
-    @GetMapping("/{codigo}/{tipo}")
-    public ResponseEntity<PosComercio> getById(@PathVariable String codigo, @PathVariable String tipo) {
-        PosComercioPK id = new PosComercioPK(codigo, tipo);
+    @GetMapping("/{codigoPos}/{tipo}")
+    public ResponseEntity<PosComercio> obtenerPorId(@PathVariable String codigoPos, @PathVariable String tipo) {
         try {
-            PosComercio comercio = posComercioService.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Comercio con código " + codigo + " y tipo " + tipo + " no encontrado."));
-            return ResponseEntity.ok(comercio);
+            PosComercioPK id = new PosComercioPK(codigoPos, tipo);
+            PosComercio posComercio = posComercioService.obtenerPorId(id);
+            return ResponseEntity.ok(posComercio);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
     @PostMapping
-    public ResponseEntity<PosComercio> create(@RequestBody PosComercio posComercio) {
-        PosComercio savedComercio = posComercioService.save(posComercio);
-        return ResponseEntity.ok(savedComercio);
+    public ResponseEntity<PosComercio> crear(@RequestBody PosComercio posComercio) {
+        try {
+            PosComercio createdPos = posComercioService.crear(posComercio);
+            return ResponseEntity.ok(createdPos);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
-    @PutMapping("/{codigo}/{tipo}")
-    public ResponseEntity<PosComercio> update(@PathVariable String codigo, @PathVariable String tipo,
-                                              @RequestBody PosComercio posComercio) {
-        PosComercioPK id = new PosComercioPK(codigo, tipo);
+    @PutMapping("/{codigoPos}/{tipo}/activar")
+    public ResponseEntity<Void> activarPOS(@PathVariable String codigoPos, @PathVariable String tipo) {
         try {
-            PosComercio updatedComercio = posComercioService.update(id, posComercio);
-            return ResponseEntity.ok(updatedComercio);
+            PosComercioPK id = new PosComercioPK(codigoPos, tipo);
+            posComercioService.activarPOS(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PutMapping("/{codigoPos}/{tipo}/inactivar")
+    public ResponseEntity<Void> inactivarPOS(@PathVariable String codigoPos, @PathVariable String tipo) {
+        try {
+            PosComercioPK id = new PosComercioPK(codigoPos, tipo);
+            posComercioService.inactivarPOS(id);
+            return ResponseEntity.ok().build();
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    @DeleteMapping("/{codigo}/{tipo}")
-    public ResponseEntity<Void> delete(@PathVariable String codigo, @PathVariable String tipo) {
-        PosComercioPK id = new PosComercioPK(codigo, tipo);
-        posComercioService.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @PutMapping("/{codigoPos}/{tipo}/ultimo-uso")
+    public ResponseEntity<Void> actualizarUltimoUso(
+            @PathVariable String codigoPos, 
+            @PathVariable String tipo,
+            @RequestParam LocalDate fechaUltimoUso) {
+        try {
+            PosComercioPK id = new PosComercioPK(codigoPos, tipo);
+            posComercioService.actualizarUltimoUso(id, fechaUltimoUso);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PutMapping("/{codigoPos}/{tipo}/comercio/{nuevoCodigoComercio}")
+    public ResponseEntity<Void> cambiarComercioAsociado(
+            @PathVariable String codigoPos, 
+            @PathVariable String tipo,
+            @PathVariable Integer nuevoCodigoComercio) {
+        try {
+            PosComercioPK id = new PosComercioPK(codigoPos, tipo);
+            posComercioService.cambiarComercioAsociado(id, nuevoCodigoComercio);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException | EntityNotFoundException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
