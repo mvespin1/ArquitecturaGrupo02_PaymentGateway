@@ -36,7 +36,7 @@ public class FacturaService {
 
     @Transactional
     public void procesarFacturacionAutomatica() {
-        List<Comercio> comerciosActivos = comercioService.findByEstado("ACT");
+        List<Comercio> comerciosActivos = comercioService.listarComerciosPorEstado("ACT");
 
         for (Comercio comercio : comerciosActivos) {
             // Procesar facturas activas que hayan llegado a su fecha de fin
@@ -87,7 +87,7 @@ public class FacturaService {
     }
 
     private BigDecimal calcularComisiones(Comercio comercio, FacturacionComercio factura) {
-        List<Transaccion> transacciones = transaccionService.findByComercioAndFecha(
+        List<Transaccion> transacciones = transaccionService.obtenerPorComercioYFecha(
                 comercio.getCodigo(), factura.getFechaInicio(), factura.getFechaFin());
 
         BigDecimal totalComisiones = BigDecimal.ZERO;
@@ -95,15 +95,15 @@ public class FacturaService {
 
         if (comisionOpt.isPresent()) {
             Comision comision = comisionOpt.get();
-            int totalTransacciones = transacciones.size();
-            int transaccionesBase = comision.getTransaccionesBase();
+            Integer totalTransacciones = transacciones.size();
+            Integer transaccionesBase = comision.getTransaccionesBase();
 
             if (transaccionesBase <= 0) {
                 throw new IllegalStateException(
                         "El valor de transacciones base debe ser mayor a cero para aplicar la comisión.");
             }
 
-            int bloques = (int) Math.ceil((double) totalTransacciones / transaccionesBase);
+            Integer bloques = (int) Math.ceil((double) totalTransacciones / transaccionesBase);
 
             for (int i = 0; i < bloques; i++) {
                 if ("POR".equals(comision.getTipo())) {

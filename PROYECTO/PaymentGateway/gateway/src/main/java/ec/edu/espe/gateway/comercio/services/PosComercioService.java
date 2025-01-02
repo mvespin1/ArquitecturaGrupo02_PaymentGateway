@@ -9,7 +9,6 @@ import ec.edu.espe.gateway.comercio.model.Comercio;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -20,7 +19,7 @@ import jakarta.transaction.Transactional.TxType;
 public class PosComercioService {
 
     private static final Pattern MAC_ADDRESS_PATTERN = Pattern.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$");
-    private static final int CODIGO_POS_LENGTH = 10;
+    private static final Integer CODIGO_POS_LENGTH = 10;
     public static final String ESTADO_ACTIVO = "ACT";
     public static final String ESTADO_INACTIVO = "INA";
 
@@ -203,7 +202,7 @@ public class PosComercioService {
         }
     }
 
-    private void validarFechasActivacion(PosComercio pos, Comercio comercio) {
+    /*private void validarFechasActivacion(PosComercio pos, Comercio comercio) {
         LocalDate fechaActual = LocalDate.now();
         
         // Validar que la fecha de activación no sea futura
@@ -226,5 +225,5 @@ public class PosComercioService {
                 throw new IllegalStateException("La fecha de último uso no puede ser anterior a la fecha de activación");
             }
         }
-    }
+    }*/
 }

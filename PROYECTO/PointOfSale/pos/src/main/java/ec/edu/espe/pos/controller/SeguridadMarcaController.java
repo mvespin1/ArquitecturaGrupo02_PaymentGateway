@@ -5,8 +5,6 @@ import ec.edu.espe.pos.service.SeguridadMarcaService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/seguridad-marca")
 public class SeguridadMarcaController {
@@ -17,32 +15,26 @@ public class SeguridadMarcaController {
         this.seguridadMarcaService = seguridadMarcaService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<SeguridadMarca>> listarTodas() {
-        return ResponseEntity.ok(this.seguridadMarcaService.obtenerTodas());
-    }
-
     @GetMapping("/{marca}")
-    public ResponseEntity<SeguridadMarca> obtenerPorMarca(@PathVariable String marca) {
-        return this.seguridadMarcaService.obtenerPorMarca(marca)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    public ResponseEntity<SeguridadMarca> crear(@RequestBody SeguridadMarca seguridadMarca) {
-        return ResponseEntity.ok(this.seguridadMarcaService.crear(seguridadMarca));
-    }
-
-    @PatchMapping("/{marca}/clave")
-    public ResponseEntity<SeguridadMarca> actualizarClave(
-            @PathVariable String marca,
-            @RequestParam String clave) {
+    public ResponseEntity<Object> obtenerPorMarca(@PathVariable String marca) {
         try {
-            SeguridadMarca actualizada = this.seguridadMarcaService.actualizarClave(marca, clave);
-            return ResponseEntity.ok(actualizada);
-        } catch (RuntimeException e) {
+            return ResponseEntity.ok(this.seguridadMarcaService.obtenerPorMarca(marca));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/actualizar-automatico")
+    public ResponseEntity<Object> procesarActualizacionAutomatica(@RequestBody SeguridadMarca seguridadMarca) {
+        try {
+            return ResponseEntity.ok(this.seguridadMarcaService.procesarActualizacionAutomatica(seguridadMarca));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body("Error al procesar la actualización automática: " + e.getMessage());
         }
     }
 } 

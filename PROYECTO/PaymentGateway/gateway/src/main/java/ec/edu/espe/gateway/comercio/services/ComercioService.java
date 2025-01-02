@@ -18,7 +18,6 @@ import jakarta.transaction.Transactional.TxType;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -240,5 +239,34 @@ public class ComercioService {
     @Transactional(value = TxType.NEVER)
     public List<Comercio> buscarPorRazonSocialONombreComercial(String criterio) {
         return comercioRepository.findByRazonSocialContainingIgnoreCaseOrNombreComercialContainingIgnoreCase(criterio, criterio);
+    }
+
+    private void validarCambioEstado(Comercio comercio, String nuevoEstado) {
+        if (comercio.getEstado().equals(nuevoEstado)) {
+            throw new IllegalStateException("El comercio ya se encuentra en estado: " + nuevoEstado);
+        }
+        
+        switch (comercio.getEstado()) {
+            case ESTADO_INACTIVO:
+                if (!ESTADO_PENDIENTE.equals(nuevoEstado)) {
+                    throw new IllegalStateException("Un comercio inactivo solo puede pasar a estado pendiente");
+                }
+                break;
+            case ESTADO_PENDIENTE:
+                if (!ESTADO_ACTIVO.equals(nuevoEstado) && !ESTADO_INACTIVO.equals(nuevoEstado)) {
+                    throw new IllegalStateException("Un comercio pendiente solo puede activarse o inactivarse");
+                }
+                break;
+            case ESTADO_ACTIVO:
+                if (!ESTADO_SUSPENDIDO.equals(nuevoEstado) && !ESTADO_INACTIVO.equals(nuevoEstado)) {
+                    throw new IllegalStateException("Un comercio activo solo puede suspenderse o inactivarse");
+                }
+                break;
+            case ESTADO_SUSPENDIDO:
+                if (!ESTADO_ACTIVO.equals(nuevoEstado) && !ESTADO_INACTIVO.equals(nuevoEstado)) {
+                    throw new IllegalStateException("Un comercio suspendido solo puede activarse o inactivarse");
+                }
+                break;
+        }
     }
 }

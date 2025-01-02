@@ -16,7 +16,7 @@ public class ServicioPago {
     private static final SecretKey claveEncriptacion = generarClave();
 
     public void capturarDatosPago(String numeroTarjeta, String fechaVencimiento, String cvv, String nombreTarjeta,
-            double monto) {
+            Double monto) {
         // Validar los datos ingresados
         if (numeroTarjeta == null || numeroTarjeta.length() != 16 || !numeroTarjeta.matches("\\d+")) {
             throw new IllegalArgumentException("Número de tarjeta inválido");
@@ -64,13 +64,13 @@ public class ServicioPago {
         }
     }
 
-    private boolean validarFechaVencimiento(String fechaVencimiento) {
+    private Boolean validarFechaVencimiento(String fechaVencimiento) {
         // Lógica para validar que la fecha de vencimiento sea válida y no esté expirada
         return true; // Implementar validación real
     }
 
     public void procesarPago(String numeroTarjetaEncriptado, String fechaVencimiento, String cvvEncriptado,
-            String nombreTarjetaEncriptado, double monto) {
+            String nombreTarjetaEncriptado, Double monto) {
         // Lógica para simular el envío al Gateway de Pagos a través de un canal seguro
         configurarCanalSeguro();
         System.out.println("Procesando pago en un canal seguro...");

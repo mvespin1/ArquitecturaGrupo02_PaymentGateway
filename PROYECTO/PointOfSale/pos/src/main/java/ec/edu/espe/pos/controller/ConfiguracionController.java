@@ -21,37 +21,49 @@ public class ConfiguracionController {
 
     @GetMapping
     public ResponseEntity<List<Configuracion>> listarTodos() {
-        return ResponseEntity.ok(this.configuracionService.obtenerTodos());
+        try {
+            return ResponseEntity.ok(this.configuracionService.obtenerTodos());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/{codigo}/{modelo}")
     public ResponseEntity<Configuracion> obtenerPorId(
             @PathVariable String codigo,
             @PathVariable String modelo) {
-        return this.configuracionService.obtenerPorId(new ConfiguracionPK(codigo, modelo))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            return ResponseEntity.ok(this.configuracionService.obtenerPorId(new ConfiguracionPK(codigo, modelo)));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
-    public ResponseEntity<Configuracion> crear(@RequestBody Configuracion configuracion) {
-        return ResponseEntity.ok(this.configuracionService.crear(configuracion));
+    public ResponseEntity<Object> crear(@RequestBody Configuracion configuracion) {
+        try {
+            return ResponseEntity.ok(this.configuracionService.crear(configuracion));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error al crear la configuración: " + e.getMessage());
+        }
     }
 
-    @PatchMapping("/{codigo}/{modelo}")
-    public ResponseEntity<Configuracion> actualizarCampos(
+    @PatchMapping("/{codigo}/{modelo}/fecha-activacion")
+    public ResponseEntity<Object> actualizarFechaActivacion(
             @PathVariable String codigo,
             @PathVariable String modelo,
-            @RequestParam String codigoComercio,
-            @RequestParam LocalDate fechaActivacion) {
+            @RequestParam LocalDate nuevaFechaActivacion) {
         try {
-            Configuracion actualizado = this.configuracionService.actualizar(
+            Configuracion actualizado = this.configuracionService.actualizarFechaActivacion(
                     new ConfiguracionPK(codigo, modelo),
-                    codigoComercio,
-                    fechaActivacion);
+                    nuevaFechaActivacion);
             return ResponseEntity.ok(actualizado);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error al actualizar la fecha de activación: " + e.getMessage());
         }
     }
 } 

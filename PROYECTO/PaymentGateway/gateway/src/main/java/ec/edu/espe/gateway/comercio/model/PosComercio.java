@@ -80,11 +80,11 @@ public class PosComercio implements Serializable {
         this.ultimoUso = ultimoUso;
     }
 
-    public Comercio getGtwComercio() {
+    public Comercio getComercio() {
         return comercio;
     }
 
-    public void setGtwComercio(Comercio comercio) {
+    public void setComercio(Comercio comercio) {
         this.comercio = comercio;
     }
 

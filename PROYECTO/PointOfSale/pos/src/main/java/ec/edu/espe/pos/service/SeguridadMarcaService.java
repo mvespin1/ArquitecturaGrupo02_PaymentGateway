@@ -27,10 +27,10 @@ public class SeguridadMarcaService {
         this.seguridadMarcaRepository = seguridadMarcaRepository;
     }
 
-    @Transactional(value = TxType.NEVER)
+   /*  @Transactional(value = TxType.NEVER)
     public List<SeguridadMarca> obtenerTodas() {
         return this.seguridadMarcaRepository.findAll();
-    }
+    }*/
 
     @Transactional(value = TxType.NEVER)
     public SeguridadMarca obtenerPorMarca(String marca) {

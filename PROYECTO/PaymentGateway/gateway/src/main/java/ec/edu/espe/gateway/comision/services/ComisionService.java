@@ -22,7 +22,7 @@ public class ComisionService {
     }
 
     // Método para actualizar los campos permitidos
-    public Comision update(int codigo, Comision comision) {
+    public Comision update(Integer codigo, Comision comision) {
         return comisionRepository.findById(codigo)
                 .map(comisionExistente -> {
                     comisionExistente.setMontoBase(comision.getMontoBase());
@@ -40,11 +40,11 @@ public class ComisionService {
         return comisionRepository.save(comision);
     }
 
-    public Optional<Comision> findById(int codigo) {
+    public Optional<Comision> findById(Integer codigo) {
         return comisionRepository.findById(codigo);
     }
 
-    public void deleteById(int codigo) {
+    public void deleteById(Integer codigo) {
         throw new UnsupportedOperationException("No se permite eliminar comisiones.");
     }
 }

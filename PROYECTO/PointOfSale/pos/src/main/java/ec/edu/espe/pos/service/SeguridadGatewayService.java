@@ -30,11 +30,6 @@ public class SeguridadGatewayService {
         this.seguridadGatewayRepository = seguridadGatewayRepository;
     }
 
-    /*@Transactional(value = TxType.NEVER)
-    public List<SeguridadGateway> obtenerTodos() {
-        return this.seguridadGatewayRepository.findAll();
-    }*/
-
     @Transactional(value = TxType.NEVER)
     public SeguridadGateway obtenerPorId(Integer id) {
         Optional<SeguridadGateway> gatewayOpt = this.seguridadGatewayRepository.findById(id);

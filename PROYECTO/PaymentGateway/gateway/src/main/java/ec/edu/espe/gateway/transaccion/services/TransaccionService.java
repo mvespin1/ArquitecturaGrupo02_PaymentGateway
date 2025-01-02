@@ -9,9 +9,9 @@ import ec.edu.espe.gateway.comercio.repository.ComercioRepository;
 import ec.edu.espe.gateway.comercio.repository.PosComercioRepository;
 import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
+import ec.edu.espe.gateway.comercio.model.PosComercioPK;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,13 +46,12 @@ public class TransaccionService {
         try {
             LocalDate fechaActual = LocalDate.now();
             
-            // Validar que la fecha no sea futura
             if (transaccion.getFecha() != null && transaccion.getFecha().isAfter(fechaActual)) {
                 throw new IllegalArgumentException("La fecha de la transacción no puede ser futura");
             }
 
             // Validar POS
-            PosComercio pos = posComercioRepository.findById(codigoPos)
+            PosComercio pos = posComercioRepository.findById(new PosComercioPK(codigoPos, "POS"))
                     .orElseThrow(() -> new EntityNotFoundException("POS no encontrado"));
             if (!"ACT".equals(pos.getEstado())) {
                 throw new IllegalStateException("El POS debe estar activo para crear transacciones");
@@ -187,9 +186,13 @@ public class TransaccionService {
 
     public void procesarCambioEstadoComercio(Integer codigoComercio, String nuevoEstado) {
         if ("INA".equals(nuevoEstado) || "SUS".equals(nuevoEstado)) {
-            // Rechazar transacciones en curso
+            Comercio comercio = comercioRepository.findById(codigoComercio)
+                .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
+                
             List<Transaccion> transaccionesEnCurso = 
-                transaccionRepository.findByComercioAndEstado(codigoComercio, ESTADO_ENVIADO);
+                transaccionRepository.findByComercioAndEstado(comercio, ESTADO_ENVIADO);
+            
+            // Rechazar transacciones en curso
             for (Transaccion transaccion : transaccionesEnCurso) {
                 transaccion.setEstado(ESTADO_RECHAZADO);
                 transaccionRepository.save(transaccion);
