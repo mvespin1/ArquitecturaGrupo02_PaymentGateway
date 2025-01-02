@@ -19,8 +19,12 @@ public class ComisionController {
 
     @GetMapping
     public ResponseEntity<List<Comision>> getAll() {
-        List<Comision> comisiones = comisionService.findAll();
-        return ResponseEntity.ok(comisiones);
+        try {
+            List<Comision> comisiones = comisionService.findAll();
+            return ResponseEntity.ok(comisiones);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/{codigo}")
@@ -32,6 +36,8 @@ public class ComisionController {
             return ResponseEntity.ok(comision);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -41,30 +47,25 @@ public class ComisionController {
             Comision savedComision = comisionService.save(comision);
             return ResponseEntity.ok(savedComision);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
     @PutMapping("/{codigo}")
     public ResponseEntity<Comision> update(
             @PathVariable Integer codigo,
-            @RequestParam Double montoBase,
-            @RequestParam Integer transaccionesBase,
-            @RequestParam Boolean manejaSegmentos) {
+            @RequestBody Comision comision) {
         try {
-            // Crear objeto con los valores específicos que deben actualizarse
-            Comision partialUpdate = new Comision();
-            partialUpdate.setMontoBase(null);;
-            partialUpdate.setTransaccionesBase(null);;
-            partialUpdate.setManejaSegmentos(manejaSegmentos);; // Conversión a "S" o "N"
-
-            // Llamar al servicio para la actualización
-            Comision updatedComision = comisionService.update(codigo, partialUpdate);
+            Comision updatedComision = comisionService.update(codigo, comision);
             return ResponseEntity.ok(updatedComision);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

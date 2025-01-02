@@ -5,8 +5,6 @@ import ec.edu.espe.pos.service.TransaccionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/transacciones")
 public class TransaccionController {
