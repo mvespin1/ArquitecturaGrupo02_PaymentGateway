@@ -14,53 +14,106 @@ public class SeguridadProcesadorService {
 
     private final SeguridadProcesadorRepository repository;
 
+    private static final String ESTADO_PENDIENTE = "PEN";
+    private static final String ESTADO_ACTIVO = "ACT";
+    private static final String ESTADO_INACTIVO = "INA";
+    private static final String REGEX_CLAVE = "^[a-zA-Z0-9]{1,128}$";
+
     public SeguridadProcesadorService(SeguridadProcesadorRepository repository) {
         this.repository = repository;
     }
 
     public SeguridadProcesador createProcesador(SeguridadProcesador procesador) {
-        procesador.setFechaActualizacion(LocalDate.now());
-        return repository.save(procesador);
+        try {
+            validarClave(procesador.getClave());
+            procesador.setEstado(ESTADO_PENDIENTE);
+            procesador.setFechaActualizacion(LocalDate.now());
+            return repository.save(procesador);
+        } catch (Exception ex) {
+            throw new RuntimeException("No se pudo crear el procesador. Motivo: " + ex.getMessage());
+        }
     }
 
     public Optional<SeguridadProcesador> getProcesadorById(Integer id) {
-        return repository.findById(id);
+        try {
+            return repository.findById(id);
+        } catch (Exception ex) {
+            throw new RuntimeException(
+                    "No se pudo obtener el procesador con ID " + id + ". Motivo: " + ex.getMessage());
+        }
     }
 
     public List<SeguridadProcesador> getAllProcesadores() {
-        return repository.findAll();
+        try {
+            return repository.findAll();
+        } catch (Exception ex) {
+            throw new RuntimeException("No se pudo obtener la lista de procesadores. Motivo: " + ex.getMessage());
+        }
     }
 
     public SeguridadProcesador updateProcesador(Integer id, SeguridadProcesador updatedProcesadorDetails) {
-        return repository.findById(id)
-                .map(procesadorExistente -> {
-                    procesadorExistente.setClave(updatedProcesadorDetails.getClave());
-                    procesadorExistente.setFechaActualizacion(LocalDate.now());
-                    procesadorExistente.setFechaActivacion(updatedProcesadorDetails.getFechaActivacion());
-                    procesadorExistente.setEstado(updatedProcesadorDetails.getEstado());
-                    return repository.save(procesadorExistente);
-                })
-                .orElseThrow(() -> new EntityNotFoundException("Procesador con ID " + id + " no encontrado."));
+        try {
+            validarClave(updatedProcesadorDetails.getClave());
+            return repository.findById(id)
+                    .map(procesadorExistente -> {
+                        procesadorExistente.setClave(updatedProcesadorDetails.getClave());
+                        procesadorExistente.setFechaActualizacion(LocalDate.now());
+                        procesadorExistente
+                                .setFechaActivacion(updatedProcesadorDetails.getEstado().equals(ESTADO_ACTIVO)
+                                        ? LocalDate.now()
+                                        : procesadorExistente.getFechaActivacion());
+                        procesadorExistente.setEstado(updatedProcesadorDetails.getEstado());
+                        return repository.save(procesadorExistente);
+                    })
+                    .orElseThrow(() -> new EntityNotFoundException("Procesador con ID " + id + " no encontrado."));
+        } catch (EntityNotFoundException e) {
+            throw e;
+        } catch (Exception ex) {
+            throw new RuntimeException(
+                    "No se pudo actualizar el procesador con ID " + id + ". Motivo: " + ex.getMessage());
+        }
     }
 
     public SeguridadProcesador deactivateProcesador(Integer id) {
-        return repository.findById(id)
-                .map(procesadorExistente -> {
-                    procesadorExistente.setEstado("INA"); // Cambiar el estado a "Inactivo"
-                    procesadorExistente.setFechaActualizacion(LocalDate.now()); // Actualizar la fecha de actualización
-                    return repository.save(procesadorExistente);
-                })
-                .orElseThrow(() -> new EntityNotFoundException("Procesador con ID " + id + " no encontrado."));
+        try {
+            return repository.findById(id)
+                    .map(procesadorExistente -> {
+                        procesadorExistente.setEstado(ESTADO_INACTIVO);
+                        procesadorExistente.setFechaActualizacion(LocalDate.now());
+                        return repository.save(procesadorExistente);
+                    })
+                    .orElseThrow(() -> new EntityNotFoundException("Procesador con ID " + id + " no encontrado."));
+        } catch (EntityNotFoundException e) {
+            throw e;
+        } catch (Exception ex) {
+            throw new RuntimeException(
+                    "No se pudo desactivar el procesador con ID " + id + ". Motivo: " + ex.getMessage());
+        }
     }
 
     public void deleteById(Integer id) {
-        SeguridadProcesador procesador = repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Procesador con ID " + id + " no encontrado."));
+        try {
+            SeguridadProcesador procesador = repository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Procesador con ID " + id + " no encontrado."));
 
-        if ("INA".equals(procesador.getEstado())) {
-            repository.deleteById(id);
-        } else {
-            throw new RuntimeException("No se puede eliminar un Procesador con estado diferente a 'INA'.");
+            if (ESTADO_INACTIVO.equals(procesador.getEstado())) {
+                repository.deleteById(id);
+            } else {
+                throw new RuntimeException("No se puede eliminar un Procesador con estado diferente a 'INA'.");
+            }
+        } catch (EntityNotFoundException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception ex) {
+            throw new RuntimeException(
+                    "No se pudo eliminar el procesador con ID " + id + ". Motivo: " + ex.getMessage());
+        }
+    }
+
+    private void validarClave(String clave) {
+        if (clave == null || !clave.matches(REGEX_CLAVE)) {
+            throw new IllegalArgumentException("La clave debe ser alfanumérica y no exceder los 128 caracteres.");
         }
     }
 }

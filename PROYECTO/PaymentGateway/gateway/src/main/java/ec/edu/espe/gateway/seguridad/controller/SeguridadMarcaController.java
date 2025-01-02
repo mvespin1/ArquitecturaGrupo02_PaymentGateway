@@ -20,8 +20,12 @@ public class SeguridadMarcaController {
 
     @GetMapping
     public ResponseEntity<List<SeguridadMarca>> getAll() {
-        List<SeguridadMarca> marcas = marcaService.getAllMarcas();
-        return ResponseEntity.ok(marcas);
+        try {
+            List<SeguridadMarca> marcas = marcaService.getAllMarcas();
+            return ResponseEntity.ok(marcas);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
     @GetMapping("/{marca}")
@@ -32,13 +36,23 @@ public class SeguridadMarcaController {
             return ResponseEntity.ok(foundMarca);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
         }
     }
 
     @PostMapping
     public ResponseEntity<SeguridadMarca> create(@RequestBody SeguridadMarca marca) {
-        SeguridadMarca savedMarca = marcaService.createMarca(marca);
-        return ResponseEntity.ok(savedMarca);
+        try {
+            SeguridadMarca savedMarca = marcaService.createMarca(marca);
+            return ResponseEntity.status(201).body(savedMarca);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
     @PutMapping("/{marca}")
@@ -50,6 +64,10 @@ public class SeguridadMarcaController {
             return ResponseEntity.ok(updatedMarca);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
         }
     }
 
@@ -60,6 +78,8 @@ public class SeguridadMarcaController {
             return ResponseEntity.noContent().build();
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).build();
         }
     }
 }

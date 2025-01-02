@@ -18,12 +18,6 @@ public class SeguridadGatewayController {
         this.gatewayService = gatewayService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<SeguridadGateway>> getAll() {
-        List<SeguridadGateway> gateways = gatewayService.getAllGateways();
-        return ResponseEntity.ok(gateways);
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<SeguridadGateway> getById(@PathVariable Integer id) {
         try {
@@ -63,5 +57,14 @@ public class SeguridadGatewayController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @GetMapping("/activos")
+    public ResponseEntity<List<SeguridadGateway>> getActiveGateways() {
+        List<SeguridadGateway> activeGateways = gatewayService.getGatewaysByEstadoActivo();
+        if (activeGateways.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(activeGateways);
     }
 }

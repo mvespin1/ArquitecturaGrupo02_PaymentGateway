@@ -21,48 +21,69 @@ public class ComisionSegmentoService {
     }
 
     public List<ComisionSegmento> findAll() {
-        return segmentoRepository.findAll();
+        try {
+            return segmentoRepository.findAll();
+        } catch (Exception ex) {
+            throw new RuntimeException(
+                    "No se pudo obtener la lista de segmentos de comisión. Motivo: " + ex.getMessage());
+        }
     }
 
     public Optional<ComisionSegmento> findById(Integer comision, Integer transaccionesDesde) {
-        ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
-        return segmentoRepository.findById(pk);
+        try {
+            ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
+            return segmentoRepository.findById(pk);
+        } catch (Exception ex) {
+            throw new RuntimeException("No se pudo obtener el segmento de comisión. Motivo: " + ex.getMessage());
+        }
     }
 
     @Transactional
     public ComisionSegmento save(ComisionSegmento segmento) {
-        validarSegmento(segmento);
-        return segmentoRepository.save(segmento);
+        try {
+            validarSegmento(segmento);
+            return segmentoRepository.save(segmento);
+        } catch (Exception ex) {
+            throw new RuntimeException("No se pudo guardar el segmento de comisión. Motivo: " + ex.getMessage());
+        }
     }
 
     @Transactional
     public ComisionSegmento update(Integer comision, Integer transaccionesDesde,
             Integer transaccionesHasta, BigDecimal monto) {
-        ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
-        return segmentoRepository.findById(pk)
-                .map(segmentoExistente -> {
-                    validarRangoTransacciones(transaccionesDesde, transaccionesHasta);
-                    segmentoExistente.setTransaccionesHasta(transaccionesHasta);
-                    segmentoExistente.setMonto(monto);
-                    return segmentoRepository.save(segmentoExistente);
-                })
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Segmento no encontrado para comisión " + comision +
-                                " y transacciones desde " + transaccionesDesde));
+        try {
+            ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
+            return segmentoRepository.findById(pk)
+                    .map(segmentoExistente -> {
+                        validarRangoTransacciones(transaccionesDesde, transaccionesHasta);
+                        segmentoExistente.setTransaccionesHasta(transaccionesHasta);
+                        segmentoExistente.setMonto(monto);
+                        return segmentoRepository.save(segmentoExistente);
+                    })
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Segmento no encontrado para comisión " + comision +
+                                    " y transacciones desde " + transaccionesDesde));
+        } catch (Exception ex) {
+            throw new RuntimeException("No se pudo actualizar el segmento de comisión. Motivo: " + ex.getMessage());
+        }
     }
 
     @Transactional
     public void deleteById(Integer comision, Integer transaccionesDesde) {
-        ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
-        ComisionSegmento segmento = segmentoRepository.findById(pk)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Segmento no encontrado para comisión " + comision +
-                                " y transacciones desde " + transaccionesDesde));
+        try {
+            ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
+            ComisionSegmento segmento = segmentoRepository.findById(pk)
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Segmento no encontrado para comisión " + comision +
+                                    " y transacciones desde " + transaccionesDesde));
 
-        if (segmento.getMonto().compareTo(BigDecimal.ZERO) == 0) {
-            segmentoRepository.deleteById(pk);
-        } else {
-            throw new IllegalStateException("No se puede eliminar un segmento con monto diferente a 0.");
+            if (segmento.getMonto().compareTo(BigDecimal.ZERO) == 0) {
+                segmentoRepository.deleteById(pk);
+            } else {
+                throw new IllegalStateException("No se puede eliminar un segmento con monto diferente a 0.");
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("No se pudo eliminar el segmento de comisión. Motivo: " + ex.getMessage());
         }
     }
 

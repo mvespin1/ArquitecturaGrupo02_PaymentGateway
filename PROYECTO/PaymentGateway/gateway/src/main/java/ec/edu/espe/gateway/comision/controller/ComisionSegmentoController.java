@@ -18,30 +18,29 @@ public class ComisionSegmentoController {
         this.segmentoService = segmentoService;
     }
 
-    /**
-     * Obtener todos los segmentos de comisión.
-     */
     @GetMapping
     public ResponseEntity<List<ComisionSegmento>> getAll() {
-        List<ComisionSegmento> segmentos = segmentoService.findAll();
-        return ResponseEntity.ok(segmentos);
+        try {
+            List<ComisionSegmento> segmentos = segmentoService.findAll();
+            return ResponseEntity.ok(segmentos);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    /**
-     * Obtener un segmento de comisión por su clave primaria.
-     */
     @GetMapping("/{comision}/{transaccionesDesde}")
     public ResponseEntity<ComisionSegmento> getById(
             @PathVariable Integer comision,
             @PathVariable Integer transaccionesDesde) {
-        return segmentoService.findById(comision, transaccionesDesde)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            return segmentoService.findById(comision, transaccionesDesde)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    /**
-     * Crear un nuevo segmento de comisión.
-     */
     @PostMapping
     public ResponseEntity<ComisionSegmento> create(@RequestBody ComisionSegmento segmento) {
         try {
@@ -49,12 +48,11 @@ public class ComisionSegmentoController {
             return ResponseEntity.ok(savedSegmento);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
-    /**
-     * Actualizar los campos TRANSACCIONES_HASTA y MONTO de un segmento.
-     */
     @PutMapping("/{comision}/{transaccionesDesde}")
     public ResponseEntity<ComisionSegmento> update(
             @PathVariable Integer comision,
@@ -69,13 +67,11 @@ public class ComisionSegmentoController {
             return ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
-    /**
-     * Eliminar un segmento de comisión.
-     * Solo permitido si MONTO == 0.
-     */
     @DeleteMapping("/{comision}/{transaccionesDesde}")
     public ResponseEntity<Void> delete(
             @PathVariable Integer comision,
@@ -87,6 +83,8 @@ public class ComisionSegmentoController {
             return ResponseEntity.notFound().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 }
