@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // Importa el hook para navegación
-import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
+import { FaEye } from "react-icons/fa";
 
 const CrudTable = () => {
   const [data, setData] = useState([
@@ -20,16 +20,12 @@ const CrudTable = () => {
       Moneda: "USD",
       Pais: "Ecuador",
       Tarjeta: "**** **** **** 1234",
-      FechaEjecucionRecurrencia: "2023-01-01",
-      FechaFinRecurrencia: "2023-12-31",
+      FechaEjecucionRecurrencia: "2025-01-01",
+      FechaFinRecurrencia: "2025-12-31",
     },
   ]);
 
   const router = useRouter(); // Inicializa el router para redirigir
-
-  const handleCreate = () => {
-    router.push("/GtwTransaccion/create");
-  };
 
   const handleView = (id) => {
     router.push(`/GtwTransaccion/read`); // Redirige a la página de visualización
@@ -44,26 +40,6 @@ const CrudTable = () => {
       <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Transacciones</h1>
       <div>
         <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Transacciones</h2>
-        <button
-          className="crear-transaccion"
-          style={{
-            marginBottom: "1rem",
-            backgroundColor: "#22c55e",
-            color: "#ffffff",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            justifyContent: "center",
-          }}
-          onClick={handleCreate}
-        >
-          <FaPlus />
-          Crear Transaccion
-        </button>
         <table>
           <thead>
             <tr>
@@ -92,30 +68,6 @@ const CrudTable = () => {
                       justifyContent: "center",
                     }}
                   >
-                    <button
-                      style={{
-                        backgroundColor: "#3b82f6",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      style={{
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <FaTrash />
-                    </button>
                     <button
                       style={{
                         backgroundColor: "#38bdf8",

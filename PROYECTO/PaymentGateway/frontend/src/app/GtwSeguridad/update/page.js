@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation"; // Importamos useRouter para navega
 
 const UpdatePage = () => {
   const [form, setForm] = useState({
-      CodigoClaveGateway: "",
-      Clave: "",
-      FechasCreacion: "",
-      FechaActivacion: "",
-      Estado: "",
+    CodigoClaveGateway: "",
+    Clave: "",
+    FechasCreacion: "",
+    FechaActivacion: "",
+    Estado: "pendiente", // Valor por defecto
   });
 
   const router = useRouter(); // Inicializamos el router para redirigir
@@ -57,42 +57,83 @@ const UpdatePage = () => {
           gap: "1rem",
         }}
       >
+        {/* Otros campos */}
         {Object.keys(form).map((field) => (
-          <div
-            key={field}
-            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-          >
-            <label
-              htmlFor={field}
+          field !== "Estado" && ( // Excluye el campo Estado aquí para personalizarlo más abajo
+            <div
+              key={field}
               style={{
-                fontWeight: "bold",
-                color: "#1f2937",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
               }}
             >
-              {field
-                .replace(/([A-Z])/g, " $1")
-                .replace(/^./, (str) => str.toUpperCase())}{" "}
-              {/* Formatea los nombres */}
-            </label>
-            <input
-              id={field}
-              type={field.includes("fecha") ? "date" : "text"}
-              name={field}
-              value={form[field]}
-              onChange={handleChange}
-              style={{
-                padding: "10px",
-                fontSize: "1rem",
-                borderRadius: "4px",
-                border: "1px solid #d1d5db",
-                backgroundColor: "#ffffff",
-              }}
-              placeholder={`Ingrese ${field
-                .replace(/([A-Z])/g, " $1")
-                .toLowerCase()}`}
-            />
-          </div>
+              <label
+                htmlFor={field}
+                style={{
+                  fontWeight: "bold",
+                  color: "#1f2937",
+                }}
+              >
+                {field
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/^./, (str) => str.toUpperCase())}
+              </label>
+              <input
+                id={field}
+                type={field.includes("Fecha") ? "date" : "text"}
+                name={field}
+                value={form[field]}
+                onChange={handleChange}
+                disabled // Todos los campos están deshabilitados
+                style={{
+                  padding: "10px",
+                  fontSize: "1rem",
+                  borderRadius: "4px",
+                  border: "1px solid #d1d5db",
+                  backgroundColor: "#e5e7eb", // Fondo gris claro para campos deshabilitados
+                  color: "#000000",
+                }}
+                placeholder={`Ingrese ${field
+                  .replace(/([A-Z])/g, " $1")
+                  .toLowerCase()}`}
+              />
+            </div>
+          )
         ))}
+
+        {/* Campo Estado */}
+        <div>
+          <label
+            htmlFor="Estado"
+            style={{
+              fontWeight: "bold",
+              color: "#1f2937",
+            }}
+          >
+            Estado
+          </label>
+          <select
+            id="Estado"
+            name="Estado"
+            value={form.Estado}
+            onChange={handleChange}
+            style={{
+              padding: "10px",
+              fontSize: "1rem",
+              borderRadius: "4px",
+              border: "1px solid #d1d5db",
+              backgroundColor: "#ffffff",
+              color: "#000000",
+            }}
+          >
+            <option value="pendiente">Pendiente</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+
+        {/* Botones */}
         <div
           style={{
             display: "flex",

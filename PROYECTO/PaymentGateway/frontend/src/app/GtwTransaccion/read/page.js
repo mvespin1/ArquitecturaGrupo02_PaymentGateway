@@ -21,8 +21,8 @@ const ViewPage = () => {
     Moneda: "USD",
     Pais: "Ecuador",
     Tarjeta: "**** **** **** 1234",
-    FechaEjecucionRecurrencia: "2023-01-01",
-    FechaFinRecurrencia: "2023-12-31",
+    FechaEjecucionRecurrencia: "2025-01-01",
+    FechaFinRecurrencia: "2025-12-31",
   };
 
   const handleCancel = () => {
@@ -47,27 +47,27 @@ const ViewPage = () => {
         {Object.entries(mockData).map(([key, value]) => (
           <div key={key}>
             <strong style={{ color: "#1f2937" }}>{key.replace(/([A-Z])/g, " $1")}: </strong>
-            <span>{value}</span>
+            <span style={{ color: "#1f2937" }}>{value}</span>
           </div>
         ))}
       </div>
 
       <button
-            type="button"
-            onClick={handleCancel}
-            style={{
-              backgroundColor: "#ef4444",
-              color: "#ffffff",
-              padding: "10px 20px",
-              fontSize: "1rem",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              marginTop: "1rem",
-            }}
-          >
-            Volver
-          </button>
+        type="button"
+        onClick={handleCancel}
+        style={{
+          backgroundColor: "#ef4444",
+          color: "#000000", // Cambiado a negro
+          padding: "10px 20px",
+          fontSize: "1rem",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+          marginTop: "1rem",
+        }}
+      >
+        Volver
+      </button>
     </main>
   );
 };

@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation"; // Importamos useRouter para navega
 
 const UpdatePage = () => {
   const [form, setForm] = useState({
-      CodigoComision: "",
-      Tipo: "",
-      MontoBase: "",
-      TransaccionesBase: "",
-      ManejaSegmenos: "",
+    CodigoComision: "",
+    Tipo: "",
+    MontoBase: "",
+    TransaccionesBase: "",
+    ManejaSegmenos: "",
   });
 
   const router = useRouter(); // Inicializamos el router para redirigir
@@ -47,7 +47,7 @@ const UpdatePage = () => {
           marginBottom: "1.5rem",
         }}
       >
-        Actualizar Comision
+        Actualizar Comisión
       </h1>
       <form
         onSubmit={handleSubmit}
@@ -72,7 +72,6 @@ const UpdatePage = () => {
               {field
                 .replace(/([A-Z])/g, " $1")
                 .replace(/^./, (str) => str.toUpperCase())}{" "}
-              {/* Formatea los nombres */}
             </label>
             <input
               id={field}
@@ -80,12 +79,16 @@ const UpdatePage = () => {
               name={field}
               value={form[field]}
               onChange={handleChange}
+              disabled={
+                field !== "MontoBase" && field !== "TransaccionesBase"
+              } // Deshabilitar excepto para MontoBase y TransaccionesBase
               style={{
                 padding: "10px",
                 fontSize: "1rem",
                 borderRadius: "4px",
                 border: "1px solid #d1d5db",
-                backgroundColor: "#ffffff",
+                backgroundColor: field !== "MontoBase" && field !== "TransaccionesBase" ? "#e5e7eb" : "#ffffff", // Fondo gris para campos deshabilitados
+                color: "#000000",
               }}
               placeholder={`Ingrese ${field
                 .replace(/([A-Z])/g, " $1")
