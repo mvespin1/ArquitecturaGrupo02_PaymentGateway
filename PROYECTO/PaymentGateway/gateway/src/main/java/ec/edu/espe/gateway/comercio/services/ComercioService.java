@@ -16,7 +16,7 @@ import jakarta.transaction.Transactional;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional.TxType;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -55,7 +55,7 @@ public class ComercioService {
     public void registrarComercio(Comercio comercio) {
         try {
             validarNuevoComercio(comercio);
-            comercio.setFechaCreacion(LocalDate.now());
+            comercio.setFechaCreacion(LocalDateTime.now());
             comercio.setEstado(ESTADO_PENDIENTE);
             comercioRepository.save(comercio);
         } catch (Exception e) {
@@ -97,12 +97,12 @@ public class ComercioService {
             
             switch (nuevoEstado) {
                 case ESTADO_ACTIVO:
-                comercio.setFechaActivacion(LocalDate.now());
+                comercio.setFechaActivacion(LocalDateTime.now());
                 comercio.setFechaSuspension(null);
                 break;
                 case ESTADO_SUSPENDIDO:
                     validarSuspension(comercio);
-                comercio.setFechaSuspension(LocalDate.now());
+                comercio.setFechaSuspension(LocalDateTime.now());
                     cancelarTransaccionesActivas(comercio);
                 break;
                 case ESTADO_INACTIVO:
@@ -126,7 +126,7 @@ public class ComercioService {
     }
 
     private void validarFechasEstado(Comercio comercio, String nuevoEstado) {
-        LocalDate fechaActual = LocalDate.now();
+        LocalDateTime fechaActual = LocalDateTime.now();
         
         if (ESTADO_ACTIVO.equals(nuevoEstado) && comercio.getFechaActivacion() != null 
             && comercio.getFechaActivacion().isAfter(fechaActual)) {
@@ -181,7 +181,7 @@ public class ComercioService {
 
     private void actualizarEstadoDispositivos(Comercio comercio) {
         List<PosComercio> dispositivos = posComercioRepository.findByComercio(comercio);
-        LocalDate fechaActivacionComercio = comercio.getFechaActivacion();
+        LocalDateTime fechaActivacionComercio = comercio.getFechaActivacion();
         
         for (PosComercio dispositivo : dispositivos) {
             if (ESTADO_INACTIVO.equals(comercio.getEstado()) || ESTADO_SUSPENDIDO.equals(comercio.getEstado())) {

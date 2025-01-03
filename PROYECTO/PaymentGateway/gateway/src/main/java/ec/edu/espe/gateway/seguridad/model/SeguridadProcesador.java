@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "GTW_SEGURIDAD_PROCESADOR")
@@ -19,7 +20,7 @@ public class SeguridadProcesador implements Serializable {
     private String clave;
     @NotNull
     @Column(name = "FECHA_ACTUALIZACION", nullable = false)
-    private LocalDate fechaActualizacion;
+    private LocalDateTime fechaActualizacion;
     @NotNull
     @Column(name = "FECHA_ACTIVACION", nullable = false)
     private LocalDate fechaActivacion;
@@ -53,11 +54,11 @@ public class SeguridadProcesador implements Serializable {
         this.clave = clave;
     }
 
-    public LocalDate getFechaActualizacion() {
+    public LocalDateTime getFechaActualizacion() {
         return fechaActualizacion;
     }
 
-    public void setFechaActualizacion(LocalDate fechaActualizacion) {
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
     }
 

@@ -41,14 +41,11 @@ public class FacturacionComercio {
     @NotNull
     @Column(name = "ESTADO", length = 3, nullable = false)
     private String estado;
-    @NotNull
-    @Column(name = "CODIGO_FACTURACION", length = 20, nullable = false)
+    @Column(name = "CODIGO_FACTURACION", length = 20)
     private String codigoFacturacion;
-    @NotNull
-    @Column(name = "FECHA_FACTURACION", nullable = false)
+    @Column(name = "FECHA_FACTURACION")
     private LocalDate fechaFacturacion;
-    @NotNull
-    @Column(name = "FECHA_PAGO", nullable = false)
+    @Column(name = "FECHA_PAGO")
     private LocalDate fechaPago;
     @NotNull
     @ManyToOne

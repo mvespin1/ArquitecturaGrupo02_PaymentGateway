@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityNotFoundException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,7 +33,7 @@ public class RecurrenceService {
 
     @Transactional
     public void procesarTransaccionesRecurrentes() {
-        LocalDate fechaActual = LocalDate.now();
+        LocalDateTime fechaActual = LocalDateTime.now();
         List<Transaccion> transaccionesRecurrentes = transaccionRepository.findRecurrentTransactionsToProcess(fechaActual);
 
         for (Transaccion transaccionRecurrente : transaccionesRecurrentes) {
@@ -45,7 +46,7 @@ public class RecurrenceService {
         }
     }
 
-    private void procesarTransaccionRecurrente(Transaccion transaccionRecurrente, LocalDate fechaActual) {
+    private void procesarTransaccionRecurrente(Transaccion transaccionRecurrente, LocalDateTime fechaActual) {
         // Validar estado del comercio
         Comercio comercio = transaccionRecurrente.getComercio();
         if (!"ACT".equals(comercio.getEstado())) {

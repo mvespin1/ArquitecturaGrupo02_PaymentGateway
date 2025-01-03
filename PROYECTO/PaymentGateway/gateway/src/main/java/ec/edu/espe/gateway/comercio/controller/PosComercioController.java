@@ -6,7 +6,7 @@ import ec.edu.espe.gateway.comercio.model.PosComercio;
 import ec.edu.espe.gateway.comercio.model.PosComercioPK;
 import ec.edu.espe.gateway.comercio.services.PosComercioService;
 import jakarta.persistence.EntityNotFoundException;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -72,7 +72,7 @@ public class PosComercioController {
     public ResponseEntity<Void> actualizarUltimoUso(
             @PathVariable String codigoPos, 
             @PathVariable String tipo,
-            @RequestParam LocalDate fechaUltimoUso) {
+            @RequestParam LocalDateTime fechaUltimoUso) {
         try {
             PosComercioPK id = new PosComercioPK(codigoPos, tipo);
             posComercioService.actualizarUltimoUso(id, fechaUltimoUso);

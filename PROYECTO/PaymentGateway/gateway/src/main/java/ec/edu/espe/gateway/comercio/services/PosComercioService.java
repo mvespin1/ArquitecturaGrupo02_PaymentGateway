@@ -7,7 +7,7 @@ import ec.edu.espe.gateway.comercio.model.PosComercio;
 import ec.edu.espe.gateway.comercio.model.PosComercioPK;
 import ec.edu.espe.gateway.comercio.model.Comercio;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
 import jakarta.persistence.EntityNotFoundException;
@@ -85,7 +85,7 @@ public class PosComercioService {
         try {
             PosComercio pos = obtenerPorId(id);
             Comercio comercio = pos.getComercio();
-            LocalDate fechaActual = LocalDate.now();
+            LocalDateTime fechaActual = LocalDateTime.now();
 
             // Validar estado del comercio
             if (!"ACT".equals(comercio.getEstado())) {
@@ -125,7 +125,7 @@ public class PosComercioService {
         }
     }
 
-    public void actualizarUltimoUso(PosComercioPK id, LocalDate fechaUltimoUso) {
+    public void actualizarUltimoUso(PosComercioPK id, LocalDateTime fechaUltimoUso) {
         try {
             PosComercio pos = obtenerPorId(id);
             
@@ -135,7 +135,7 @@ public class PosComercioService {
             }
 
             // Validar coherencia de fechas
-            if (fechaUltimoUso.isAfter(LocalDate.now())) {
+            if (fechaUltimoUso.isAfter(LocalDateTime.now())) {
                 throw new IllegalStateException("La fecha de último uso no puede ser futura");
             }
             if (pos.getFechaActivacion() != null && fechaUltimoUso.isBefore(pos.getFechaActivacion())) {

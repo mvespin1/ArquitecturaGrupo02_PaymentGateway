@@ -3,7 +3,7 @@ package ec.edu.espe.gateway.comercio.model;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import jakarta.validation.constraints.NotNull;
 
 import ec.edu.espe.gateway.comision.model.Comision;
@@ -30,7 +30,7 @@ public class Comercio implements Serializable {
     private String nombreComercial;
     @NotNull
     @Column(name = "FECHA_CREACION", nullable = false)
-    private LocalDate fechaCreacion;
+    private LocalDateTime fechaCreacion;
     @NotNull
     @ManyToOne
     @JoinColumn(name = "COD_COMISION", nullable = false)
@@ -42,9 +42,9 @@ public class Comercio implements Serializable {
     @Column(name = "ESTADO", length = 3, nullable = false)
     private String estado;
     @Column(name = "FECHA_ACTIVACION")
-    private LocalDate fechaActivacion;
+    private LocalDateTime fechaActivacion;
     @Column(name = "FECHA_SUSPENSION")
-    private LocalDate fechaSuspension;
+    private LocalDateTime fechaSuspension;
 
     public Comercio() {
     }
@@ -95,11 +95,11 @@ public class Comercio implements Serializable {
         this.nombreComercial = nombreComercial;
     }
 
-    public LocalDate getFechaCreacion() {
+    public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public void setFechaCreacion(LocalDate fechaCreacion) {
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 
@@ -133,19 +133,19 @@ public class Comercio implements Serializable {
         this.estado = estado;
     }
 
-    public LocalDate getFechaActivacion() {
+    public LocalDateTime getFechaActivacion() {
         return fechaActivacion;
     }
 
-    public void setFechaActivacion(LocalDate fechaActivacion) {
+    public void setFechaActivacion(LocalDateTime fechaActivacion) {
         this.fechaActivacion = fechaActivacion;
     }
 
-    public LocalDate getFechaSuspension() {
+    public LocalDateTime getFechaSuspension() {
         return fechaSuspension;
     }
 
-    public void setFechaSuspension(LocalDate fechaSuspension) {
+    public void setFechaSuspension(LocalDateTime fechaSuspension) {
         this.fechaSuspension = fechaSuspension;
     }
 

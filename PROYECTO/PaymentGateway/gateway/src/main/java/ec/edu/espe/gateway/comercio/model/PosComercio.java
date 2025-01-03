@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "GTW_POS_COMERCIO")
@@ -18,12 +18,10 @@ public class PosComercio implements Serializable {
     @NotNull
     @Column(name = "ESTADO", length = 3, nullable = false)
     private String estado;
-    @NotNull
-    @Column(name = "FECHA_ACTIVACION", nullable = false)
-    private LocalDate fechaActivacion;
-    @NotNull
-    @Column(name = "ULTIMO_USO", nullable = false)
-    private LocalDate ultimoUso;
+    @Column(name = "FECHA_ACTIVACION")
+    private LocalDateTime fechaActivacion;
+    @Column(name = "ULTIMO_USO")
+    private LocalDateTime ultimoUso;
     @NotNull
     @ManyToOne
     @JoinColumn(name = "COD_COMERCIO", nullable = false)
@@ -64,19 +62,19 @@ public class PosComercio implements Serializable {
         this.estado = estado;
     }
 
-    public LocalDate getFechaActivacion() {
+    public LocalDateTime getFechaActivacion() {
         return fechaActivacion;
     }
 
-    public void setFechaActivacion(LocalDate fechaActivacion) {
+    public void setFechaActivacion(LocalDateTime fechaActivacion) {
         this.fechaActivacion = fechaActivacion;
     }
 
-    public LocalDate getUltimoUso() {
+    public LocalDateTime getUltimoUso() {
         return ultimoUso;
     }
 
-    public void setUltimoUso(LocalDate ultimoUso) {
+    public void setUltimoUso(LocalDateTime ultimoUso) {
         this.ultimoUso = ultimoUso;
     }
 

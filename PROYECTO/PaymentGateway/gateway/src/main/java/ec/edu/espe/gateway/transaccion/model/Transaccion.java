@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import jakarta.validation.constraints.NotNull;
 
 import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
@@ -43,7 +44,7 @@ public class Transaccion implements Serializable {
     private String codigoUnicoTransaccion;
     @NotNull
     @Column(name = "FECHA", nullable = false)
-    private LocalDate fecha;
+    private LocalDateTime fecha;
     @NotNull
     @Column(name = "ESTADO", length = 3, nullable = false)
     private String estado;
@@ -139,11 +140,11 @@ public class Transaccion implements Serializable {
         this.codigoUnicoTransaccion = codigoUnicoTransaccion;
     }
 
-    public LocalDate getFecha() {
+    public LocalDateTime getFecha() {
         return fecha;
     }
 
-    public void setFecha(LocalDate fecha) {
+    public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
     }
 

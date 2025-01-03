@@ -16,6 +16,7 @@ import java.util.UUID;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 
 @Service
@@ -44,7 +45,7 @@ public class TransaccionService {
 
     public Transaccion crearTransaccionPOS(Transaccion transaccion, String codigoPos) {
         try {
-            LocalDate fechaActual = LocalDate.now();
+            LocalDateTime fechaActual = LocalDateTime.now();
             
             if (transaccion.getFecha() != null && transaccion.getFecha().isAfter(fechaActual)) {
                 throw new IllegalArgumentException("La fecha de la transacción no puede ser futura");
@@ -101,7 +102,7 @@ public class TransaccionService {
         }
 
         // Validar fecha
-        LocalDate fechaActual = LocalDate.now();
+        LocalDateTime fechaActual = LocalDateTime.now();
         if (transaccion.getFecha() != null && transaccion.getFecha().isAfter(fechaActual)) {
             throw new IllegalArgumentException("La fecha de la transacción no puede ser futura");
         }

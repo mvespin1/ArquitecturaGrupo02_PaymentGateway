@@ -67,7 +67,7 @@ public class FacturaService {
                 fechaInicio = ultimaFactura.getFechaFin();
             } else {
                 // Primera factura, usar la fecha de activación del comercio
-                fechaInicio = comercio.getFechaActivacion();
+                fechaInicio = comercio.getFechaActivacion().toLocalDate();
             }
             fechaFin = fechaInicio.plusMonths(1);
 

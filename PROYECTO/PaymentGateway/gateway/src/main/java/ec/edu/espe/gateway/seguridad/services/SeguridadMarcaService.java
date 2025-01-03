@@ -4,7 +4,7 @@ import ec.edu.espe.gateway.seguridad.model.SeguridadMarca;
 import ec.edu.espe.gateway.seguridad.repository.SeguridadMarcaRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.EntityNotFoundException;
@@ -32,7 +32,7 @@ public class SeguridadMarcaService {
             throw new IllegalArgumentException(ERROR_CLAVE_INVALIDA);
         }
 
-        marca.setFechaActualizacion(LocalDate.now());
+        marca.setFechaActualizacion(LocalDateTime.now());
 
         try {
             return repository.save(marca);
@@ -66,13 +66,13 @@ public class SeguridadMarcaService {
             throw new IllegalArgumentException(ERROR_CLAVE_INVALIDA);
         }
 
-        updatedMarcaDetails.setFechaActualizacion(LocalDate.now());
+        updatedMarcaDetails.setFechaActualizacion(LocalDateTime.now());
 
         try {
             return repository.findById(marcaId)
                     .map(marcaExistente -> {
                         marcaExistente.setClave(updatedMarcaDetails.getClave());
-                        marcaExistente.setFechaActualizacion(LocalDate.now());
+                        marcaExistente.setFechaActualizacion(LocalDateTime.now());
                         return repository.save(marcaExistente);
                     })
                     .orElseThrow(() -> new EntityNotFoundException("Marca con ID " + marcaId + " no encontrada."));

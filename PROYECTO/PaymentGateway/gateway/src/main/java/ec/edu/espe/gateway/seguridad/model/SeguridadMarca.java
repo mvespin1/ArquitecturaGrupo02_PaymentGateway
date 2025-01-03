@@ -4,7 +4,7 @@ import java.io.Serializable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "GTW_SEGURIDAD_MARCA")
@@ -18,7 +18,7 @@ public class SeguridadMarca implements Serializable {
     private String clave;
     @NotNull
     @Column(name = "FECHA_ACTUALIZACION", nullable = false)
-    private LocalDate fechaActualizacion;
+    private LocalDateTime fechaActualizacion;
 
     // Empty constructor
     public SeguridadMarca() {
@@ -46,11 +46,11 @@ public class SeguridadMarca implements Serializable {
         this.clave = clave;
     }
 
-    public LocalDate getFechaActualizacion() {
+    public LocalDateTime getFechaActualizacion() {
         return this.fechaActualizacion;
     }
 
-    public void setFechaActualizacion(LocalDate fechaActualizacion) {
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
     }
 

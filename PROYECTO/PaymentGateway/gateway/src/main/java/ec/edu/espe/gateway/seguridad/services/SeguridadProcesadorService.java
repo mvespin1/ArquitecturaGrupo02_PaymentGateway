@@ -5,6 +5,7 @@ import ec.edu.espe.gateway.seguridad.model.SeguridadProcesador;
 import ec.edu.espe.gateway.seguridad.repository.SeguridadProcesadorRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.EntityNotFoundException;
@@ -27,7 +28,7 @@ public class SeguridadProcesadorService {
         try {
             validarClave(procesador.getClave());
             procesador.setEstado(ESTADO_PENDIENTE);
-            procesador.setFechaActualizacion(LocalDate.now());
+            procesador.setFechaActualizacion(LocalDateTime.now());
             return repository.save(procesador);
         } catch (Exception ex) {
             throw new RuntimeException("No se pudo crear el procesador. Motivo: " + ex.getMessage());
@@ -57,7 +58,7 @@ public class SeguridadProcesadorService {
             return repository.findById(id)
                     .map(procesadorExistente -> {
                         procesadorExistente.setClave(updatedProcesadorDetails.getClave());
-                        procesadorExistente.setFechaActualizacion(LocalDate.now());
+                        procesadorExistente.setFechaActualizacion(LocalDateTime.now());
                         procesadorExistente
                                 .setFechaActivacion(updatedProcesadorDetails.getEstado().equals(ESTADO_ACTIVO)
                                         ? LocalDate.now()
@@ -79,7 +80,7 @@ public class SeguridadProcesadorService {
             return repository.findById(id)
                     .map(procesadorExistente -> {
                         procesadorExistente.setEstado(ESTADO_INACTIVO);
-                        procesadorExistente.setFechaActualizacion(LocalDate.now());
+                        procesadorExistente.setFechaActualizacion(LocalDateTime.now());
                         return repository.save(procesadorExistente);
                     })
                     .orElseThrow(() -> new EntityNotFoundException("Procesador con ID " + id + " no encontrado."));

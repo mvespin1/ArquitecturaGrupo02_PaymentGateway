@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import ec.edu.espe.gateway.seguridad.model.SeguridadGateway;
 import ec.edu.espe.gateway.seguridad.repository.SeguridadGatewayRepository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.EntityNotFoundException;
@@ -39,7 +40,7 @@ public class SeguridadGatewayService {
 
     public SeguridadGateway createGateway(SeguridadGateway gateway) {
         try {
-            gateway.setFechaCreacion(LocalDate.now());
+            gateway.setFechaCreacion(LocalDateTime.now());
             gateway.setEstado(ESTADO_PENDIENTE);
             if (gateway.getClave().length() > 128) {
                 throw new IllegalArgumentException("La clave no puede exceder los 128 caracteres.");
@@ -126,7 +127,7 @@ public class SeguridadGatewayService {
 
             SeguridadGateway nuevaClave = new SeguridadGateway();
             nuevaClave.setClave(generarClaveSegura());
-            nuevaClave.setFechaCreacion(LocalDate.now());
+            nuevaClave.setFechaCreacion(LocalDateTime.now());
             nuevaClave.setFechaActivacion(LocalDate.now());
             nuevaClave.setEstado(ESTADO_ACTIVO);
             repository.save(nuevaClave);
@@ -141,7 +142,7 @@ public class SeguridadGatewayService {
             if (repository.findByEstado(ESTADO_ACTIVO).isEmpty()) {
                 SeguridadGateway nuevaClave = new SeguridadGateway();
                 nuevaClave.setClave(generarClaveSegura());
-                nuevaClave.setFechaCreacion(LocalDate.now());
+                nuevaClave.setFechaCreacion(LocalDateTime.now());
                 nuevaClave.setFechaActivacion(LocalDate.now());
                 nuevaClave.setEstado(ESTADO_ACTIVO);
                 repository.save(nuevaClave);
