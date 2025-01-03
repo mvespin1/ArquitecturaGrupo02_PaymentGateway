@@ -3,50 +3,79 @@ package ec.edu.espe.pos.service;
 import ec.edu.espe.pos.model.SeguridadGateway;
 import ec.edu.espe.pos.repository.SeguridadGatewayRepository;
 import org.springframework.stereotype.Service;
+
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.Cipher;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Base64;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import jakarta.annotation.PostConstruct;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.time.LocalDateTime;
 
 @Service
-@Transactional
-@EnableScheduling
 public class SeguridadGatewayService {
 
+    private final RestTemplate restTemplate;
     private final SeguridadGatewayRepository seguridadGatewayRepository;
+    private static final Logger log = LoggerFactory.getLogger(SeguridadGatewayService.class);
 
-    public SeguridadGatewayService(SeguridadGatewayRepository seguridadGatewayRepository) {
+    
+    private static final String SEGURIDAD_URL = "http://localhost:8083/api/seguridad/clave-activa";
+
+    public SeguridadGatewayService(RestTemplate restTemplate, 
+                                  SeguridadGatewayRepository seguridadGatewayRepository) {
+        this.restTemplate = restTemplate;
         this.seguridadGatewayRepository = seguridadGatewayRepository;
     }
 
-    public String generarClaveSegura() {
-        try {
-            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-            keyGenerator.init(128, new SecureRandom());
-            SecretKey secretKey = keyGenerator.generateKey();
-            byte[] keyBytes = secretKey.getEncoded();
-            return Base64.getEncoder().encodeToString(keyBytes);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al generar la clave segura: " + e.getMessage());
-        }
+    @PostConstruct
+    @Transactional
+    public void inicializarClave() {
+        log.info("Inicializando clave al arrancar el servicio");
+        actualizarClaveDesdeGateway();
     }
 
-    public void guardarClaveEnBaseDeDatos() {
-        SeguridadGateway nuevaClave = new SeguridadGateway();
-        String claveGenerada = generarClaveSegura();
-        nuevaClave.setClave(claveGenerada);
-        nuevaClave.setFechaActivacion(LocalDate.now());
-        nuevaClave.setFechaActualizacion(LocalDateTime.now());
-        nuevaClave.setEstado("ACT");
-        seguridadGatewayRepository.save(nuevaClave);
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public void actualizarClaveDesdeGateway() {
+        try {
+            log.info("Intentando actualizar clave desde: {}", SEGURIDAD_URL);
+            
+            ResponseEntity<SeguridadGateway> response = restTemplate.getForEntity(
+                SEGURIDAD_URL,
+                SeguridadGateway.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                SeguridadGateway nuevaClave = response.getBody();
+                
+                if (nuevaClave != null && nuevaClave.getClave() != null && 
+                    !seguridadGatewayRepository.existsByClave(nuevaClave.getClave())) {
+                    
+                    log.info("Actualizando claves activas a inactivas");
+                    seguridadGatewayRepository.updateEstadoForActiveCodes("INA");
+                    
+                    // Crear una nueva instancia para evitar problemas de versión
+                    SeguridadGateway claveAGuardar = new SeguridadGateway();
+                    claveAGuardar.setClave(nuevaClave.getClave());
+                    claveAGuardar.setEstado("ACT");
+                    claveAGuardar.setFechaActivacion(nuevaClave.getFechaActivacion());
+                    claveAGuardar.setFechaActualizacion(LocalDateTime.now());
+                    
+                    log.info("Guardando nueva clave: {}", claveAGuardar.getClave());
+                    seguridadGatewayRepository.save(claveAGuardar);
+                    log.info("Clave actualizada exitosamente");
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error al actualizar clave desde gateway: ", e);
+        }
     }
 
     public String encriptarInformacion(String informacion, String clave) {
@@ -97,49 +126,5 @@ public class SeguridadGatewayService {
                 .stream()
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No se encontró una clave activa"));
-    }
-
-    @Scheduled(cron = "0 0 0 */20 * *")
-    public void generarClaveAutomaticamente() {
-        try {
-            SeguridadGateway claveActual = obtenerClaveActiva();
-            if (claveActual != null) {
-                LocalDateTime fechaUltimaActualizacion = claveActual.getFechaActualizacion();
-                if (fechaUltimaActualizacion.plusDays(20).isAfter(LocalDateTime.now())) {
-                    return;
-                }
-                claveActual.setEstado("INA");
-                seguridadGatewayRepository.save(claveActual);
-            }
-
-            guardarClaveEnBaseDeDatos();
-        } catch (Exception e) {
-            System.err.println("Error al generar clave automáticamente: " + e.getMessage());
-        }
-    }
-
-    public boolean requiereActualizacionClave(SeguridadGateway clave) {
-        if (clave == null) return true;
-        LocalDateTime fechaUltimaActualizacion = clave.getFechaActualizacion();
-        return fechaUltimaActualizacion.plusDays(20).isBefore(LocalDateTime.now());
-    }
-
-    @PostConstruct
-    public void inicializarClave() {
-        try {
-            // Verificar si ya existe una clave activa
-            boolean existeClaveActiva = seguridadGatewayRepository.findByEstado("ACT")
-                    .stream()
-                    .findFirst()
-                    .isPresent();
-
-            // Si no existe clave activa, crear una nueva
-            if (!existeClaveActiva) {
-                guardarClaveEnBaseDeDatos();
-                System.out.println("Primera clave de seguridad generada exitosamente");
-            }
-        } catch (Exception e) {
-            System.err.println("Error al inicializar la primera clave: " + e.getMessage());
-        }
     }
 }  

@@ -7,8 +7,16 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.EntityNotFoundException;
+import javax.crypto.KeyGenerator;
+import java.security.SecureRandom;
+import javax.crypto.SecretKey;
+import java.util.Base64;
+import jakarta.annotation.PostConstruct;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Service
+@EnableScheduling
 public class SeguridadGatewayService {
 
     private final SeguridadGatewayRepository repository;
@@ -89,5 +97,64 @@ public class SeguridadGatewayService {
         } catch (Exception ex) {
             throw new RuntimeException("No se pudo eliminar el gateway con ID " + id + ". Motivo: " + ex.getMessage());
         }
+    }
+
+    public String generarClaveSegura() {
+        try {
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+            keyGenerator.init(128, new SecureRandom());
+            SecretKey secretKey = keyGenerator.generateKey();
+            byte[] keyBytes = secretKey.getEncoded();
+            return Base64.getEncoder().encodeToString(keyBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar la clave segura: " + e.getMessage());
+        }
+    }
+
+    @Scheduled(cron = "0 0 0 */20 * *")
+    public void generarClaveAutomaticamente() {
+        try {
+            List<SeguridadGateway> clavesActivas = repository.findByEstado(ESTADO_ACTIVO);
+            if (!clavesActivas.isEmpty()) {
+                SeguridadGateway claveActual = clavesActivas.get(0);
+                if (claveActual.getFechaActivacion().plusDays(20).isAfter(LocalDate.now())) {
+                    return;
+                }
+                claveActual.setEstado(ESTADO_INACTIVO);
+                repository.save(claveActual);
+            }
+
+            SeguridadGateway nuevaClave = new SeguridadGateway();
+            nuevaClave.setClave(generarClaveSegura());
+            nuevaClave.setFechaCreacion(LocalDate.now());
+            nuevaClave.setFechaActivacion(LocalDate.now());
+            nuevaClave.setEstado(ESTADO_ACTIVO);
+            repository.save(nuevaClave);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar clave automáticamente: " + e.getMessage());
+        }
+    }
+
+    @PostConstruct
+    public void inicializarClave() {
+        try {
+            if (repository.findByEstado(ESTADO_ACTIVO).isEmpty()) {
+                SeguridadGateway nuevaClave = new SeguridadGateway();
+                nuevaClave.setClave(generarClaveSegura());
+                nuevaClave.setFechaCreacion(LocalDate.now());
+                nuevaClave.setFechaActivacion(LocalDate.now());
+                nuevaClave.setEstado(ESTADO_ACTIVO);
+                repository.save(nuevaClave);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error al inicializar la primera clave: " + e.getMessage());
+        }
+    }
+
+    public SeguridadGateway obtenerClaveActiva() {
+        return repository.findByEstado(ESTADO_ACTIVO)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No se encontró una clave activa"));
     }
 }
