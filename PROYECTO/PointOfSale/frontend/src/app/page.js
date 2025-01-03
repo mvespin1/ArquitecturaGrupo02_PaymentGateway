@@ -12,19 +12,17 @@ const MainPage = () => {
     transactionAmount: "",
   });
 
-  const [errors, setErrors] = useState({}); // Estado para los errores de validación
+  const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    // Validación para el CVV (máximo 3 dígitos)
     if (name === "cvv" && value.length > 3) return;
 
-    // Formateo del número de tarjeta (cada 4 dígitos con espacio)
     if (name === "cardNumber") {
       const formattedValue = value
-        .replace(/\D/g, "") // Eliminar caracteres no numéricos
-        .replace(/(\d{4})(?=\d)/g, "$1 "); // Agregar un espacio cada 4 dígitos
+        .replace(/\D/g, "")
+        .replace(/(\d{4})(?=\d)/g, "$1 ");
       setFormData({ ...formData, [name]: formattedValue });
       return;
     }
@@ -34,61 +32,85 @@ const MainPage = () => {
       [name]: value,
     });
 
-    // Limpiar el error del campo actual al escribir
     setErrors({
       ...errors,
       [name]: "",
     });
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-
-    // Validaciones
+  
     const newErrors = {};
-
-    // Validación del número de tarjeta
-    const cleanCardNumber = formData.cardNumber.replace(/\s/g, ""); // Eliminar espacios para validación
+    const cleanCardNumber = formData.cardNumber.replace(/\s/g, "");
     if (!cleanCardNumber || !/^\d{16}$/.test(cleanCardNumber)) {
       newErrors.cardNumber = "El número de la tarjeta debe tener 16 dígitos.";
     }
-
-    // Validación de fecha de vencimiento
     if (!formData.expiryDate || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(formData.expiryDate)) {
       newErrors.expiryDate = "La fecha de vencimiento debe estar en formato MM/YY.";
-    } else {
-      const [month, year] = formData.expiryDate.split("/").map(Number);
-      const currentYear = new Date().getFullYear() % 100; // Últimos dos dígitos del año actual
-      const currentMonth = new Date().getMonth() + 1; // Mes actual
-
-      if (year < 25 || (year === currentYear && month < currentMonth)) {
-        newErrors.expiryDate = "La fecha de vencimiento debe ser a partir del año 2025.";
-      }
     }
-
-    // Validación de CVV
     if (!formData.cvv || formData.cvv.length !== 3) {
       newErrors.cvv = "El CVV debe tener exactamente 3 dígitos.";
     }
-
-    // Validación de monto
     if (!formData.transactionAmount || isNaN(formData.transactionAmount)) {
       newErrors.transactionAmount = "El monto debe ser un número válido.";
     }
-
+  
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
+  
+    try {
+      // 1. Obtener la clave activa
+      const claveResponse = await fetch("http://localhost:8082/api/seguridad-gateway/clave-activa");
+      if (!claveResponse.ok) throw new Error("Error al obtener la clave de encriptación");
+      const claveData = await claveResponse.json();
 
-    const isSuccessful = Math.random() > 0.5;
+      // 2. Preparar datos sensibles para encriptar
+      const datosSensibles = JSON.stringify({
+        cardNumber: formData.cardNumber.replace(/\s/g, ""),
+        expiryDate: formData.expiryDate,
+        cvv: formData.cvv
+      });
 
-    if (isSuccessful) {
-      alert("Transacción realizada con éxito.");
-    } else {
-      alert("Transacción rechazada. Inténtalo nuevamente.");
+      // 3. Encriptar datos sensibles
+      const encryptResponse = await fetch("http://localhost:8082/api/seguridad-gateway/encriptar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          informacion: datosSensibles,
+          clave: claveData.clave
+        })
+      });
+
+      if (!encryptResponse.ok) {
+        const errorText = await encryptResponse.text();
+        throw new Error(`Error al encriptar los datos: ${errorText}`);
+      }
+      const { datosEncriptados } = await encryptResponse.json();
+
+      // 4. Enviar transacción con datos encriptados
+      const transactionPayload = {
+        monto: parseFloat(formData.transactionAmount),
+        marca: formData.cardName,
+        encryptedData: datosEncriptados
+      };
+
+      const response = await fetch("http://localhost:8082/api/pagos/procesar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) throw new Error("Error al procesar los datos en el backend");
+      const result = await response.text();
+      alert(`Transacción exitosa: ${result}`);
+    } catch (error) {
+      console.error('Error detallado:', error);
+      alert(`Error al procesar la transacción: ${error.message}`);
     }
-  };
+  };  
 
   return (
     <main className="main-container">
@@ -142,9 +164,10 @@ const MainPage = () => {
             onChange={handleInputChange}
             className="form-input"
           >
-            <option value="MasterCard">MasterCard</option>
-            <option value="Visa">Visa</option>
-            <option value="American Express">American Express</option>
+            <option value="MSCD">MasterCard</option>
+            <option value="VISA">Visa</option>
+            <option value="AMEX">American Express</option>
+            <option value="DINE">Diners Club</option>
           </select>
         </div>
         <div className="form-group">

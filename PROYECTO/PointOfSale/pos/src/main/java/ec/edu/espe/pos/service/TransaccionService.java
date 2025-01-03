@@ -59,15 +59,31 @@ public class TransaccionService {
 
     public Transaccion crear(Transaccion transaccion) {
         try {
+            // Establecer valores predeterminados
+            transaccion.setTipo(TIPO_PAGO);
+            transaccion.setModalidad(MODALIDAD_SIMPLE);
+            transaccion.setMoneda("USD");
+            transaccion.setFecha(LocalDate.now());
+
+            // Generar un código único usando la fecha de la transacción
+            String codigoUnico = "TRX" + System.currentTimeMillis() + transaccion.getFecha();
+            transaccion.setCodigoUnicoTransaccion(codigoUnico);
+
+            // Validar la transacción con los nuevos datos
             validarTransaccion(transaccion);
             validarCodigoUnicoTransaccion(transaccion.getCodigoUnicoTransaccion());
 
-            if (TIPO_REVERSO.equals(transaccion.getTipo())) {
-                validarReverso(transaccion);
-            }
-
+            // Establecer estados iniciales
             transaccion.setEstado(ESTADO_ENVIADO);
             transaccion.setEstadoRecibo(ESTADO_RECIBO_PENDIENTE);
+
+            // Generar detalle de la transacción (limitado a 50 caracteres)
+            String detalle = String.format("TRX:%s %.2f%s",
+                    codigoUnico.substring(codigoUnico.length() - 8),
+                    transaccion.getMonto(),
+                    transaccion.getMoneda());
+            transaccion.setDetalle(detalle.length() > 50 ? detalle.substring(0, 50) : detalle);
+
             return this.transaccionRepository.save(transaccion);
         } catch (Exception ex) {
             throw new RuntimeException("No se pudo crear la transacción. Motivo: " + ex.getMessage());

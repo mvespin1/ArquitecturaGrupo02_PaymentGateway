@@ -3,94 +3,142 @@ package ec.edu.espe.pos.service;
 import ec.edu.espe.pos.model.SeguridadGateway;
 import ec.edu.espe.pos.repository.SeguridadGatewayRepository;
 import org.springframework.stereotype.Service;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import jakarta.transaction.Transactional.TxType;
-
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.Cipher;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
+import java.util.Base64;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import jakarta.annotation.PostConstruct;
 
 @Service
 @Transactional
+@EnableScheduling
 public class SeguridadGatewayService {
 
     private final SeguridadGatewayRepository seguridadGatewayRepository;
-
-    private static final int LONGITUD_CLAVE = 128;
-    private static final Pattern PATRON_CLAVE = Pattern
-            .compile("^[A-Za-z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]{128}$");
-
-    public static final String ESTADO_ACTIVO = "ACT";
-    public static final String ESTADO_INACTIVO = "INA";
-    public static final String ESTADO_PENDIENTE = "PEN";
 
     public SeguridadGatewayService(SeguridadGatewayRepository seguridadGatewayRepository) {
         this.seguridadGatewayRepository = seguridadGatewayRepository;
     }
 
-    @Transactional(value = TxType.NEVER)
-    public SeguridadGateway obtenerPorId(Integer id) {
-        Optional<SeguridadGateway> gatewayOpt = this.seguridadGatewayRepository.findById(id);
-        if (gatewayOpt.isPresent()) {
-            return gatewayOpt.get();
-        }
-        throw new EntityNotFoundException("No existe el gateway de seguridad con el ID: " + id);
-    }
-
-    public SeguridadGateway procesarActualizacionAutomatica(SeguridadGateway seguridadGateway) {
+    public String generarClaveSegura() {
         try {
-            validarSeguridadGateway(seguridadGateway);
-            seguridadGateway.setFechaActualizacion(LocalDate.now());
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+            keyGenerator.init(128, new SecureRandom());
+            SecretKey secretKey = keyGenerator.generateKey();
+            byte[] keyBytes = secretKey.getEncoded();
+            return Base64.getEncoder().encodeToString(keyBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar la clave segura: " + e.getMessage());
+        }
+    }
 
-            if (seguridadGateway.getCodigo() != null) {
-                SeguridadGateway existente = obtenerPorId(seguridadGateway.getCodigo());
-                existente.setClave(seguridadGateway.getClave());
-                existente.setEstado(seguridadGateway.getEstado());
-                existente.setFechaActualizacion(LocalDate.now());
-                return this.seguridadGatewayRepository.save(existente);
-            } else {
-                seguridadGateway.setFechaActivacion(LocalDate.now());
-                seguridadGateway.setEstado(ESTADO_ACTIVO);
-                return this.seguridadGatewayRepository.save(seguridadGateway);
+    public void guardarClaveEnBaseDeDatos() {
+        SeguridadGateway nuevaClave = new SeguridadGateway();
+        String claveGenerada = generarClaveSegura();
+        nuevaClave.setClave(claveGenerada);
+        nuevaClave.setFechaActivacion(LocalDate.now());
+        nuevaClave.setFechaActualizacion(LocalDate.now());
+        nuevaClave.setEstado("ACT");
+        seguridadGatewayRepository.save(nuevaClave);
+    }
+
+    public String encriptarInformacion(String informacion, String clave) {
+        try {
+            Cipher cipher = Cipher.getInstance("AES");
+            SecretKey secretKey = reconstruirClaveDesdeBase64(clave);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            byte[] encriptado = cipher.doFinal(informacion.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(encriptado);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al encriptar la información: " + e.getMessage());
+        }
+    }
+
+    public String desencriptarInformacion(String informacionEncriptada, String clave) {
+        try {
+            Cipher cipher = Cipher.getInstance("AES");
+            SecretKey secretKey = reconstruirClaveDesdeBase64(clave);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey);
+            byte[] desencriptado = cipher.doFinal(Base64.getDecoder().decode(informacionEncriptada));
+            return new String(desencriptado, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al desencriptar la información: " + e.getMessage());
+        }
+    }
+
+    private SecretKey reconstruirClaveDesdeBase64(String claveBase64) {
+        try {
+            // Asegurarse de que la clave tenga un padding Base64 correcto
+            String claveAjustada = claveBase64;
+            while (claveAjustada.length() % 4 != 0) {
+                claveAjustada += "=";
             }
-        } catch (Exception ex) {
-            throw new RuntimeException("Error al procesar la actualización automática. Motivo: " + ex.getMessage());
+            
+            byte[] claveBytes = Base64.getDecoder().decode(claveAjustada);
+            // Asegurarse de que la clave tenga exactamente 16 bytes para AES-128
+            byte[] clave16Bytes = new byte[16];
+            System.arraycopy(claveBytes, 0, clave16Bytes, 0, Math.min(claveBytes.length, 16));
+            
+            return new javax.crypto.spec.SecretKeySpec(clave16Bytes, "AES");
+        } catch (Exception e) {
+            throw new RuntimeException("Error al reconstruir la clave desde Base64: " + e.getMessage());
         }
     }
 
-    private void validarSeguridadGateway(SeguridadGateway seguridadGateway) {
-        validarClave(seguridadGateway.getClave());
-        validarEstado(seguridadGateway.getEstado());
-        validarFechaActivacion(seguridadGateway.getFechaActivacion());
+    public SeguridadGateway obtenerClaveActiva() {
+        return seguridadGatewayRepository.findByEstado("ACT")
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No se encontró una clave activa"));
     }
 
-    private void validarClave(String clave) {
-        if (clave == null || clave.length() != LONGITUD_CLAVE) {
-            throw new IllegalArgumentException("La clave debe tener exactamente 128 caracteres");
-        }
-        if (!PATRON_CLAVE.matcher(clave).matches()) {
-            throw new IllegalArgumentException("La clave contiene caracteres no permitidos");
-        }
-    }
+    @Scheduled(cron = "0 0 0 */20 * *")
+    public void generarClaveAutomaticamente() {
+        try {
+            SeguridadGateway claveActual = obtenerClaveActiva();
+            if (claveActual != null) {
+                LocalDate fechaUltimaActualizacion = claveActual.getFechaActualizacion();
+                if (fechaUltimaActualizacion.plusDays(20).isAfter(LocalDate.now())) {
+                    return;
+                }
+                claveActual.setEstado("INA");
+                seguridadGatewayRepository.save(claveActual);
+            }
 
-    private void validarEstado(String estado) {
-        if (estado != null && !List.of(ESTADO_ACTIVO, ESTADO_INACTIVO, ESTADO_PENDIENTE).contains(estado)) {
-            throw new IllegalArgumentException(
-                    "El estado proporcionado no es válido. Estados permitidos: ACT, INA, PEN");
-        }
-    }
-
-    private void validarFechaActivacion(LocalDate fechaActivacion) {
-        if (fechaActivacion != null && fechaActivacion.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("La fecha de activación no puede ser una fecha futura");
+            guardarClaveEnBaseDeDatos();
+        } catch (Exception e) {
+            System.err.println("Error al generar clave automáticamente: " + e.getMessage());
         }
     }
 
-    @Transactional(value = TxType.NEVER)
-    public List<SeguridadGateway> obtenerPorEstado(String estado) {
-        validarEstado(estado);
-        return this.seguridadGatewayRepository.findByEstado(estado);
+    public boolean requiereActualizacionClave(SeguridadGateway clave) {
+        if (clave == null) return true;
+        LocalDate fechaUltimaActualizacion = clave.getFechaActualizacion();
+        return fechaUltimaActualizacion.plusDays(20).isBefore(LocalDate.now());
     }
-}
+
+    @PostConstruct
+    public void inicializarClave() {
+        try {
+            // Verificar si ya existe una clave activa
+            boolean existeClaveActiva = seguridadGatewayRepository.findByEstado("ACT")
+                    .stream()
+                    .findFirst()
+                    .isPresent();
+
+            // Si no existe clave activa, crear una nueva
+            if (!existeClaveActiva) {
+                guardarClaveEnBaseDeDatos();
+                System.out.println("Primera clave de seguridad generada exitosamente");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al inicializar la primera clave: " + e.getMessage());
+        }
+    }
+}  
