@@ -14,11 +14,11 @@ const UpdatePage = () => {
     transaccionesRechazadas: "10",
     transaccionesReversadas: "5",
     codComision: "COM123",
-    valor: "$500",
+    valor: "500",
     estado: "Activo",
     codigoFacturacion: "COD001",
     fechaFacturacion: "2023-11-01",
-    fechaPago: "", // Este es el único campo editable
+    fechaPago: "", // Campo editable
   });
 
   const router = useRouter(); // Inicializamos el router para redirigir
@@ -40,12 +40,20 @@ const UpdatePage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Registro actualizado:", form);
-    router.push("/"); // Redirige a la página principal después de guardar
+
+    // Validar que el campo fechaPago no esté vacío
+    if (!form.fechaPago) {
+      alert("El campo 'Fecha de Pago' no puede estar vacío.");
+      return;
+    }
+
+    console.log("Formulario actualizado:", form);
+
+    router.push("/GtwFacturacionComercio/components"); // Redirige a la página principal después de guardar
   };
 
   const handleCancel = () => {
-    router.push("/"); // Redirige a la página principal sin guardar
+    router.push("/GtwFacturacionComercio/components"); // Redirige a la página principal sin guardar
   };
 
   return (
@@ -90,8 +98,7 @@ const UpdatePage = () => {
             >
               {field
                 .replace(/([A-Z])/g, " $1")
-                .replace(/^./, (str) => str.toUpperCase())}{" "}
-              {/* Formatea los nombres */}
+                .replace(/^./, (str) => str.toUpperCase())}
             </label>
             <input
               id={field}
@@ -105,8 +112,8 @@ const UpdatePage = () => {
                 fontSize: "1rem",
                 borderRadius: "4px",
                 border: "1px solid #d1d5db",
-                backgroundColor: field !== "fechaPago" ? "#e5e7eb" : "#ffffff", // Fondo gris para deshabilitados
-                color: field !== "fechaPago" ? "#6b7280" : "#000000", // Texto gris para deshabilitados
+                backgroundColor: field !== "fechaPago" ? "#e5e7eb" : "#ffffff",
+                color: field !== "fechaPago" ? "#6b7280" : "#000000",
               }}
               placeholder={`Ingrese ${field
                 .replace(/([A-Z])/g, " $1")

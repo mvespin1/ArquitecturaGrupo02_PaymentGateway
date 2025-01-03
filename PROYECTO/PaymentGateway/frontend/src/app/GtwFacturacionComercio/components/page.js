@@ -2,34 +2,120 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // Importa el hook para navegación
-import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
+import { FaEdit, FaEye } from "react-icons/fa";
 
 const CrudTable = () => {
   const [data, setData] = useState([
     {
-      id: 1,
       facturacionComercio: "FC001",
       comercio: "Comercio A",
       fechaInicio: "2023-01-01",
       fechaFin: "2023-12-31",
-      comision: "5%",
-      valor: "$500",
+      transaccionesProcesadas: "150",
+      transaccionesAutorizadas: "140",
+      transaccionesRechazadas: "10",
+      transaccionesReversadas: "5",
+      codComision: "COM001",
+      valor: "500",
       estado: "Activo",
+      codigoFacturacion: "COD123",
+      fechaFacturacion: "2023-10-01",
+      fechaPago: "2023-10-15",
     },
   ]);
 
   const router = useRouter(); // Inicializa el router para redirigir
 
-  const handleUpdate = (id) => {
-    router.push(`/GtwFacturacionComercio/update/`); // Redirige al formulario de actualización
+  const handleUpdate = async (item) => {
+    // Crear el objeto transactionPayload con los datos de la fila seleccionada
+    const transactionPayload = {
+      facturacionComercio: item.facturacionComercio,
+      comercio: item.comercio,
+      fechaInicio: item.fechaInicio,
+      fechaFin: item.fechaFin,
+      transaccionesProcesadas: item.transaccionesProcesadas,
+      transaccionesAutorizadas: item.transaccionesAutorizadas,
+      transaccionesRechazadas: item.transaccionesRechazadas,
+      transaccionesReversadas: item.transaccionesReversadas,
+      codComision: item.codComision,
+      valor: parseFloat(item.valor), // Convertir el valor a número flotante
+      estado: item.estado,
+      codigoFacturacion: item.codigoFacturacion,
+      fechaFacturacion: item.fechaFacturacion,
+      fechaPago: item.fechaPago,
+    };
+
+    console.log("Payload para actualización:", transactionPayload);
+
+    // Simular envío de datos (puedes usar fetch para un POST real)
+    try {
+      const response = await fetch("http://localhost:8082/api/pagos/procesar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      alert(`Respuesta de la API: ${JSON.stringify(result)}`);
+      router.push(`/GtwFacturacionComercio/update/${item.id}`); // Redirige al formulario de actualización
+    } catch (error) {
+      console.error("Error al enviar los datos:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
   };
 
-  const handleView = (id) => {
-    router.push(`/GtwFacturacionComercio/read/`); // Redirige a la página de visualización
+  const handleView = async (item) => {
+    // Crear el objeto transactionPayload con los datos de la fila seleccionada para visualizar
+    const transactionPayload = {
+      facturacionComercio: item.facturacionComercio,
+      comercio: item.comercio,
+      fechaInicio: item.fechaInicio,
+      fechaFin: item.fechaFin,
+      transaccionesProcesadas: item.transaccionesProcesadas,
+      transaccionesAutorizadas: item.transaccionesAutorizadas,
+      transaccionesRechazadas: item.transaccionesRechazadas,
+      transaccionesReversadas: item.transaccionesReversadas,
+      codComision: item.codComision,
+      valor: parseFloat(item.valor), // Convertir el valor a número flotante
+      estado: item.estado,
+      codigoFacturacion: item.codigoFacturacion,
+      fechaFacturacion: item.fechaFacturacion,
+      fechaPago: item.fechaPago,
+    };
+
+    console.log("Payload para visualización:", transactionPayload);
+
+    // Simular envío de datos
+    try {
+      const response = await fetch("http://localhost:8082/api/pagos/procesar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      alert(`Respuesta de la API: ${JSON.stringify(result)}`);
+      router.push(`/GtwFacturacionComercio/read/${item.id}`); // Redirige a la página de visualización
+    } catch (error) {
+      console.error("Error al enviar los datos:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
   };
 
   const handleBackToHome = () => {
-    router.push("/GtwFacturacionComercio/components/"); // Redirige al inicio
+    router.push("/"); // Redirige al inicio
   };
 
   return (
@@ -51,8 +137,8 @@ const CrudTable = () => {
             </tr>
           </thead>
           <tbody>
-            {data.map((item, index) => (
-              <tr key={item.id || index}>
+            {data.map((item) => (
+              <tr key={item.id}>
                 <td>{item.facturacionComercio}</td>
                 <td>{item.comercio}</td>
                 <td>{item.fechaInicio}</td>
@@ -77,7 +163,7 @@ const CrudTable = () => {
                         borderRadius: "4px",
                         cursor: "pointer",
                       }}
-                      onClick={() => handleUpdate(item.id)} // Redirige al formulario de actualización
+                      onClick={() => handleUpdate(item)} // Redirige al formulario de actualización
                     >
                       <FaEdit />
                     </button>
@@ -90,7 +176,7 @@ const CrudTable = () => {
                         borderRadius: "4px",
                         cursor: "pointer",
                       }}
-                      onClick={() => handleView(item.id)} // Redirige a la página de visualización
+                      onClick={() => handleView(item)} // Redirige a la página de visualización
                     >
                       <FaEye />
                     </button>
