@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // Importa el hook para navegación
-import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
+import { FaEye, FaPlus } from "react-icons/fa";
 
 const CrudTable = () => {
   const [data, setData] = useState([
@@ -15,12 +15,37 @@ const CrudTable = () => {
 
   const router = useRouter(); // Inicializa el router para redirigir
 
-  const handleCreate = () => {
-    router.push("/GtwSeguridadMarca/create");
-  };
+  const handleView = async (item) => {
+    // Crear el objeto transactionPayload con los datos de la fila seleccionada
+    const transactionPayload = {
+      marca: item.marca,
+      clave: item.clave,
+      fechaActualizacion: item.fechaActualizacion,
+    };
 
-  const handleView = (id) => {
-    router.push(`/GtwSeguridadMarca/read`); // Redirige a la página de visualización
+    console.log("Payload para visualización:", transactionPayload);
+
+    // Simular envío de datos (puedes usar fetch para un POST real)
+    try {
+      const response = await fetch("http://localhost:8082/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      alert(`Respuesta de la API: ${JSON.stringify(result)}`);
+      router.push(`/GtwSeguridadMarca/read/${item.id}`); // Redirige a la página de visualización
+    } catch (error) {
+      console.error("Error al enviar los datos:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
   };
 
   const handleBackToHome = () => {
@@ -46,7 +71,7 @@ const CrudTable = () => {
               <tr key={item.id || index}>
                 <td>{item.marca}</td>
                 <td>{item.clave}</td>
-                <td>{item.fechaActualizacion}</td>                
+                <td>{item.fechaActualizacion}</td>
                 <td>
                   <div
                     style={{
@@ -54,7 +79,7 @@ const CrudTable = () => {
                       gap: "10px",
                       justifyContent: "center",
                     }}
-                  >                    
+                  >
                     <button
                       style={{
                         backgroundColor: "#38bdf8",
@@ -64,7 +89,7 @@ const CrudTable = () => {
                         borderRadius: "4px",
                         cursor: "pointer",
                       }}
-                      onClick={() => handleView(item.id)} // Redirige a la página de visualización
+                      onClick={() => handleView(item)} // Redirige a la página de visualización
                     >
                       <FaEye />
                     </button>

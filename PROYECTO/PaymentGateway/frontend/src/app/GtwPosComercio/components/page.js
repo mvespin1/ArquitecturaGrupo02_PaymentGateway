@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // Importa el hook para navegación
-import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
+import { FaEdit, FaEye, FaPlus } from "react-icons/fa";
 
 const CrudTable = () => {
   const [data, setData] = useState([
     {
-      id: 1,
       modelo: "Modelo A",
       codigoPos: "FC001",
       codComercio: "Comercio A",
@@ -20,16 +19,78 @@ const CrudTable = () => {
 
   const router = useRouter(); // Inicializa el router para redirigir
 
-  const handleCreate = () => {
-    router.push("/GtwPosComercio/create");
+  const handleUpdate = async (item) => {
+    // Crear el objeto transactionPayload con los datos de la fila seleccionada
+    const transactionPayload = {
+      modelo: item.modelo,
+      codigoPos: item.codigoPos,
+      codComercio: item.codComercio,
+      direccionMac: item.direccionMac,
+      estado: item.estado,
+      fechaActivacion: item.fechaActivacion,
+      ultimoUso: item.ultimoUso,
+    };
+
+    console.log("Payload para actualización:", transactionPayload);
+
+    // Simular envío de datos (puedes usar fetch para un POST real)
+    try {
+      const response = await fetch("http://localhost:8082/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      alert(`Respuesta de la API: ${JSON.stringify(result)}`);
+      router.push(`/GtwPosComercio/update/${item.id}`); // Redirige al formulario de actualización
+    } catch (error) {
+      console.error("Error al enviar los datos:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
   };
 
-  const handleUpdate = (id) => {
-    router.push(`/GtwPosComercio/update/`); // Redirige al formulario de actualización
-  };
+  const handleView = async (item) => {
+    // Crear el objeto transactionPayload con los datos de la fila seleccionada para visualizar
+    const transactionPayload = {
+      modelo: item.modelo,
+      codigoPos: item.codigoPos,
+      codComercio: item.codComercio,
+      direccionMac: item.direccionMac,
+      estado: item.estado,
+      fechaActivacion: item.fechaActivacion,
+      ultimoUso: item.ultimoUso,
+    };
 
-  const handleView = (id) => {
-    router.push(`/GtwPosComercio/read`); // Redirige a la página de visualización
+    console.log("Payload para visualización:", transactionPayload);
+
+    // Simular envío de datos
+    try {
+      const response = await fetch("http://localhost:8082/api/pos/comercio/procesar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      alert(`Respuesta de la API: ${JSON.stringify(result)}`);
+      router.push(`/GtwPosComercio/read/${item.id}`); // Redirige a la página de visualización
+    } catch (error) {
+      console.error("Error al enviar los datos:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
   };
 
   const handleBackToHome = () => {
@@ -55,8 +116,8 @@ const CrudTable = () => {
             </tr>
           </thead>
           <tbody>
-            {data.map((item) => (
-              <tr key={item.id}>
+            {data.map((item, index) => (
+              <tr key={item.id || index}>
                 <td>{item.modelo}</td>
                 <td>{item.codigoPos}</td>
                 <td>{item.codComercio}</td>
@@ -81,21 +142,9 @@ const CrudTable = () => {
                         borderRadius: "4px",
                         cursor: "pointer",
                       }}
-                      onClick={() => handleUpdate(item.id)} // Redirige al formulario de actualización
+                      onClick={() => handleUpdate(item)} // Redirige al formulario de actualización
                     >
                       <FaEdit />
-                    </button>
-                    <button
-                      style={{
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <FaTrash />
                     </button>
                     <button
                       style={{
@@ -106,7 +155,7 @@ const CrudTable = () => {
                         borderRadius: "4px",
                         cursor: "pointer",
                       }}
-                      onClick={() => handleView(item.id)} // Redirige a la página de visualización
+                      onClick={() => handleView(item)} // Redirige a la página de visualización
                     >
                       <FaEye />
                     </button>
