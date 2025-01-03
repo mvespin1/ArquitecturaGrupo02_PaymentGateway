@@ -22,7 +22,6 @@ public class ComisionService {
     private static final int MAX_DIGITOS_MONTO_BASE = 20;
     private static final int MAX_DIGITOS_ENTERO_MONTO_BASE = 16;
     private static final int MAX_DIGITOS_DECIMAL_MONTO_BASE = 4;
-    private static final int MAX_DIGITOS_TRANSACCION_BASE = 9;
     public static final String TIPO_COMISION_POR = "POR";
     public static final String TIPO_COMISION_FIJ = "FIJ";
 
@@ -67,22 +66,60 @@ public class ComisionService {
     @Transactional
     public Comision update(Integer codigo, Comision comision) {
         try {
+            if (codigo == null) {
+                throw new IllegalArgumentException("El código de comisión no puede ser nulo");
+            }
+            if (comision == null) {
+                throw new IllegalArgumentException("La comisión no puede ser nula");
+            }
+            
             return comisionRepository.findById(codigo)
                     .map(comisionExistente -> {
-                        comisionExistente.setMontoBase(comision.getMontoBase());
-                        comisionExistente.setTransaccionesBase(comision.getTransaccionesBase());
+                        try {
+                            // Validar que los campos requeridos no sean nulos
+                            if (comision.getMontoBase() == null) {
+                                throw new IllegalArgumentException("El monto base no puede ser nulo");
+                            }
+                            if (comision.getTransaccionesBase() == null) {
+                                throw new IllegalArgumentException("Las transacciones base no pueden ser nulas");
+                            }
 
-                        if (Boolean.TRUE.equals(comisionExistente.getManejaSegmentos())) {
-                            actualizarSegmento(comisionExistente);
+                            // Mantener valores que no deben cambiar
+                            comision.setCodigo(codigo);
+                            comision.setTipo(comisionExistente.getTipo());
+                            comision.setManejaSegmentos(comisionExistente.getManejaSegmentos());
+                            
+                            // Validar nuevos valores
+                            validarComision(comision);
+                            
+                            // Actualizar valores permitidos
+                            comisionExistente.setMontoBase(comision.getMontoBase());
+                            comisionExistente.setTransaccionesBase(comision.getTransaccionesBase());
+
+                            if (Boolean.TRUE.equals(comisionExistente.getManejaSegmentos())) {
+                                try {
+                                    actualizarSegmento(comisionExistente);
+                                } catch (Exception e) {
+                                    throw new RuntimeException("Error al actualizar segmento: " + e.getMessage());
+                                }
+                            }
+
+                            try {
+                                return comisionRepository.save(comisionExistente);
+                            } catch (Exception e) {
+                                throw new RuntimeException("Error al guardar la comisión: " + e.getMessage());
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException("Error durante la actualización: " + e.getMessage());
                         }
-
-                        return comisionRepository.save(comisionExistente);
                     })
-                    .orElseThrow(
-                            () -> new EntityNotFoundException("Comisión con código " + codigo + " no encontrada."));
+                    .orElseThrow(() -> new EntityNotFoundException("Comisión con código " + codigo + " no encontrada."));
+        } catch (EntityNotFoundException e) {
+            throw e;
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception ex) {
-            throw new RuntimeException(
-                    "No se pudo actualizar la comisión con código " + codigo + ". Motivo: " + ex.getMessage());
+            throw new RuntimeException("Error inesperado al actualizar la comisión con código " + codigo + ". Motivo: " + ex.getMessage(), ex);
         }
     }
 
@@ -108,9 +145,9 @@ public class ComisionService {
         if (comision.getTransaccionesBase() == null || comision.getTransaccionesBase() <= 0) {
             throw new IllegalArgumentException("Las transacciones base deben ser mayores a 0.");
         }
-        if (comision.getTransaccionesBase() > MAX_DIGITOS_TRANSACCION_BASE) {
+        if (comision.getTransaccionesBase() >= 1000000000) {
             throw new IllegalArgumentException(
-                    "Las transacciones base no pueden exceder los " + MAX_DIGITOS_TRANSACCION_BASE + " dígitos.");
+                    "Las transacciones base no pueden exceder los 9 dígitos.");
         }
     }
 
@@ -132,6 +169,19 @@ public class ComisionService {
     private void actualizarSegmento(Comision comision) {
         try {
             ComisionSegmentoPK pk = new ComisionSegmentoPK(comision.getCodigo(), comision.getTransaccionesBase());
+            
+            // Verificar si existe el segmento
+            if (!segmentoRepository.existsById(pk)) {
+                // Si no existe, crear uno nuevo
+                ComisionSegmento nuevoSegmento = new ComisionSegmento(pk);
+                nuevoSegmento.setTransaccionesHasta(comision.getTransaccionesBase());
+                nuevoSegmento.setMonto(BigDecimal.ZERO);
+                nuevoSegmento.setComision(comision);
+                segmentoRepository.save(nuevoSegmento);
+                return;
+            }
+            
+            // Si existe, actualizar
             ComisionSegmento segmento = segmentoRepository.findById(pk)
                     .orElseThrow(() -> new EntityNotFoundException(
                             "Segmento no encontrado para la comisión con código " + comision.getCodigo()));

@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import ec.edu.espe.gateway.comision.model.Comision;
 import ec.edu.espe.gateway.comision.services.ComisionService;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/comisiones")
@@ -42,30 +43,34 @@ public class ComisionController {
     }
 
     @PostMapping
-    public ResponseEntity<Comision> create(@RequestBody Comision comision) {
+    public ResponseEntity<?> create(@RequestBody Comision comision) {
         try {
             Comision savedComision = comisionService.save(comision);
             return ResponseEntity.ok(savedComision);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al crear la comisión: " + e.getMessage());
         }
     }
 
     @PutMapping("/{codigo}")
-    public ResponseEntity<Comision> update(
-            @PathVariable Integer codigo,
-            @RequestBody Comision comision) {
+    public ResponseEntity<?> update(@PathVariable Integer codigo, @RequestBody Comision comision) {
         try {
             Comision updatedComision = comisionService.update(codigo, comision);
             return ResponseEntity.ok(updatedComision);
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No se encontró la comisión: " + e.getMessage());
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error en los datos: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            e.printStackTrace(); // Para ver el error en los logs
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error interno al actualizar la comisión: " + e.getMessage());
         }
     }
 }
