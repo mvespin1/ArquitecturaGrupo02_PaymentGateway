@@ -5,8 +5,9 @@ import ec.edu.espe.pos.service.SeguridadGatewayService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/seguridad-gateway")
 public class SeguridadGatewayController {
@@ -16,39 +17,40 @@ public class SeguridadGatewayController {
     public SeguridadGatewayController(SeguridadGatewayService seguridadGatewayService) {
         this.seguridadGatewayService = seguridadGatewayService;
     }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Object> obtenerPorId(@PathVariable Integer id) {
+    
+    @GetMapping("/clave-activa")
+    public ResponseEntity<Object> obtenerClaveActiva() {
         try {
-            return ResponseEntity.ok(this.seguridadGatewayService.obtenerPorId(id));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @GetMapping("/estado/{estado}")
-    public ResponseEntity<Object> obtenerPorEstado(@PathVariable String estado) {
-        try {
-            List<SeguridadGateway> gateways = this.seguridadGatewayService.obtenerPorEstado(estado);
-            return ResponseEntity.ok(gateways);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error al obtener gateways por estado: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/actualizar-automatico")
-    public ResponseEntity<Object> procesarActualizacionAutomatica(@RequestBody SeguridadGateway seguridadGateway) {
-        try {
-            return ResponseEntity.ok(this.seguridadGatewayService.procesarActualizacionAutomatica(seguridadGateway));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            SeguridadGateway claveActiva = this.seguridadGatewayService.obtenerClaveActiva();
+            return ResponseEntity.ok(claveActiva);
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
-                    .body("Error al procesar la actualización automática: " + e.getMessage());
+                    .body("Error al obtener clave activa: " + e.getMessage());
         }
     }
-} 
+
+    @PostMapping("/encriptar")
+    public ResponseEntity<Object> encriptarDatos(@RequestBody Map<String, String> datos) {
+        try {
+            // Validación de datos de entrada
+            if (datos.get("informacion") == null || datos.get("clave") == null) {
+                return ResponseEntity.badRequest()
+                        .body("Los campos 'informacion' y 'clave' son requeridos");
+            }
+
+            String informacion = datos.get("informacion");
+            String clave = datos.get("clave");
+            
+            // Log para depuración
+            System.out.println("Información a encriptar: " + informacion);
+            System.out.println("Clave utilizada: " + clave);
+
+            String datosEncriptados = this.seguridadGatewayService.encriptarInformacion(informacion, clave);
+            return ResponseEntity.ok(Map.of("datosEncriptados", datosEncriptados));
+        } catch (Exception e) {
+            e.printStackTrace(); // Para ver el stack trace completo en los logs
+            return ResponseEntity.internalServerError()
+                    .body("Error al encriptar datos: " + e.getMessage() + " | Causa: " + e.getCause());
+        }
+    }
+}
