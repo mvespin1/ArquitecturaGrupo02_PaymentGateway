@@ -3,6 +3,7 @@ package ec.edu.espe.pos.model;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 import jakarta.validation.constraints.NotNull;
 
@@ -19,7 +20,7 @@ public class SeguridadGateway implements Serializable {
     private String clave;
     @NotNull
     @Column(name = "FECHA_ACTUALIZACION", nullable = false)
-    private LocalDate fechaActualizacion;
+    private LocalDateTime fechaActualizacion;
     @NotNull
     @Column(name = "FECHA_ACTIVACION", nullable = false)
     private LocalDate fechaActivacion;
@@ -50,11 +51,11 @@ public class SeguridadGateway implements Serializable {
         this.clave = clave;
     }
 
-    public LocalDate getFechaActualizacion() {
+    public LocalDateTime getFechaActualizacion() {
         return fechaActualizacion;
     }
 
-    public void setFechaActualizacion(LocalDate fechaActualizacion) {
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
     }
 

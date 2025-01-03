@@ -6,7 +6,7 @@ import ec.edu.espe.pos.service.ConfiguracionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -54,7 +54,7 @@ public class ConfiguracionController {
     public ResponseEntity<Object> actualizarFechaActivacion(
             @PathVariable String codigo,
             @PathVariable String modelo,
-            @RequestParam LocalDate nuevaFechaActivacion) {
+            @RequestParam LocalDateTime nuevaFechaActivacion) {
         try {
             Configuracion actualizado = this.configuracionService.actualizarFechaActivacion(
                     new ConfiguracionPK(codigo, modelo),

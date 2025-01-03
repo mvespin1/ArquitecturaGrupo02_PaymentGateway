@@ -10,6 +10,7 @@ import javax.crypto.Cipher;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -43,7 +44,7 @@ public class SeguridadGatewayService {
         String claveGenerada = generarClaveSegura();
         nuevaClave.setClave(claveGenerada);
         nuevaClave.setFechaActivacion(LocalDate.now());
-        nuevaClave.setFechaActualizacion(LocalDate.now());
+        nuevaClave.setFechaActualizacion(LocalDateTime.now());
         nuevaClave.setEstado("ACT");
         seguridadGatewayRepository.save(nuevaClave);
     }
@@ -103,8 +104,8 @@ public class SeguridadGatewayService {
         try {
             SeguridadGateway claveActual = obtenerClaveActiva();
             if (claveActual != null) {
-                LocalDate fechaUltimaActualizacion = claveActual.getFechaActualizacion();
-                if (fechaUltimaActualizacion.plusDays(20).isAfter(LocalDate.now())) {
+                LocalDateTime fechaUltimaActualizacion = claveActual.getFechaActualizacion();
+                if (fechaUltimaActualizacion.plusDays(20).isAfter(LocalDateTime.now())) {
                     return;
                 }
                 claveActual.setEstado("INA");
@@ -119,8 +120,8 @@ public class SeguridadGatewayService {
 
     public boolean requiereActualizacionClave(SeguridadGateway clave) {
         if (clave == null) return true;
-        LocalDate fechaUltimaActualizacion = clave.getFechaActualizacion();
-        return fechaUltimaActualizacion.plusDays(20).isBefore(LocalDate.now());
+        LocalDateTime fechaUltimaActualizacion = clave.getFechaActualizacion();
+        return fechaUltimaActualizacion.plusDays(20).isBefore(LocalDateTime.now());
     }
 
     @PostConstruct

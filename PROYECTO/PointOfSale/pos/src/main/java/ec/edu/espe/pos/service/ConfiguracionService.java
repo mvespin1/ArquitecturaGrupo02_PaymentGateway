@@ -8,7 +8,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -43,14 +43,14 @@ public class ConfiguracionService {
     public Configuracion crear(Configuracion configuracion) {
         try {
             validarConfiguracion(configuracion);
-            configuracion.setFechaActivacion(LocalDate.now());
+            configuracion.setFechaActivacion(LocalDateTime.now());
             return this.configuracionRepository.save(configuracion);
         } catch (Exception ex) {
             throw new RuntimeException("No se pudo crear la configuración POS. Motivo: " + ex.getMessage());
         }
     }
 
-    public Configuracion actualizarFechaActivacion(ConfiguracionPK id, LocalDate nuevaFechaActivacion) {
+    public Configuracion actualizarFechaActivacion(ConfiguracionPK id, LocalDateTime nuevaFechaActivacion) {
         try {
             Configuracion configuracion = obtenerPorId(id);
             validarFechaActivacion(nuevaFechaActivacion);
@@ -94,8 +94,8 @@ public class ConfiguracionService {
         }
     }
 
-    private void validarFechaActivacion(LocalDate fechaActivacion) {
-        if (fechaActivacion != null && fechaActivacion.isBefore(LocalDate.now())) {
+    private void validarFechaActivacion(LocalDateTime fechaActivacion) {
+        if (fechaActivacion != null && fechaActivacion.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("La fecha de activación no puede ser anterior a la fecha actual");
         }
     }

@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
@@ -35,7 +35,7 @@ public class Transaccion implements Serializable {
     private String codigoUnicoTransaccion;
     @NotNull(message = "La fecha no puede ser nula")
     @Column(name = "FECHA", nullable = false)
-    private LocalDate fecha;
+    private LocalDateTime fecha;
     @Column(name = "ESTADO", length = 3)
     private String estado;
     @Column(name = "ESTADO_RECIBO", length = 3)
@@ -109,11 +109,11 @@ public class Transaccion implements Serializable {
         this.codigoUnicoTransaccion = codigoUnicoTransaccion;
     }
 
-    public LocalDate getFecha() {
+    public LocalDateTime getFecha() {
         return fecha;
     }
 
-    public void setFecha(LocalDate fecha) {
+    public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
     }
 
