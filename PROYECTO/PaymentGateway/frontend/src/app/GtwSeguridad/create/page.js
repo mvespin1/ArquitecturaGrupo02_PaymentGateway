@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation"; // Importamos useRouter para navega
 
 const CreatePage = () => {
   const [form, setForm] = useState({
-      CodigoComision: "",
-      Tipo: "",
-      MontoBase: "",
-      TransaccionesBase: "",
-      ManejaSegmenos: "",
+    CLAVE: "",
+    FECHA_CREACION: "",
+    FECHA_ACTIVACION: "",
+    ESTADO: "pendiente",
   });
 
   const router = useRouter(); // Inicializamos el router para redirigir
@@ -57,42 +56,122 @@ const CreatePage = () => {
           gap: "1rem",
         }}
       >
-        {Object.keys(form).map((field) => (
-          <div
-            key={field}
-            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        {/* CLAVE */}
+        <div>
+          <label
+            htmlFor="CLAVE"
+            style={{
+              fontWeight: "bold",
+              color: "#1f2937",
+            }}
           >
-            <label
-              htmlFor={field}
-              style={{
-                fontWeight: "bold",
-                color: "#1f2937",
-              }}
-            >
-              {field
-                .replace(/([A-Z])/g, " $1")
-                .replace(/^./, (str) => str.toUpperCase())}{" "}
-              {/* Formatea los nombres */}
-            </label>
-            <input
-              id={field}
-              type={field.includes("fecha") ? "date" : "text"}
-              name={field}
-              value={form[field]}
-              onChange={handleChange}
-              style={{
-                padding: "10px",
-                fontSize: "1rem",
-                borderRadius: "4px",
-                border: "1px solid #d1d5db",
-                backgroundColor: "#ffffff",
-              }}
-              placeholder={`Ingrese ${field
-                .replace(/([A-Z])/g, " $1")
-                .toLowerCase()}`}
-            />
-          </div>
-        ))}
+            Clave
+          </label>
+          <input
+            id="CLAVE"
+            type="text"
+            name="CLAVE"
+            value={form.CLAVE}
+            onChange={handleChange}
+            style={{
+              padding: "10px",
+              fontSize: "1rem",
+              borderRadius: "4px",
+              border: "1px solid #d1d5db",
+              backgroundColor: "#ffffff",
+            }}
+            placeholder="Ingrese clave"
+            maxLength="128" // Longitud máxima de 128 caracteres
+          />
+        </div>
+
+        {/* FECHA_CREACION */}
+        <div>
+          <label
+            htmlFor="FECHA_CREACION"
+            style={{
+              fontWeight: "bold",
+              color: "#1f2937",
+            }}
+          >
+            Fecha Creación
+          </label>
+          <input
+            id="FECHA_CREACION"
+            type="date"
+            name="FECHA_CREACION"
+            value={form.FECHA_CREACION}
+            onChange={handleChange}
+            style={{
+              padding: "10px",
+              fontSize: "1rem",
+              borderRadius: "4px",
+              border: "1px solid #d1d5db",
+              backgroundColor: "#e5e7eb", // Fondo gris para campos deshabilitados
+            }}
+            disabled // Campo deshabilitado
+          />
+        </div>
+
+        {/* FECHA_ACTIVACION */}
+        <div>
+          <label
+            htmlFor="FECHA_ACTIVACION"
+            style={{
+              fontWeight: "bold",
+              color: "#1f2937",
+            }}
+          >
+            Fecha Activación
+          </label>
+          <input
+            id="FECHA_ACTIVACION"
+            type="date"
+            name="FECHA_ACTIVACION"
+            value={form.FECHA_ACTIVACION}
+            onChange={handleChange}
+            style={{
+              padding: "10px",
+              fontSize: "1rem",
+              borderRadius: "4px",
+              border: "1px solid #d1d5db",
+              backgroundColor: "#e5e7eb", // Fondo gris para campos deshabilitados
+            }}
+            disabled // Campo deshabilitado
+          />
+        </div>
+
+        {/* ESTADO */}
+        <div>
+          <label
+            htmlFor="ESTADO"
+            style={{
+              fontWeight: "bold",
+              color: "#1f2937",
+            }}
+          >
+            Estado
+          </label>
+          <select
+            id="ESTADO"
+            name="ESTADO"
+            value={form.ESTADO}
+            onChange={handleChange}
+            style={{
+              padding: "10px",
+              fontSize: "1rem",
+              borderRadius: "4px",
+              border: "1px solid #d1d5db",
+              backgroundColor: "#ffffff",
+            }}
+          >
+            <option value="pendiente">Pendiente</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+
+        {/* Botones */}
         <div
           style={{
             display: "flex",
