@@ -8,7 +8,7 @@ import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -63,7 +63,7 @@ public class TransaccionService {
             transaccion.setTipo(TIPO_PAGO);
             transaccion.setModalidad(MODALIDAD_SIMPLE);
             transaccion.setMoneda("USD");
-            transaccion.setFecha(LocalDate.now());
+            transaccion.setFecha(LocalDateTime.now());
 
             // Generar un código único usando la fecha de la transacción
             String codigoUnico = "TRX" + System.currentTimeMillis() + transaccion.getFecha();
@@ -149,11 +149,11 @@ public class TransaccionService {
         }
     }
 
-    private void validarFecha(LocalDate fecha) {
+    private void validarFecha(LocalDateTime fecha) {
         if (fecha == null) {
             throw new IllegalArgumentException("La fecha no puede ser nula");
         }
-        if (fecha.isAfter(LocalDate.now())) {
+        if (fecha.isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("No se permiten fechas futuras");
         }
     }

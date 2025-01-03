@@ -7,7 +7,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -43,13 +43,13 @@ public class SeguridadMarcaService {
     public SeguridadMarca procesarActualizacionAutomatica(SeguridadMarca seguridadMarca) {
         try {
             validarSeguridadMarca(seguridadMarca);
-            seguridadMarca.setFechaActualizacion(LocalDate.now());
+            seguridadMarca.setFechaActualizacion(LocalDateTime.now());
 
             Optional<SeguridadMarca> marcaExistente = seguridadMarcaRepository.findById(seguridadMarca.getMarca());
             if (marcaExistente.isPresent()) {
                 SeguridadMarca existente = marcaExistente.get();
                 existente.setClave(seguridadMarca.getClave());
-                existente.setFechaActualizacion(LocalDate.now());
+                existente.setFechaActualizacion(LocalDateTime.now());
                 return this.seguridadMarcaRepository.save(existente);
             } else {
                 return this.seguridadMarcaRepository.save(seguridadMarca);

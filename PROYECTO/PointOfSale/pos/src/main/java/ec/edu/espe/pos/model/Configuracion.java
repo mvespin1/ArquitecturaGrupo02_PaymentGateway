@@ -3,7 +3,7 @@ package ec.edu.espe.pos.model;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
@@ -20,7 +20,7 @@ public class Configuracion implements Serializable {
     private String codigoComercio;
     @NotNull
     @Column(name = "FECHA_ACTIVACION", nullable = false)
-    private LocalDate fechaActivacion;
+    private LocalDateTime fechaActivacion;
 
     public Configuracion() {
     }
@@ -53,11 +53,11 @@ public class Configuracion implements Serializable {
         this.codigoComercio = codigoComercio;
     }
 
-    public LocalDate getFechaActivacion() {
+    public LocalDateTime getFechaActivacion() {
         return fechaActivacion;
     }
 
-    public void setFechaActivacion(LocalDate fechaActivacion) {
+    public void setFechaActivacion(LocalDateTime fechaActivacion) {
         this.fechaActivacion = fechaActivacion;
     }
 
