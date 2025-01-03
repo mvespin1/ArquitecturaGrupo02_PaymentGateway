@@ -29,7 +29,7 @@ const CrudTable = () => {
   };
 
   const handleBackToHome = () => {
-    router.push("/GtwFacturacionComercio/components/"); // Redirige al inicio
+    router.push("/"); // Redirige al inicio
   };
 
   return (
