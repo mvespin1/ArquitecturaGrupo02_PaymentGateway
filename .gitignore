@@ -1,0 +1,6 @@
+# Ignorar carpetas de configuración de IDEs
+.idea/
+.vscode/
+
+# Ignorar archivo de bloqueo de npm
+package-lock.json
