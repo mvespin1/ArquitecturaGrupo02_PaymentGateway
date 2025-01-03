@@ -10,5 +10,5 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Intege
     Optional<Transaccion> findByCodigoUnicoTransaccion(String codigoUnicoTransaccion);
     List<Transaccion> findByEstado(String estado);
     List<Transaccion> findByTipoAndEstado(String tipo, String estado);
-    boolean existsByCodigoUnicoTransaccion(String codigoUnicoTransaccion);
+    Boolean existsByCodigoUnicoTransaccion(String codigoUnicoTransaccion);
 }
