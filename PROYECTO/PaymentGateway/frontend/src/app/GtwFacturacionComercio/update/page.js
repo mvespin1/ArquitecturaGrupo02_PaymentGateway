@@ -14,7 +14,7 @@ const UpdatePage = () => {
     transaccionesRechazadas: "10",
     transaccionesReversadas: "5",
     codComision: "COM123",
-    valor: "$500",
+    valor: "500", // Monto para la transacción
     estado: "Activo",
     codigoFacturacion: "COD001",
     fechaFacturacion: "2023-11-01",
@@ -38,14 +38,60 @@ const UpdatePage = () => {
     setForm({ ...form, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Registro actualizado:", form);
-    router.push("/"); // Redirige a la página principal después de guardar
+
+    // Validar que el campo fechaPago no esté vacío
+    if (!form.fechaPago) {
+      alert("El campo 'Fecha de Pago' no puede estar vacío.");
+      return;
+    }
+
+    // Crear el objeto transactionPayload con los datos del formulario
+    const transactionPayload = {
+      codFacturacionComercio: form.codFacturacionComercio,
+      codComercio: form.codComercio,
+      fechaInicio: form.fechaInicio,
+      fechaFin: form.fechaFin,
+      transaccionesProcesadas: form.transaccionesProcesadas,
+      transaccionesAutorizadas: form.transaccionesAutorizadas,
+      transaccionesRechazadas: form.transaccionesRechazadas,
+      transaccionesReversadas: form.transaccionesReversadas,
+      codComision: form.codComision,
+      valor: parseFloat(form.valor), // Convierte el valor a número flotante
+      estado: form.estado,
+      codigoFacturacion: form.codigoFacturacion,
+      fechaFacturacion: form.fechaFacturacion,
+      fechaPago: form.fechaPago, // Campo editable
+    };
+
+    try {
+      // Realizar la solicitud POST a la API
+      const response = await fetch("http://localhost:8082/api/pagos/procesar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      // Verificar el estado de la respuesta
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      alert(`Respuesta de la API: ${JSON.stringify(result)}`);
+
+      router.push("/"); // Redirige a la página principal después de guardar
+    } catch (error) {
+      console.error("Error al enviar el payload:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
   };
 
   const handleCancel = () => {
-    router.push("/"); // Redirige a la página principal sin guardar
+    router.push("/GtwFacturacionComercio/components"); // Redirige a la página principal sin guardar
   };
 
   return (
@@ -91,7 +137,6 @@ const UpdatePage = () => {
               {field
                 .replace(/([A-Z])/g, " $1")
                 .replace(/^./, (str) => str.toUpperCase())}{" "}
-              {/* Formatea los nombres */}
             </label>
             <input
               id={field}
