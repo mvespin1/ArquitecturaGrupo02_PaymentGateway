@@ -73,19 +73,22 @@ public class ComercioService {
         }
 
         // Validar RUC
-        if (comercio.getRuc() == null || comercio.getRuc().length() != 13 || !comercio.getRuc().matches("\\d+")) {
-            throw new IllegalArgumentException("El RUC debe tener 13 dígitos numéricos");
+        if (comercio.getRuc() == null || comercio.getRuc().length() != 13 || !comercio.getRuc().matches("\\d{13}")) {
+            throw new IllegalArgumentException("El RUC debe tener exactamente 13 dígitos numéricos");
         }
         if (comercioRepository.findByRuc(comercio.getRuc()).isPresent()) {
             throw new IllegalArgumentException("Ya existe un comercio con el RUC: " + comercio.getRuc());
         }
 
         // Validar razón social y nombre comercial
-        if (comercio.getRazonSocial() == null || comercio.getRazonSocial().length() > 100) {
-            throw new IllegalArgumentException("La razón social debe tener máximo 100 caracteres");
+        if (comercio.getRazonSocial() == null || comercio.getRazonSocial().trim().isEmpty() 
+            || comercio.getRazonSocial().length() > 100) {
+            throw new IllegalArgumentException("La razón social no puede estar vacía ni exceder 100 caracteres");
         }
-        if (comercio.getNombreComercial() == null || comercio.getNombreComercial().length() > 10) {
-            throw new IllegalArgumentException("El nombre comercial debe tener máximo 10 caracteres");
+
+        if (comercio.getNombreComercial() == null || comercio.getNombreComercial().trim().isEmpty() 
+            || comercio.getNombreComercial().length() > 100) {
+            throw new IllegalArgumentException("El nombre comercial no puede estar vacío ni exceder 100 caracteres");
         }
     }
 
