@@ -217,28 +217,26 @@ public class TransaccionService {
     }
 
     public void procesarTransaccionPOS(Transaccion transaccionPOS) {
-        Transaccion transaccionGateway = new Transaccion();
+        Comercio comercio = comercioRepository.findByCodigoInterno(transaccionPOS.getCodigoInterno())
+            .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado con código: " + transaccionPOS.getCodigoInterno()));
+        transaccionPOS.setComercio(comercio);
         
         // Copiar datos básicos del POS
-        transaccionGateway.setTipo(transaccionPOS.getTipo());
-        transaccionGateway.setMarca(transaccionPOS.getMarca());
-        transaccionGateway.setMonto(transaccionPOS.getMonto());
-        transaccionGateway.setCodigoUnicoTransaccion(transaccionPOS.getCodigoUnicoTransaccion());
-        transaccionGateway.setFecha(transaccionPOS.getFecha());
-        transaccionGateway.setEstado(transaccionPOS.getEstado());
-        transaccionGateway.setMoneda(transaccionPOS.getMoneda());
+        transaccionPOS.setTipo(transaccionPOS.getTipo());
+        transaccionPOS.setMarca(transaccionPOS.getMarca());
+        transaccionPOS.setMonto(transaccionPOS.getMonto());
+        transaccionPOS.setCodigoUnicoTransaccion(transaccionPOS.getCodigoUnicoTransaccion());
+        transaccionPOS.setFecha(transaccionPOS.getFecha());
+        transaccionPOS.setEstado(transaccionPOS.getEstado());
+        transaccionPOS.setMoneda(transaccionPOS.getMoneda());
         
         // Establecer valores por defecto o buscar relaciones
-        transaccionGateway.setPais("EC"); // Default para Ecuador
-        transaccionGateway.setTarjeta("XXXXXXXXXXXX1234"); // Número enmascarado por defecto
-        
-        Comercio comercio = comercioRepository.findByCodigoInterno(transaccionPOS.getCodigoComercio())
-        .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado con código: " + transaccionPOS.getCodigoComercio()));
-        transaccionGateway.setComercio(comercio);
+        transaccionPOS.setPais("EC"); // Default para Ecuador
+        transaccionPOS.setTarjeta("XXXXXXXXXXXX1234"); // Número enmascarado por defecto
         
         FacturacionComercio facturacion = facturacionComercioRepository.findFacturaActivaPorComercio(comercio.getCodigo());
-        transaccionGateway.setFacturacionComercio(facturacion);
+        transaccionPOS.setFacturacionComercio(facturacion);
         
-        transaccionRepository.save(transaccionGateway);
+        transaccionRepository.save(transaccionPOS);
     }
 }

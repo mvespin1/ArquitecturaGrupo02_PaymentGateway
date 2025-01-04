@@ -61,6 +61,8 @@ public class Transaccion implements Serializable {
     private LocalDate fechaEjecucionRecurrencia;
     @Column(name = "FECHA_FIN_RECURRENCIA")
     private LocalDate fechaFinRecurrencia;
+    @Transient
+    private String codigoInterno;
 
     // Empty Constructor
 
@@ -197,6 +199,14 @@ public class Transaccion implements Serializable {
 
     public void setFechaFinRecurrencia(LocalDate fechaFinRecurrencia) {
         this.fechaFinRecurrencia = fechaFinRecurrencia;
+    }
+
+    public String getCodigoInterno() {
+        return codigoInterno;
+    }
+
+    public void setCodigoInterno(String codigoInterno) {
+        this.codigoInterno = codigoInterno;
     }
 
     // HashCode and Equals
