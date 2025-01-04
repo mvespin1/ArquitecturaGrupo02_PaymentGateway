@@ -1,7 +1,11 @@
 package ec.edu.espe.pos.service;
 
 import ec.edu.espe.pos.model.Transaccion;
+import ec.edu.espe.pos.repository.ConfiguracionRepository;
 import ec.edu.espe.pos.repository.TransaccionRepository;
+import ec.edu.espe.pos.client.GatewayTransaccionClient;
+import ec.edu.espe.pos.model.ConfiguracionPK;
+
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -37,10 +41,19 @@ public class TransaccionService {
     // Set de códigos de moneda válidos (ISO 4217)
     private static final Set<String> MONEDAS_VALIDAS = Set.of("USD", "EUR", "GBP");
 
-    private final TransaccionRepository transaccionRepository;
+    private static final String CODIGO_POS = "POS001";
+    private static final String MODELO_POS = "MODEL001";
 
-    public TransaccionService(TransaccionRepository transaccionRepository) {
+    private final TransaccionRepository transaccionRepository;
+    private final ConfiguracionRepository configuracionRepository;
+    private final GatewayTransaccionClient gatewayClient;
+
+    public TransaccionService(TransaccionRepository transaccionRepository,
+                            ConfiguracionRepository configuracionRepository,
+                            GatewayTransaccionClient gatewayClient) {
         this.transaccionRepository = transaccionRepository;
+        this.configuracionRepository = configuracionRepository;
+        this.gatewayClient = gatewayClient;
     }
 
     @Transactional(value = TxType.NEVER)
@@ -55,6 +68,15 @@ public class TransaccionService {
             return transaccionOpt.get();
         }
         throw new EntityNotFoundException("No existe la transacción con el ID: " + id);
+    }
+
+    private String obtenerCodigoComercio() {
+        ConfiguracionPK pk = new ConfiguracionPK(CODIGO_POS, MODELO_POS);
+        
+        return configuracionRepository.findByPk(pk)
+            .orElseThrow(() -> new RuntimeException(
+                "No se encontró la configuración para POS: " + CODIGO_POS + " modelo: " + MODELO_POS))
+            .getCodigoComercio();
     }
 
     public Transaccion crear(Transaccion transaccion) {
@@ -84,7 +106,19 @@ public class TransaccionService {
                     transaccion.getMoneda());
             transaccion.setDetalle(detalle.length() > 50 ? detalle.substring(0, 50) : detalle);
 
-            return this.transaccionRepository.save(transaccion);
+            // Guardar en base de datos local
+            Transaccion transaccionGuardada = this.transaccionRepository.save(transaccion);
+            
+            // Sincronizar con el gateway
+            try {
+                transaccionGuardada.setCodigoComercioPOS(obtenerCodigoComercio());
+                transaccionGuardada.setTarjeta(transaccion.getTarjeta());
+                gatewayClient.sincronizarTransaccion(transaccionGuardada);
+            } catch (Exception e) {
+                throw new RuntimeException("Error al sincronizar con gateway: " + e.getMessage());
+            }
+            
+            return transaccionGuardada;
         } catch (Exception ex) {
             throw new RuntimeException("No se pudo crear la transacción. Motivo: " + ex.getMessage());
         }
@@ -99,10 +133,15 @@ public class TransaccionService {
             if (ESTADO_AUTORIZADO.equals(nuevoEstado)) {
                 transaccion.setEstadoRecibo(ESTADO_RECIBO_PENDIENTE);
             }
-
-            return this.transaccionRepository.save(transaccion);
+            
+            Transaccion transaccionActualizada = this.transaccionRepository.save(transaccion);
+            
+            // Sincronizar con el gateway
+            gatewayClient.actualizarEstadoTransaccion(id, nuevoEstado);
+            
+            return transaccionActualizada;
         } catch (Exception ex) {
-            throw new RuntimeException("No se pudo actualizar el estado de la transacción. Motivo: " + ex.getMessage());
+            throw new RuntimeException("No se pudo actualizar el estado. Motivo: " + ex.getMessage());
         }
     }
 
@@ -212,5 +251,23 @@ public class TransaccionService {
             throw new IllegalArgumentException("Estado no válido");
         }
         return transaccionRepository.findByTipoAndEstado(tipo, estado);
+    }
+
+    public String convertirMarcaACodigo(String marca) {
+        if (marca == null)
+            return "OTHR";
+
+        switch (marca.toUpperCase()) {
+            case "MASTERCARD":
+                return "MSCD";
+            case "VISA":
+                return "VISA";
+            case "AMERICAN EXPRESS":
+                return "AMEX";
+            case "DINERS CLUB":
+                return "DINE";
+            default:
+                return "OTHR";
+        }
     }
 }

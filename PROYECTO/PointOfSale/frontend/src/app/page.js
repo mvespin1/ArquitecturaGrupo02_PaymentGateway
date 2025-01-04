@@ -63,9 +63,9 @@ const MainPage = () => {
   
     try {
       // 1. Obtener la clave activa
-      const claveResponse = await fetch("http://localhost:8082/api/seguridad-gateway/clave-activa");
+      /*const claveResponse = await fetch("http://localhost:8082/api/seguridad-gateway/clave-activa");
       if (!claveResponse.ok) throw new Error("Error al obtener la clave de encriptación");
-      const claveData = await claveResponse.json();
+      const claveData = await claveResponse.json();*/
 
       // 2. Preparar datos sensibles para encriptar
       const datosSensibles = JSON.stringify({
@@ -75,26 +75,26 @@ const MainPage = () => {
       });
 
       // 3. Encriptar datos sensibles
-      const encryptResponse = await fetch("http://localhost:8082/api/seguridad-gateway/encriptar", {
+      /*const encryptResponse = await fetch("http://localhost:8082/api/seguridad-gateway/encriptar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           informacion: datosSensibles,
           clave: claveData.clave
         })
-      });
+      });*/
 
-      if (!encryptResponse.ok) {
+      /*if (!encryptResponse.ok) {
         const errorText = await encryptResponse.text();
         throw new Error(`Error al encriptar los datos: ${errorText}`);
-      }
-      const { datosEncriptados } = await encryptResponse.json();
+      }*/
+      //const { datosEncriptados } = await encryptResponse.json();
 
       // 4. Enviar transacción con datos encriptados
       const transactionPayload = {
         monto: parseFloat(formData.transactionAmount),
         marca: formData.cardName,
-        encryptedData: datosEncriptados
+        encryptedData: datosSensibles
       };
 
       const response = await fetch("http://localhost:8082/api/pagos/procesar", {

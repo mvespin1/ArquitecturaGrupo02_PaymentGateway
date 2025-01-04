@@ -215,4 +215,30 @@ public class TransaccionService {
         return transaccionRepository.findByComercio_CodigoAndFechaBetween(
             codigoComercio, fechaInicio, fechaFin);
     }
+
+    public void procesarTransaccionPOS(Transaccion transaccionPOS) {
+        Transaccion transaccionGateway = new Transaccion();
+        
+        // Copiar datos básicos del POS
+        transaccionGateway.setTipo(transaccionPOS.getTipo());
+        transaccionGateway.setMarca(transaccionPOS.getMarca());
+        transaccionGateway.setMonto(transaccionPOS.getMonto());
+        transaccionGateway.setCodigoUnicoTransaccion(transaccionPOS.getCodigoUnicoTransaccion());
+        transaccionGateway.setFecha(transaccionPOS.getFecha());
+        transaccionGateway.setEstado(transaccionPOS.getEstado());
+        transaccionGateway.setMoneda(transaccionPOS.getMoneda());
+        
+        // Establecer valores por defecto o buscar relaciones
+        transaccionGateway.setPais("EC"); // Default para Ecuador
+        transaccionGateway.setTarjeta("XXXXXXXXXXXX1234"); // Número enmascarado por defecto
+        
+        Comercio comercio = comercioRepository.findByCodigoInterno(transaccionPOS.getCodigoComercio())
+        .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado con código: " + transaccionPOS.getCodigoComercio()));
+        transaccionGateway.setComercio(comercio);
+        
+        FacturacionComercio facturacion = facturacionComercioRepository.findFacturaActivaPorComercio(comercio.getCodigo());
+        transaccionGateway.setFacturacionComercio(facturacion);
+        
+        transaccionRepository.save(transaccionGateway);
+    }
 }

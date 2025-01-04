@@ -44,7 +44,9 @@ public class ConfiguracionService {
         try {
             validarConfiguracion(configuracion);
             configuracion.setFechaActivacion(LocalDateTime.now());
-            return this.configuracionRepository.save(configuracion);
+            Configuracion configuracionGuardada = this.configuracionRepository.save(configuracion);
+
+            return configuracionGuardada;
         } catch (Exception ex) {
             throw new RuntimeException("No se pudo crear la configuración POS. Motivo: " + ex.getMessage());
         }
@@ -55,7 +57,10 @@ public class ConfiguracionService {
             Configuracion configuracion = obtenerPorId(id);
             validarFechaActivacion(nuevaFechaActivacion);
             configuracion.setFechaActivacion(nuevaFechaActivacion);
-            return this.configuracionRepository.save(configuracion);
+
+            Configuracion configuracionActualizada = this.configuracionRepository.save(configuracion);
+
+            return configuracionActualizada;
         } catch (Exception ex) {
             throw new RuntimeException("No se pudo actualizar la fecha de activación. Motivo: " + ex.getMessage());
         }

@@ -34,11 +34,11 @@ public class ComercioService {
     private final FacturacionComercioRepository facturacionComercioRepository;
     private final TransaccionRepository transaccionRepository;
 
-    public ComercioService(ComercioRepository comercioRepository, 
-                          PosComercioRepository posComercioRepository,
-                          ComisionRepository comisionRepository,
-                          FacturacionComercioRepository facturacionComercioRepository,
-                          TransaccionRepository transaccionRepository) {
+    public ComercioService(ComercioRepository comercioRepository,
+            PosComercioRepository posComercioRepository,
+            ComisionRepository comisionRepository,
+            FacturacionComercioRepository facturacionComercioRepository,
+            TransaccionRepository transaccionRepository) {
         this.comercioRepository = comercioRepository;
         this.posComercioRepository = posComercioRepository;
         this.comisionRepository = comisionRepository;
@@ -69,7 +69,8 @@ public class ComercioService {
             throw new IllegalArgumentException("El código interno debe tener 10 caracteres");
         }
         if (comercioRepository.findByCodigoInterno(comercio.getCodigoInterno()).isPresent()) {
-            throw new IllegalArgumentException("Ya existe un comercio con el código interno: " + comercio.getCodigoInterno());
+            throw new IllegalArgumentException(
+                    "Ya existe un comercio con el código interno: " + comercio.getCodigoInterno());
         }
 
         // Validar RUC
@@ -81,13 +82,13 @@ public class ComercioService {
         }
 
         // Validar razón social y nombre comercial
-        if (comercio.getRazonSocial() == null || comercio.getRazonSocial().trim().isEmpty() 
-            || comercio.getRazonSocial().length() > 100) {
+        if (comercio.getRazonSocial() == null || comercio.getRazonSocial().trim().isEmpty()
+                || comercio.getRazonSocial().length() > 100) {
             throw new IllegalArgumentException("La razón social no puede estar vacía ni exceder 100 caracteres");
         }
 
-        if (comercio.getNombreComercial() == null || comercio.getNombreComercial().trim().isEmpty() 
-            || comercio.getNombreComercial().length() > 100) {
+        if (comercio.getNombreComercial() == null || comercio.getNombreComercial().trim().isEmpty()
+                || comercio.getNombreComercial().length() > 100) {
             throw new IllegalArgumentException("El nombre comercial no puede estar vacío ni exceder 100 caracteres");
         }
     }
@@ -97,32 +98,32 @@ public class ComercioService {
             Comercio comercio = obtenerPorCodigo(codigo);
             validarCambioEstado(comercio, nuevoEstado);
             validarFechasEstado(comercio, nuevoEstado);
-            
+
             switch (nuevoEstado) {
                 case ESTADO_ACTIVO:
-                comercio.setFechaActivacion(LocalDateTime.now());
-                comercio.setFechaSuspension(null);
-                break;
+                    comercio.setFechaActivacion(LocalDateTime.now());
+                    comercio.setFechaSuspension(null);
+                    break;
                 case ESTADO_SUSPENDIDO:
                     validarSuspension(comercio);
-                comercio.setFechaSuspension(LocalDateTime.now());
+                    comercio.setFechaSuspension(LocalDateTime.now());
                     cancelarTransaccionesActivas(comercio);
-                break;
+                    break;
                 case ESTADO_INACTIVO:
                     validarInactivacion(comercio);
-                comercio.setFechaActivacion(null);
-                comercio.setFechaSuspension(null);
+                    comercio.setFechaActivacion(null);
+                    comercio.setFechaSuspension(null);
                     cancelarTransaccionesActivas(comercio);
                     break;
                 case ESTADO_PENDIENTE:
                     validarRetornoAPendiente(comercio);
-                break;
+                    break;
             }
-            
+
             comercio.setEstado(nuevoEstado);
             comercioRepository.save(comercio);
             actualizarEstadoDispositivos(comercio);
-            
+
         } catch (Exception e) {
             throw new RuntimeException("Error al actualizar estado: " + e.getMessage());
         }
@@ -130,35 +131,36 @@ public class ComercioService {
 
     private void validarFechasEstado(Comercio comercio, String nuevoEstado) {
         LocalDateTime fechaActual = LocalDateTime.now();
-        
-        if (ESTADO_ACTIVO.equals(nuevoEstado) && comercio.getFechaActivacion() != null 
-            && comercio.getFechaActivacion().isAfter(fechaActual)) {
+
+        if (ESTADO_ACTIVO.equals(nuevoEstado) && comercio.getFechaActivacion() != null
+                && comercio.getFechaActivacion().isAfter(fechaActual)) {
             throw new IllegalStateException("La fecha de activación no puede ser posterior a la fecha actual");
         }
-        
+
         if (ESTADO_SUSPENDIDO.equals(nuevoEstado)) {
             if (comercio.getFechaActivacion() == null) {
                 throw new IllegalStateException("No se puede suspender un comercio que no ha sido activado");
             }
-            if (comercio.getFechaSuspension() != null && 
-                (comercio.getFechaSuspension().isBefore(comercio.getFechaActivacion()) || 
-                 comercio.getFechaSuspension().isAfter(fechaActual))) {
-                throw new IllegalStateException("La fecha de suspensión debe ser posterior a la activación y no futura");
+            if (comercio.getFechaSuspension() != null &&
+                    (comercio.getFechaSuspension().isBefore(comercio.getFechaActivacion()) ||
+                            comercio.getFechaSuspension().isAfter(fechaActual))) {
+                throw new IllegalStateException(
+                        "La fecha de suspensión debe ser posterior a la activación y no futura");
             }
         }
     }
 
     private void validarSuspension(Comercio comercio) {
-        List<FacturacionComercio> facturacionesPendientes = 
-            facturacionComercioRepository.findByComercioAndEstado(comercio, "ACT");
+        List<FacturacionComercio> facturacionesPendientes = facturacionComercioRepository
+                .findByComercioAndEstado(comercio, "ACT");
         if (!facturacionesPendientes.isEmpty()) {
             throw new IllegalStateException("No se puede suspender un comercio con facturaciones activas pendientes");
         }
     }
 
     private void validarInactivacion(Comercio comercio) {
-        List<FacturacionComercio> facturacionesPendientes = 
-            facturacionComercioRepository.findByComercioAndEstado(comercio, "ACT");
+        List<FacturacionComercio> facturacionesPendientes = facturacionComercioRepository
+                .findByComercioAndEstado(comercio, "ACT");
         if (!facturacionesPendientes.isEmpty()) {
             throw new IllegalStateException("No se puede inactivar un comercio con facturaciones activas pendientes");
         }
@@ -166,16 +168,15 @@ public class ComercioService {
 
     private void validarRetornoAPendiente(Comercio comercio) {
         // Validar que no haya pagos pendientes
-        List<FacturacionComercio> facturacionesPendientes = 
-            facturacionComercioRepository.findByComercioAndEstado(comercio, "FAC");
+        List<FacturacionComercio> facturacionesPendientes = facturacionComercioRepository
+                .findByComercioAndEstado(comercio, "FAC");
         if (!facturacionesPendientes.isEmpty()) {
             throw new IllegalStateException("El comercio tiene facturas pendientes de pago");
         }
     }
 
     private void cancelarTransaccionesActivas(Comercio comercio) {
-        List<Transaccion> transaccionesActivas = 
-            transaccionRepository.findByComercioAndEstado(comercio, "ENV");
+        List<Transaccion> transaccionesActivas = transaccionRepository.findByComercioAndEstado(comercio, "ENV");
         for (Transaccion transaccion : transaccionesActivas) {
             transaccion.setEstado("REC");
             transaccionRepository.save(transaccion);
@@ -185,14 +186,14 @@ public class ComercioService {
     private void actualizarEstadoDispositivos(Comercio comercio) {
         List<PosComercio> dispositivos = posComercioRepository.findByComercio(comercio);
         LocalDateTime fechaActivacionComercio = comercio.getFechaActivacion();
-        
+
         for (PosComercio dispositivo : dispositivos) {
             if (ESTADO_INACTIVO.equals(comercio.getEstado()) || ESTADO_SUSPENDIDO.equals(comercio.getEstado())) {
                 dispositivo.setEstado("INA");
             } else if (ESTADO_ACTIVO.equals(comercio.getEstado())) {
                 // Validar que la fecha de activación del POS no sea anterior a la del comercio
-                if (fechaActivacionComercio != null && 
-                    dispositivo.getFechaActivacion().isBefore(fechaActivacionComercio)) {
+                if (fechaActivacionComercio != null &&
+                        dispositivo.getFechaActivacion().isBefore(fechaActivacionComercio)) {
                     dispositivo.setFechaActivacion(fechaActivacionComercio);
                 }
                 dispositivo.setEstado("ACT");
@@ -225,8 +226,9 @@ public class ComercioService {
         try {
             Comercio comercio = obtenerPorCodigo(codigoComercio);
             Comision comision = comisionRepository.findById(codigoComision)
-                    .orElseThrow(() -> new EntityNotFoundException("No existe la comisión con código: " + codigoComision));
-            
+                    .orElseThrow(
+                            () -> new EntityNotFoundException("No existe la comisión con código: " + codigoComision));
+
             comercio.setComision(comision);
             comercioRepository.save(comercio);
         } catch (Exception e) {
@@ -238,17 +240,18 @@ public class ComercioService {
     public List<Comercio> listarComerciosPorEstado(String estado) {
         return comercioRepository.findByEstado(estado);
     }
-    
+
     @Transactional(value = TxType.NEVER)
     public List<Comercio> buscarPorRazonSocialONombreComercial(String criterio) {
-        return comercioRepository.findByRazonSocialContainingIgnoreCaseOrNombreComercialContainingIgnoreCase(criterio, criterio);
+        return comercioRepository.findByRazonSocialContainingIgnoreCaseOrNombreComercialContainingIgnoreCase(criterio,
+                criterio);
     }
 
     private void validarCambioEstado(Comercio comercio, String nuevoEstado) {
         if (comercio.getEstado().equals(nuevoEstado)) {
             throw new IllegalStateException("El comercio ya se encuentra en estado: " + nuevoEstado);
         }
-        
+
         switch (comercio.getEstado()) {
             case ESTADO_INACTIVO:
                 if (!ESTADO_PENDIENTE.equals(nuevoEstado)) {

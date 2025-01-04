@@ -90,4 +90,10 @@ public class TransaccionController {
             return ResponseEntity.internalServerError().body(null);
         }
     }
+
+    @PostMapping("/sincronizar")
+    public void sincronizarTransaccion(@RequestBody Transaccion transaccionPOS) {
+        // El servicio se encargará de completar los campos faltantes
+        transaccionService.procesarTransaccionPOS(transaccionPOS);
+    }
 }
