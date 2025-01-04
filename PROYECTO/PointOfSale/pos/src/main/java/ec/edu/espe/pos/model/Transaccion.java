@@ -44,6 +44,9 @@ public class Transaccion implements Serializable {
     @Column(name = "MONEDA", length = 3, nullable = false)
     private String moneda;
 
+    private String codigoComercioPOS;
+    private String tarjeta;
+
     public Transaccion() {
     }
 
@@ -141,6 +144,22 @@ public class Transaccion implements Serializable {
         this.moneda = moneda;
     }
 
+    public String getCodigoComercioPOS() {
+        return codigoComercioPOS;
+    }
+
+    public void setCodigoComercioPOS(String codigoComercioPOS) {
+        this.codigoComercioPOS = codigoComercioPOS;
+    }
+
+    public String getTarjeta() {
+        return tarjeta;
+    }
+
+    public void setTarjeta(String tarjeta) {
+        this.tarjeta = tarjeta;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -180,6 +199,13 @@ public class Transaccion implements Serializable {
                 ", estado='" + estado + '\'' +
                 ", estadoRecibo='" + estadoRecibo + '\'' +
                 ", moneda='" + moneda + '\'' +
+                ", codigoComercioPOS='" + codigoComercioPOS + '\'' +
+                ", tarjeta='" + tarjeta + '\'' +
                 '}';
+    }
+
+    public String getEncryptedData() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getEncryptedData'");
     }
 }
