@@ -44,7 +44,9 @@ public class Transaccion implements Serializable {
     @Column(name = "MONEDA", length = 3, nullable = false)
     private String moneda;
 
+    @Transient
     private String codigoComercioPOS;
+    @Transient
     private String tarjeta;
 
     public Transaccion() {
