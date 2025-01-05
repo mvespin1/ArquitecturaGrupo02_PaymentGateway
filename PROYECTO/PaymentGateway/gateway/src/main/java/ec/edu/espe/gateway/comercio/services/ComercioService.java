@@ -10,6 +10,8 @@ import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
 import ec.edu.espe.gateway.transaccion.model.Transaccion;
 import ec.edu.espe.gateway.transaccion.repository.TransaccionRepository;
+import ec.edu.espe.gateway.facturacion.services.FacturaService;
+import ec.edu.espe.gateway.comision.services.ComisionService;
 
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
@@ -19,6 +21,9 @@ import jakarta.transaction.Transactional.TxType;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @Transactional
@@ -34,17 +39,23 @@ public class ComercioService {
     private final ComisionRepository comisionRepository;
     private final FacturacionComercioRepository facturacionComercioRepository;
     private final TransaccionRepository transaccionRepository;
+    private final FacturaService facturaService;
+    private final ComisionService comisionService;
 
     public ComercioService(ComercioRepository comercioRepository,
             PosComercioRepository posComercioRepository,
             ComisionRepository comisionRepository,
             FacturacionComercioRepository facturacionComercioRepository,
-            TransaccionRepository transaccionRepository) {
+            TransaccionRepository transaccionRepository,
+            FacturaService facturaService,
+            ComisionService comisionService) {
         this.comercioRepository = comercioRepository;
         this.posComercioRepository = posComercioRepository;
         this.comisionRepository = comisionRepository;
         this.facturacionComercioRepository = facturacionComercioRepository;
         this.transaccionRepository = transaccionRepository;
+        this.facturaService = facturaService;
+        this.comisionService = comisionService;
     }
 
     @Transactional(value = TxType.NEVER)
@@ -94,6 +105,7 @@ public class ComercioService {
         }
     }
 
+    @Transactional
     public void actualizarEstado(Integer codigo, String nuevoEstado) {
         try {
             Comercio comercio = obtenerPorCodigo(codigo);
@@ -104,25 +116,42 @@ public class ComercioService {
                 case ESTADO_ACTIVO:
                     comercio.setFechaActivacion(LocalDateTime.now());
                     comercio.setFechaSuspension(null);
+                    comercio.setEstado(nuevoEstado);
+                    comercioRepository.saveAndFlush(comercio);
+                    crearFacturacionInicial(comercio);
                     break;
                 case ESTADO_SUSPENDIDO:
                     validarSuspension(comercio);
                     comercio.setFechaSuspension(LocalDateTime.now());
-                    cancelarTransaccionesActivas(comercio);
+                    comercio.setEstado(nuevoEstado);
+                    // Primero cancelar transacciones
+                    List<Transaccion> transaccionesActivas = transaccionRepository
+                            .findByComercioAndEstado(comercio, "ENV");
+                    for (Transaccion transaccion : transaccionesActivas) {
+                        transaccion.setEstado("REC");
+                        transaccionRepository.saveAndFlush(transaccion);
+                    }
                     break;
                 case ESTADO_INACTIVO:
                     validarInactivacion(comercio);
                     comercio.setFechaActivacion(null);
                     comercio.setFechaSuspension(null);
-                    cancelarTransaccionesActivas(comercio);
+                    comercio.setEstado(nuevoEstado);
+                    // Primero cancelar transacciones
+                    transaccionesActivas = transaccionRepository
+                            .findByComercioAndEstado(comercio, "ENV");
+                    for (Transaccion transaccion : transaccionesActivas) {
+                        transaccion.setEstado("REC");
+                        transaccionRepository.saveAndFlush(transaccion);
+                    }
                     break;
                 case ESTADO_PENDIENTE:
                     validarRetornoAPendiente(comercio);
+                    comercio.setEstado(nuevoEstado);
                     break;
             }
 
-            comercio.setEstado(nuevoEstado);
-            comercioRepository.save(comercio);
+            comercioRepository.saveAndFlush(comercio);
             actualizarEstadoDispositivos(comercio);
 
         } catch (Exception e) {
@@ -177,10 +206,11 @@ public class ComercioService {
     }
 
     private void cancelarTransaccionesActivas(Comercio comercio) {
-        List<Transaccion> transaccionesActivas = transaccionRepository.findByComercioAndEstado(comercio, "ENV");
+        List<Transaccion> transaccionesActivas = transaccionRepository
+                .findByComercioAndEstado(comercio, "ENV");
         for (Transaccion transaccion : transaccionesActivas) {
             transaccion.setEstado("REC");
-            transaccionRepository.save(transaccion);
+            transaccionRepository.saveAndFlush(transaccion);
         }
     }
 
@@ -279,5 +309,48 @@ public class ComercioService {
 
     public Optional<Comercio> findByCodigoInterno(String codigoInterno) {
         return comercioRepository.findByCodigoInterno(codigoInterno);
+    }
+
+    @Transactional
+    public void activarComercio(Integer codigoComercio) {
+        Comercio comercio = comercioRepository.findById(codigoComercio)
+            .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
+        
+        comercio.setEstado("ACT");
+        comercio.setFechaActivacion(LocalDateTime.now());
+        comercioRepository.save(comercio);
+
+        // Crear facturación inicial
+        crearFacturacionInicial(comercio);
+    }
+
+    private void crearFacturacionInicial(Comercio comercio) {
+        if (!"ACT".equals(comercio.getEstado())) {
+            throw new IllegalStateException("El comercio debe estar activo para iniciar la facturación");
+        }
+
+        FacturacionComercio facturaActiva = facturacionComercioRepository
+                .findFacturaActivaPorComercio(comercio.getCodigo());
+
+        if (facturaActiva == null) {
+            LocalDate fechaInicio = comercio.getFechaActivacion().toLocalDate();
+            LocalDate fechaFin = fechaInicio.plusMonths(1);
+
+            FacturacionComercio nuevaFactura = new FacturacionComercio();
+            nuevaFactura.setFechaInicio(fechaInicio);
+            nuevaFactura.setFechaFin(fechaFin);
+            nuevaFactura.setEstado("ACT");
+            nuevaFactura.setCodigoFacturacion(
+                    "FACT-" + comercio.getCodigo() + "-" + fechaFin.format(DateTimeFormatter.ofPattern("yyyyMM")));
+            nuevaFactura.setComercio(comercio);
+            nuevaFactura.setComision(comercio.getComision());
+            nuevaFactura.setTransaccionesAutorizadas(0);
+            nuevaFactura.setTransaccionesProcesadas(0);
+            nuevaFactura.setTransaccionesRechazadas(0);
+            nuevaFactura.setTransaccionesReversadas(0);
+            nuevaFactura.setValor(BigDecimal.ZERO);
+
+            facturacionComercioRepository.save(nuevaFactura);
+        }
     }
 }

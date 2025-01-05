@@ -8,6 +8,8 @@ import ec.edu.espe.pos.dto.Comercio;
 import ec.edu.espe.pos.client.GatewayComercioClient;
 import ec.edu.espe.pos.model.ConfiguracionPK;
 import ec.edu.espe.pos.dto.GatewayComercioDTO;
+import ec.edu.espe.pos.dto.GatewayTransaccionDTO;
+import feign.FeignException;
 
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityNotFoundException;
@@ -132,28 +134,57 @@ public class TransaccionService {
             // Preparar transacción para el gateway
             transaccionGuardada.setComercio(comercioPos);
             
-            // Crear copia para el gateway
-            Transaccion transaccionGateway = new Transaccion();
-            // Copiar propiedades básicas
-            transaccionGateway.setCodigo(transaccionGuardada.getCodigo());
-            transaccionGateway.setTipo(transaccionGuardada.getModalidad()); // el tipo en gateway es la modalidad
-            transaccionGateway.setMarca(transaccionGuardada.getMarca());
-            transaccionGateway.setModalidad(transaccionGuardada.getModalidad());
-            transaccionGateway.setDetalle(transaccionGuardada.getDetalle());
-            transaccionGateway.setMonto(transaccionGuardada.getMonto());
-            transaccionGateway.setCodigoUnicoTransaccion(transaccionGuardada.getCodigoUnicoTransaccion());
-            transaccionGateway.setFecha(transaccionGuardada.getFecha());
-            transaccionGateway.setEstado(transaccionGuardada.getEstado());
-            transaccionGateway.setMoneda(transaccionGuardada.getMoneda());
-            transaccionGateway.setComercio(comercioGateway);
+            // Verificar que el comercio exista en el gateway antes de sincronizar
+            try {
+                if (idComercio == null) {
+                    throw new EntityNotFoundException("El comercio con ID " + idComercio + " no existe en el gateway");
+                }
+            } catch (FeignException.NotFound e) {
+                throw new EntityNotFoundException("El comercio con ID " + idComercio + " no existe en el gateway");
+            } catch (FeignException e) {
+                throw new RuntimeException("Error al verificar el comercio en el gateway: " + e.getMessage());
+            }
             
-            // Sincronizar con gateway
-            System.out.println("6. Enviando al gateway...");
-            System.out.println("Datos de comercio enviados al gateway: " + comercioGateway);
-            gatewayClient.sincronizarTransaccion(transaccionGateway);
-            System.out.println("7. Sincronización completada");
+            // Crear copia para el gateway
+            GatewayTransaccionDTO transaccionGateway = GatewayTransaccionDTO.fromTransaccion(transaccionGuardada, idComercio);
+            
+            // Sincronizar con gateway con reintentos
+            int maxIntentos = 3;
+            int intento = 0;
+            boolean sincronizacionExitosa = false;
+            Exception ultimoError = null;
+
+            while (intento < maxIntentos && !sincronizacionExitosa) {
+                try {
+                    System.out.println("6. Enviando al gateway... (intento " + (intento + 1) + " de " + maxIntentos + ")");
+                    System.out.println("Datos de comercio enviados al gateway: " + comercioGateway);
+                    gatewayClient.sincronizarTransaccion(transaccionGateway);
+                    sincronizacionExitosa = true;
+                    System.out.println("7. Sincronización completada exitosamente");
+                } catch (FeignException.InternalServerError e) {
+                    ultimoError = e;
+                    intento++;
+                    if (intento < maxIntentos) {
+                        // Esperar un poco antes de reintentar
+                        Thread.sleep(1000 * intento); // Espera progresiva
+                    }
+                }
+            }
+
+            if (!sincronizacionExitosa) {
+                // Si después de todos los intentos no se logró sincronizar
+                transaccionGuardada.setEstado(ESTADO_RECHAZADO);
+                transaccionRepository.save(transaccionGuardada);
+                throw new RuntimeException("No se pudo sincronizar la transacción después de " + maxIntentos + 
+                    " intentos. Último error: " + (ultimoError != null ? ultimoError.getMessage() : "desconocido"));
+            }
 
             return transaccionGuardada;
+        } catch (EntityNotFoundException e) {
+            throw e;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("La operación fue interrumpida", e);
         } catch (Exception ex) {
             System.err.println("ERROR: " + ex.getMessage());
             ex.printStackTrace();

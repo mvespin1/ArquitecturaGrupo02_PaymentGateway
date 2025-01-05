@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import ec.edu.espe.gateway.comercio.model.Comercio;
-import ec.edu.espe.gateway.comercio.services.ComercioService;
 import ec.edu.espe.gateway.transaccion.model.Transaccion;
 import ec.edu.espe.gateway.transaccion.services.TransaccionService;
 import ec.edu.espe.gateway.comision.model.Comision;
@@ -21,14 +20,12 @@ import java.util.Optional;
 @Service
 public class FacturaService {
 
-    private final ComercioService comercioService;
     private final TransaccionService transaccionService;
     private final ComisionService comisionService;
     private final FacturacionComercioRepository facturacionComercioRepository;
 
-    public FacturaService(ComercioService comercioService, TransaccionService transaccionService,
+    public FacturaService(TransaccionService transaccionService,
             ComisionService comisionService, FacturacionComercioRepository facturacionComercioRepository) {
-        this.comercioService = comercioService;
         this.transaccionService = transaccionService;
         this.comisionService = comisionService;
         this.facturacionComercioRepository = facturacionComercioRepository;
@@ -36,54 +33,45 @@ public class FacturaService {
 
     @Transactional
     public void procesarFacturacionAutomatica() {
-        List<Comercio> comerciosActivos = comercioService.listarComerciosPorEstado("ACT");
+        List<FacturacionComercio> facturasActivas = facturacionComercioRepository.findByEstado("ACT");
 
-        for (Comercio comercio : comerciosActivos) {
-            // Procesar facturas activas que hayan llegado a su fecha de fin
-            FacturacionComercio facturaActiva = facturacionComercioRepository
-                    .findFacturaActivaPorComercio(comercio.getCodigo());
-
-            if (facturaActiva != null) {
-                if (facturaActiva.getFechaFin().isBefore(LocalDate.now())) {
-                    // Calcular comisiones y actualizar estado a FACTURADO
-                    BigDecimal totalComisiones = calcularComisiones(comercio, facturaActiva);
-                    facturaActiva.setValor(totalComisiones);
-                    facturaActiva.setEstado(FacturacionComercioService.ESTADO_FACTURADO);
-                    facturacionComercioRepository.save(facturaActiva);
-                }
-                // No generar nuevas facturas si hay una activa pendiente
-                continue;
+        for (FacturacionComercio factura : facturasActivas) {
+            if (factura.getFechaFin().isBefore(LocalDate.now())) {
+                procesarFactura(factura);
             }
-
-            // Si no hay facturas activas, crear una nueva
-            FacturacionComercio ultimaFactura = facturacionComercioRepository
-                    .findUltimaFacturaPorComercio(comercio.getCodigo());
-
-            LocalDate fechaInicio;
-            LocalDate fechaFin;
-
-            if (ultimaFactura != null) {
-                // La nueva factura comienza en la fecha de fin de la última factura
-                fechaInicio = ultimaFactura.getFechaFin();
-            } else {
-                // Primera factura, usar la fecha de activación del comercio
-                fechaInicio = comercio.getFechaActivacion().toLocalDate();
-            }
-            fechaFin = fechaInicio.plusMonths(1);
-
-            // Crear una nueva factura con estado ACTIVO
-            FacturacionComercio nuevaFactura = new FacturacionComercio();
-            nuevaFactura.setFechaInicio(fechaInicio);
-            nuevaFactura.setFechaFin(fechaFin);
-            nuevaFactura.setEstado(FacturacionComercioService.ESTADO_ACTIVO); // Estado inicial
-            nuevaFactura.setCodigoFacturacion(
-                    "FACT-" + comercio.getCodigo() + "-" + fechaFin.format(DateTimeFormatter.ofPattern("yyyyMM")));
-            nuevaFactura.setComercio(comercio);
-            nuevaFactura.setComision(comercio.getComision());
-
-            // Guardar la nueva factura en la base de datos
-            facturacionComercioRepository.save(nuevaFactura);
         }
+    }
+
+    @Transactional
+    public void procesarFactura(FacturacionComercio factura) {
+        // Calcular comisiones y actualizar estado a FACTURADO
+        BigDecimal totalComisiones = calcularComisiones(factura.getComercio(), factura);
+        factura.setValor(totalComisiones);
+        factura.setEstado("FAC"); // FACTURADO
+        facturacionComercioRepository.save(factura);
+        
+        // Crear nueva factura inmediatamente después
+        crearNuevaFactura(factura.getComercio(), factura.getFechaFin());
+    }
+
+    private void crearNuevaFactura(Comercio comercio, LocalDate fechaInicio) {
+        LocalDate fechaFin = fechaInicio.plusMonths(1);
+
+        FacturacionComercio nuevaFactura = new FacturacionComercio();
+        nuevaFactura.setFechaInicio(fechaInicio);
+        nuevaFactura.setFechaFin(fechaFin);
+        nuevaFactura.setEstado("ACT"); // ACTIVO
+        nuevaFactura.setCodigoFacturacion(
+                "FACT-" + comercio.getCodigo() + "-" + fechaFin.format(DateTimeFormatter.ofPattern("yyyyMM")));
+        nuevaFactura.setComercio(comercio);
+        nuevaFactura.setComision(comercio.getComision());
+        nuevaFactura.setTransaccionesAutorizadas(0);
+        nuevaFactura.setTransaccionesProcesadas(0);
+        nuevaFactura.setTransaccionesRechazadas(0);
+        nuevaFactura.setTransaccionesReversadas(0);
+        nuevaFactura.setValor(BigDecimal.ZERO);
+
+        facturacionComercioRepository.save(nuevaFactura);
     }
 
     private BigDecimal calcularComisiones(Comercio comercio, FacturacionComercio factura) {
@@ -126,5 +114,4 @@ public class FacturaService {
 
         return totalComisiones;
     }
-
 }
