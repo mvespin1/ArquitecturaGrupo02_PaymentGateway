@@ -8,11 +8,11 @@ const ViewPage = () => {
 
   // Datos de ejemplo
   const mockData = {
-    CodigoSeguridadProcesador: "",
-    Clave: "",
-    FechaActualizacion: "",
-    FechaActivacion: "",
-    Estado: "",
+    CodigoSeguridadProcesador: "xx",
+    Clave: "xxx",
+    FechaActualizacion: "xxx",
+    FechaActivacion: "xxx",
+    Estado: "xxx",
   };
 
   const handleCancel = () => {

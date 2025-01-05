@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // Importa el hook para navegación
+import { useRouter } from "next/navigation";
 import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
 
 const CrudTable = () => {
@@ -15,18 +15,47 @@ const CrudTable = () => {
     },
   ]);
 
-  const router = useRouter(); // Inicializa el router para redirigir
+  const router = useRouter();
 
-  const handleCreate = () => {
-    router.push("/GtwSeguridadProcesador/create");
+  const handleView = async (item) => {
+    const transactionPayload = {
+      CodigoSeguridadProcesador: item.CodigoSeguridadProcesador,
+      Clave: item.Clave,
+      FechaActualizacion: item.FechaActualizacion,
+      FechaActivacion: item.FechaActivacion,
+      Estado: item.Estado,
+    };
+
+    console.log("Payload para visualización:", transactionPayload);
+
+    try {
+      const response = await fetch("http://localhost:8082/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      alert(`Respuesta de la API: ${JSON.stringify(result)}`);
+      router.push(`/GtwSeguridadProcesador/read/${item.id}`);
+    } catch (error) {
+      console.error("Error al enviar los datos:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
   };
 
-  const handleView = (id) => {
-    router.push(`/GtwSeguridadProcesador/read`); // Redirige a la página de visualización
+  const handleCreate = () => {
+    console.log("Crear Comisión");
   };
 
   const handleBackToHome = () => {
-    router.push("/"); // Redirige al inicio
+    router.push("/");
   };
 
   return (
@@ -52,15 +81,15 @@ const CrudTable = () => {
           onClick={handleCreate}
         >
           <FaPlus />
-          Crear Comision
+          Crear Comisión
         </button>
         <table>
           <thead>
             <tr>
               <th>Codigo Seguridad Procesador</th>
               <th>Clave</th>
-              <th>Fecha Actualizacion</th>
-              <th>Fecha Activacion</th>
+              <th>Fecha Actualización</th>
+              <th>Fecha Activación</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -73,47 +102,16 @@ const CrudTable = () => {
                 <td>{item.FechaActivacion}</td>
                 <td>{item.Estado}</td>
                 <td>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <button
-                      style={{
-                        backgroundColor: "#3b82f6",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
+                  <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                    <button style={{ backgroundColor: "#3b82f6", color: "white", padding: "5px 10px", border: "none", borderRadius: "4px", cursor: "pointer" }}>
                       <FaEdit />
                     </button>
-                    <button
-                      style={{
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
+                    <button style={{ backgroundColor: "#ef4444", color: "white", padding: "5px 10px", border: "none", borderRadius: "4px", cursor: "pointer" }}>
                       <FaTrash />
                     </button>
                     <button
-                      style={{
-                        backgroundColor: "#38bdf8",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => handleView(item.id)} // Redirige a la página de visualización
+                      style={{ backgroundColor: "#38bdf8", color: "white", padding: "5px 10px", border: "none", borderRadius: "4px", cursor: "pointer" }}
+                      onClick={() => handleView(item)}
                     >
                       <FaEye />
                     </button>
