@@ -6,13 +6,13 @@ import java.util.List;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ec.edu.espe.gateway.comercio.model.Comercio;
+import java.util.Optional;
 
 public interface FacturacionComercioRepository extends JpaRepository<FacturacionComercio, Integer>{
-
     List<FacturacionComercio> findByEstado(String estado);
     
     @Query("SELECT f FROM FacturacionComercio f WHERE f.comercio.codigo = :codigoComercio AND f.estado = 'ACT' ORDER BY f.fechaInicio DESC")
-    FacturacionComercio findFacturaActivaPorComercio(@Param("codigoComercio") Integer codigoComercio);
+    Optional<FacturacionComercio> findFacturaActivaPorComercio(@Param("codigoComercio") Integer codigoComercio);
     
     @Query("SELECT f FROM FacturacionComercio f WHERE f.comercio.codigo = :codigoComercio ORDER BY f.fechaFin DESC LIMIT 1")
     FacturacionComercio findUltimaFacturaPorComercio(@Param("codigoComercio") Integer codigoComercio);

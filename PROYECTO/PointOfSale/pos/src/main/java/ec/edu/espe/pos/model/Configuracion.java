@@ -16,8 +16,8 @@ public class Configuracion implements Serializable {
     @Column(name = "DIRECCION_MAC", length = 32, nullable = false)
     private String direccionMac;
     @NotNull
-    @Column(name = "CODIGO_COMERCIO", length = 10, nullable = false)
-    private String codigoComercio;
+    @Column(name = "CODIGO_COMERCIO", nullable = false)
+    private Integer codigoComercio;
     @NotNull
     @Column(name = "FECHA_ACTIVACION", nullable = false)
     private LocalDateTime fechaActivacion;
@@ -48,11 +48,11 @@ public class Configuracion implements Serializable {
         this.direccionMac = direccionMac;
     }
 
-    public String getCodigoComercio() {
+    public Integer getCodigoComercio() {
         return codigoComercio;
     }
 
-    public void setCodigoComercio(String codigoComercio) {
+    public void setCodigoComercio(Integer codigoComercio) {
         this.codigoComercio = codigoComercio;
     }
 

@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ec.edu.espe.gateway.comercio.model.Comercio;
 import ec.edu.espe.gateway.comercio.services.ComercioService;
+import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 
@@ -89,6 +90,37 @@ public class ComercioController {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/activo")
+    public ResponseEntity<Comercio> obtenerComercioActivo() {
+        try {
+            Comercio comercio = comercioService.obtenerComercioActivo();
+            return ResponseEntity.ok(comercio);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/facturacion-activa")
+    public ResponseEntity<FacturacionComercio> obtenerFacturacionActiva() {
+        try {
+            FacturacionComercio facturacion = comercioService.obtenerFacturacionActiva();
+            return ResponseEntity.ok(facturacion);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{codigoComercio}/facturacion")
+    public ResponseEntity<FacturacionComercio> obtenerFacturacionPorComercio(
+            @PathVariable Integer codigoComercio) {
+        try {
+            FacturacionComercio facturacion = comercioService.obtenerFacturacionPorComercio(codigoComercio);
+            return ResponseEntity.ok(facturacion);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 }
