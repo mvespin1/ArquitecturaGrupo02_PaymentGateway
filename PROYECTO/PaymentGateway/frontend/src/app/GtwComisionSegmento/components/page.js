@@ -9,19 +9,50 @@ const CrudTable = () => {
     {
       CodigoComision: "001",
       TransaccionDesde: "xxx",
-      TransaciionHasta: "xxx",
+      TransaccionHasta: "xxx",
       Monto: "10",
+      id: "1", // Asegúrate de tener un id único para cada elemento
     },
   ]);
 
   const router = useRouter(); // Inicializa el router para redirigir
 
-  const handleCreate = () => {
-    router.push("/GtwComisionSegmento/create");
+  const handleUpdate = async (item) => {
+    // Crear el objeto transactionPayload con los datos de la fila seleccionada
+    const transactionPayload = {
+      CodigoComision: item.CodigoComision,
+      TransaccionDesde: item.TransaccionDesde,
+      TransaccionHasta: item.TransaccionHasta,
+      Monto: item.Monto,
+    };
+
+    console.log("Payload para actualización:", transactionPayload);
+
+    // Simular envío de datos (puedes usar fetch para un POST real)
+    try {
+      const response = await fetch("http://localhost:8082", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      alert(`Respuesta de la API: ${JSON.stringify(result)}`);
+      router.push(`/GtwComisionSegmento/update/${item.id}`); // Redirige al formulario de actualización
+    } catch (error) {
+      console.error("Error al enviar los datos:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
   };
 
-  const handleView = (id) => {
-    router.push(`/GtwComisionSegmento/read`); // Redirige a la página de visualización
+  const handleCreate = () => {
+    router.push("/GtwComisionSegmento/create"); // Redirige a la página de creación
   };
 
   const handleBackToHome = () => {
@@ -60,6 +91,7 @@ const CrudTable = () => {
               <th>Transaccion Desde</th>
               <th>Transaccion Hasta</th>
               <th>Monto </th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -86,6 +118,7 @@ const CrudTable = () => {
                         borderRadius: "4px",
                         cursor: "pointer",
                       }}
+                      onClick={() => handleUpdate(item)}
                     >
                       <FaEdit />
                     </button>
@@ -110,7 +143,7 @@ const CrudTable = () => {
                         borderRadius: "4px",
                         cursor: "pointer",
                       }}
-                      onClick={() => handleView(item.id)} // Redirige a la página de visualización
+                      onClick={() => router.push(`/GtwComisionSegmento/view/${item.id}`)} // Redirige a la página de visualización
                     >
                       <FaEye />
                     </button>
