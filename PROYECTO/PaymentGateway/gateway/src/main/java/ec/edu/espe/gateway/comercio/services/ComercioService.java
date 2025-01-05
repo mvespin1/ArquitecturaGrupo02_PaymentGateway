@@ -18,6 +18,7 @@ import jakarta.transaction.Transactional.TxType;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -274,5 +275,9 @@ public class ComercioService {
                 }
                 break;
         }
+    }
+
+    public Optional<Comercio> findByCodigoInterno(String codigoInterno) {
+        return comercioRepository.findByCodigoInterno(codigoInterno);
     }
 }

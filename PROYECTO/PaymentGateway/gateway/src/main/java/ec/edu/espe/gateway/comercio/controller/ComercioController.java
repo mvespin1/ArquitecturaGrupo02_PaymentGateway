@@ -78,4 +78,17 @@ public class ComercioController {
         List<Comercio> comercios = comercioService.buscarPorRazonSocialONombreComercial(criterio);
         return ResponseEntity.ok(comercios);
     }
+
+    @GetMapping("/codigo/{codigoInterno}")
+    public ResponseEntity<Integer> obtenerIdPorCodigoInterno(@PathVariable String codigoInterno) {
+        try {
+            Comercio comercio = comercioService.findByCodigoInterno(codigoInterno)
+                .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
+            return ResponseEntity.ok(comercio.getCodigo());
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

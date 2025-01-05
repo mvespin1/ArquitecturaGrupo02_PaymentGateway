@@ -34,9 +34,9 @@ public class TransaccionService {
     private final FacturacionComercioRepository facturacionComercioRepository;
 
     public TransaccionService(TransaccionRepository transaccionRepository,
-                            ComercioRepository comercioRepository,
-                            PosComercioRepository posComercioRepository,
-                            FacturacionComercioRepository facturacionComercioRepository) {
+            ComercioRepository comercioRepository,
+            PosComercioRepository posComercioRepository,
+            FacturacionComercioRepository facturacionComercioRepository) {
         this.transaccionRepository = transaccionRepository;
         this.comercioRepository = comercioRepository;
         this.posComercioRepository = posComercioRepository;
@@ -46,7 +46,7 @@ public class TransaccionService {
     public Transaccion crearTransaccionPOS(Transaccion transaccion, String codigoPos) {
         try {
             LocalDateTime fechaActual = LocalDateTime.now();
-            
+
             if (transaccion.getFecha() != null && transaccion.getFecha().isAfter(fechaActual)) {
                 throw new IllegalArgumentException("La fecha de la transacción no puede ser futura");
             }
@@ -115,7 +115,7 @@ public class TransaccionService {
 
     private void validarFechasRecurrencia(Transaccion transaccion) {
         LocalDate fechaActual = LocalDate.now();
-        
+
         if (transaccion.getFechaEjecucionRecurrencia() == null) {
             throw new IllegalArgumentException("La fecha de ejecución es requerida para transacciones recurrentes");
         }
@@ -165,15 +165,15 @@ public class TransaccionService {
             // Validar estado del comercio
             Comercio comercio = comercioRepository.findById(codigoComercio)
                     .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
-            
+
             if (!"INA".equals(comercio.getEstado()) && !"SUS".equals(comercio.getEstado())) {
                 throw new IllegalStateException(
-                    "Solo se pueden detener recurrencias de comercios inactivos o suspendidos");
+                        "Solo se pueden detener recurrencias de comercios inactivos o suspendidos");
             }
 
-            List<Transaccion> transaccionesRecurrentes = 
-                transaccionRepository.findActiveRecurrentTransactionsByComercio(codigoComercio);
-            
+            List<Transaccion> transaccionesRecurrentes = transaccionRepository
+                    .findActiveRecurrentTransactionsByComercio(codigoComercio);
+
             LocalDate fechaDetencion = LocalDate.now();
             for (Transaccion transaccion : transaccionesRecurrentes) {
                 transaccion.setEstado(ESTADO_RECHAZADO);
@@ -188,17 +188,17 @@ public class TransaccionService {
     public void procesarCambioEstadoComercio(Integer codigoComercio, String nuevoEstado) {
         if ("INA".equals(nuevoEstado) || "SUS".equals(nuevoEstado)) {
             Comercio comercio = comercioRepository.findById(codigoComercio)
-                .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
-                
-            List<Transaccion> transaccionesEnCurso = 
-                transaccionRepository.findByComercioAndEstado(comercio, ESTADO_ENVIADO);
-            
+                    .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
+
+            List<Transaccion> transaccionesEnCurso = transaccionRepository.findByComercioAndEstado(comercio,
+                    ESTADO_ENVIADO);
+
             // Rechazar transacciones en curso
             for (Transaccion transaccion : transaccionesEnCurso) {
                 transaccion.setEstado(ESTADO_RECHAZADO);
                 transaccionRepository.save(transaccion);
             }
-            
+
             // Detener transacciones recurrentes
             detenerTransaccionesRecurrentes(codigoComercio);
         }
@@ -209,34 +209,28 @@ public class TransaccionService {
         return transaccionRepository.findByEstado(estado);
     }
 
-    public List<Transaccion> obtenerPorComercioYFecha(Integer codigoComercio, 
-                                                     LocalDate fechaInicio, 
-                                                     LocalDate fechaFin) {
+    public List<Transaccion> obtenerPorComercioYFecha(Integer codigoComercio,
+            LocalDate fechaInicio,
+            LocalDate fechaFin) {
         return transaccionRepository.findByComercio_CodigoAndFechaBetween(
-            codigoComercio, fechaInicio, fechaFin);
+                codigoComercio, fechaInicio, fechaFin);
     }
 
     public void procesarTransaccionPOS(Transaccion transaccionPOS) {
-        Comercio comercio = comercioRepository.findByCodigoInterno(transaccionPOS.getCodigoInterno())
-            .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado con código: " + transaccionPOS.getCodigoInterno()));
+        // Validar que la transacción no exista ya
+        if (transaccionRepository.existsByCodigoUnicoTransaccion(transaccionPOS.getCodigoUnicoTransaccion())) {
+            throw new IllegalStateException("La transacción ya existe en el sistema");
+        }
+
+        Comercio comercio = comercioRepository.findById(transaccionPOS.getComercio().getCodigo())
+            .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
+
+        // Obtener la facturación activa del comercio
+        FacturacionComercio facturacion = facturacionComercioRepository
+                .findFacturaActivaPorComercio(comercio.getCodigo());
+
         transaccionPOS.setComercio(comercio);
-        
-        // Copiar datos básicos del POS
-        transaccionPOS.setTipo(transaccionPOS.getTipo());
-        transaccionPOS.setMarca(transaccionPOS.getMarca());
-        transaccionPOS.setMonto(transaccionPOS.getMonto());
-        transaccionPOS.setCodigoUnicoTransaccion(transaccionPOS.getCodigoUnicoTransaccion());
-        transaccionPOS.setFecha(transaccionPOS.getFecha());
-        transaccionPOS.setEstado(transaccionPOS.getEstado());
-        transaccionPOS.setMoneda(transaccionPOS.getMoneda());
-        
-        // Establecer valores por defecto o buscar relaciones
-        transaccionPOS.setPais("EC"); // Default para Ecuador
-        transaccionPOS.setTarjeta("XXXXXXXXXXXX1234"); // Número enmascarado por defecto
-        
-        FacturacionComercio facturacion = facturacionComercioRepository.findFacturaActivaPorComercio(comercio.getCodigo());
         transaccionPOS.setFacturacionComercio(facturacion);
-        
         transaccionRepository.save(transaccionPOS);
     }
 }

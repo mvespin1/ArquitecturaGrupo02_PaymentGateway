@@ -4,7 +4,10 @@ import ec.edu.espe.pos.model.Transaccion;
 import ec.edu.espe.pos.repository.ConfiguracionRepository;
 import ec.edu.espe.pos.repository.TransaccionRepository;
 import ec.edu.espe.pos.client.GatewayTransaccionClient;
+import ec.edu.espe.pos.dto.Comercio;
+import ec.edu.espe.pos.client.GatewayComercioClient;
 import ec.edu.espe.pos.model.ConfiguracionPK;
+import ec.edu.espe.pos.dto.GatewayComercioDTO;
 
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityNotFoundException;
@@ -41,19 +44,19 @@ public class TransaccionService {
     // Set de códigos de moneda válidos (ISO 4217)
     private static final Set<String> MONEDAS_VALIDAS = Set.of("USD", "EUR", "GBP");
 
-    private static final String CODIGO_POS = "POS001";
-    private static final String MODELO_POS = "MODEL001";
-
     private final TransaccionRepository transaccionRepository;
     private final ConfiguracionRepository configuracionRepository;
     private final GatewayTransaccionClient gatewayClient;
+    private final GatewayComercioClient comercioClient;
 
     public TransaccionService(TransaccionRepository transaccionRepository,
                             ConfiguracionRepository configuracionRepository,
-                            GatewayTransaccionClient gatewayClient) {
+                            GatewayTransaccionClient gatewayClient,
+                            GatewayComercioClient comercioClient) {
         this.transaccionRepository = transaccionRepository;
         this.configuracionRepository = configuracionRepository;
         this.gatewayClient = gatewayClient;
+        this.comercioClient = comercioClient;
     }
 
     @Transactional(value = TxType.NEVER)
@@ -71,11 +74,13 @@ public class TransaccionService {
     }
 
     private String obtenerCodigoComercio() {
-        ConfiguracionPK pk = new ConfiguracionPK(CODIGO_POS, MODELO_POS);
+        // Obtener la configuración del POS actual
+        ConfiguracionPK pk = new ConfiguracionPK("POS0000001", "MODEL001");
         
         return configuracionRepository.findByPk(pk)
             .orElseThrow(() -> new RuntimeException(
-                "No se encontró la configuración para POS: " + CODIGO_POS + " modelo: " + MODELO_POS))
+                String.format("No se encontró la configuración para POS: codigo_pos: %s modelo: %s", 
+                    pk.getCodigo(), pk.getModelo())))
             .getCodigoComercio();
     }
 
@@ -86,43 +91,72 @@ public class TransaccionService {
             transaccion.setModalidad(MODALIDAD_SIMPLE);
             transaccion.setMoneda("USD");
             transaccion.setFecha(LocalDateTime.now());
-
-            // Generar un código único usando la fecha de la transacción
-            String codigoUnico = "TRX" + System.currentTimeMillis() + transaccion.getFecha();
-            transaccion.setCodigoUnicoTransaccion(codigoUnico);
-
-            // Convertir la marca de la tarjeta a código
-            transaccion.setMarca(convertirMarcaACodigo(transaccion.getMarca()));
-
-            // Validar la transacción con los nuevos datos
-            validarTransaccion(transaccion);
-            validarCodigoUnicoTransaccion(transaccion.getCodigoUnicoTransaccion());
-
-            // Establecer estados iniciales
             transaccion.setEstado(ESTADO_ENVIADO);
+            transaccion.setDetalle("Pago con tarjeta");
+            transaccion.setMarca(convertirMarcaACodigo(transaccion.getMarca()));
             transaccion.setEstadoRecibo(ESTADO_RECIBO_PENDIENTE);
 
-            // Generar detalle de la transacción (limitado a 50 caracteres)
-            String detalle = String.format("TRX:%s %.2f%s",
-                    codigoUnico.substring(codigoUnico.length() - 8),
-                    transaccion.getMonto(),
-                    transaccion.getMoneda());
-            transaccion.setDetalle(detalle.length() > 50 ? detalle.substring(0, 50) : detalle);
+            System.out.println("1. Datos iniciales de la transacción:");
+            System.out.println("   Tipo: " + transaccion.getTipo());
+            System.out.println("   Modalidad: " + transaccion.getModalidad());
+            System.out.println("   Monto: " + transaccion.getMonto());
+            System.out.println("   Detalle: " + transaccion.getDetalle());
+            System.out.println("   Comercio inicial: " + transaccion.getComercio());
+            System.out.println("   Marca: " + transaccion.getMarca());
 
-            // Guardar en base de datos local
+            String codigoComercio = obtenerCodigoComercio();
+            System.out.println("2. Código de comercio obtenido: " + codigoComercio);
+            
+            Integer idComercio = comercioClient.obtenerIdPorCodigoInterno(codigoComercio);
+            System.out.println("3. ID de comercio obtenido del gateway: " + idComercio);
+
+            // Guardar una copia del comercio original
+            GatewayComercioDTO comercioGateway = new GatewayComercioDTO(idComercio);
+            Comercio comercioPos = new Comercio(idComercio);
+            
+            // Limpiar campos transientes para guardar localmente
+            transaccion.setCodigoComercioPOS(null);
+            transaccion.setTarjeta(null);
+            transaccion.setComercio(comercioPos);
+            transaccion.setFacturacionComercio(null);
+
+            // Generar código único y guardar
+            String codigoUnico = "TRX" + System.currentTimeMillis();
+            transaccion.setCodigoUnicoTransaccion(codigoUnico);
+            
+            // Validar y guardar localmente
+            validarTransaccion(transaccion);
             Transaccion transaccionGuardada = this.transaccionRepository.save(transaccion);
+            System.out.println("5. Transacción guardada localmente: " + transaccionGuardada);
+
+            // Preparar transacción para el gateway
+            transaccionGuardada.setComercio(comercioPos);
             
-            // Sincronizar con el gateway
-            try {
-                transaccionGuardada.setCodigoComercioPOS(obtenerCodigoComercio());
-                transaccionGuardada.setTarjeta(transaccion.getTarjeta());
-                gatewayClient.sincronizarTransaccion(transaccionGuardada);
-            } catch (Exception e) {
-                throw new RuntimeException("Error al sincronizar con gateway: " + e.getMessage());
-            }
+            // Crear copia para el gateway
+            Transaccion transaccionGateway = new Transaccion();
+            // Copiar propiedades básicas
+            transaccionGateway.setCodigo(transaccionGuardada.getCodigo());
+            transaccionGateway.setTipo(transaccionGuardada.getModalidad()); // el tipo en gateway es la modalidad
+            transaccionGateway.setMarca(transaccionGuardada.getMarca());
+            transaccionGateway.setModalidad(transaccionGuardada.getModalidad());
+            transaccionGateway.setDetalle(transaccionGuardada.getDetalle());
+            transaccionGateway.setMonto(transaccionGuardada.getMonto());
+            transaccionGateway.setCodigoUnicoTransaccion(transaccionGuardada.getCodigoUnicoTransaccion());
+            transaccionGateway.setFecha(transaccionGuardada.getFecha());
+            transaccionGateway.setEstado(transaccionGuardada.getEstado());
+            transaccionGateway.setMoneda(transaccionGuardada.getMoneda());
+            transaccionGateway.setComercio(comercioGateway);
             
+            // Sincronizar con gateway
+            System.out.println("6. Enviando al gateway...");
+            System.out.println("Datos de comercio enviados al gateway: " + comercioGateway);
+            gatewayClient.sincronizarTransaccion(transaccionGateway);
+            System.out.println("7. Sincronización completada");
+
             return transaccionGuardada;
         } catch (Exception ex) {
+            System.err.println("ERROR: " + ex.getMessage());
+            ex.printStackTrace();
             throw new RuntimeException("No se pudo crear la transacción. Motivo: " + ex.getMessage());
         }
     }
