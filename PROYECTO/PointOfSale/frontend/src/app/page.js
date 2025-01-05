@@ -71,7 +71,9 @@ const MainPage = () => {
       const datosSensibles = JSON.stringify({
         cardNumber: formData.cardNumber.replace(/\s/g, ""),
         expiryDate: formData.expiryDate,
-        cvv: formData.cvv
+        cvv: formData.cvv,
+        nombreTarjeta: "JUAN PEREZ",
+        direccionTarjeta: "Av. Principal 123"
       });
 
       console.log("Marca seleccionada:", formData.cardName); // Para debug

@@ -90,26 +90,26 @@ public class TransaccionService {
         validarCamposObligatorios(transaccion);
         log.info("Validación de campos completada exitosamente");
 
-        try {
-            // Guardar localmente primero
-            Transaccion transaccionGuardada = transaccionRepository.save(transaccion);
-            log.info("Transacción guardada localmente con ID: {}", transaccionGuardada.getCodigo());
+        // Guardar localmente primero
+        Transaccion transaccionGuardada = transaccionRepository.save(transaccion);
+        log.info("Transacción guardada localmente con ID: {}", transaccionGuardada.getCodigo());
 
+        // Intentar sincronizar con el gateway
+        try {
             // Preparar y enviar al gateway
             GatewayTransaccionDTO gatewayDTO = convertirAGatewayDTO(transaccionGuardada, datosSensibles);
             log.info("Enviando al gateway DTO con datos de tarjeta incluidos");
 
             String respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
             log.info("Respuesta del gateway: {}", respuesta);
-
-            return transaccionGuardada;
-
         } catch (Exception e) {
-            log.error("Error al sincronizar con el gateway: {}", e.getMessage());
-            // Aquí podrías decidir si revertir la transacción local o manejar el error de
-            // otra manera
-            throw new RuntimeException("Error al procesar la transacción: " + e.getMessage());
+            // Si falla la sincronización, solo logueamos el error pero no lo propagamos
+            log.error("Error al sincronizar con el gateway. La transacción se procesará posteriormente: {}", 
+                    e.getMessage());
+            // Aquí podrías implementar un mecanismo de reintentos o cola de sincronización
         }
+
+        return transaccionGuardada;
     }
 
     private void validarCamposObligatorios(Transaccion transaccion) {

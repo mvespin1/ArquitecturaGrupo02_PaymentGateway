@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ec.edu.espe.gateway.transaccion.model.Transaccion;
+import ec.edu.espe.gateway.transaccion.model.ValidacionTransaccionDTO;
 import ec.edu.espe.gateway.transaccion.repository.TransaccionRepository;
 import ec.edu.espe.gateway.comercio.model.Comercio;
 import ec.edu.espe.gateway.comercio.model.PosComercio;
@@ -12,7 +13,9 @@ import ec.edu.espe.gateway.comercio.repository.PosComercioRepository;
 import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
 import ec.edu.espe.gateway.comercio.model.PosComercioPK;
+import ec.edu.espe.gateway.transaccion.client.ValidacionTransaccionClient;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 import jakarta.persistence.EntityNotFoundException;
@@ -36,15 +39,21 @@ public class TransaccionService {
     private final ComercioRepository comercioRepository;
     private final PosComercioRepository posComercioRepository;
     private final FacturacionComercioRepository facturacionComercioRepository;
+    private final ValidacionTransaccionClient validacionTransaccionClient;
+    private final ObjectMapper objectMapper;
 
     public TransaccionService(TransaccionRepository transaccionRepository,
             ComercioRepository comercioRepository,
             PosComercioRepository posComercioRepository,
-            FacturacionComercioRepository facturacionComercioRepository) {
+            FacturacionComercioRepository facturacionComercioRepository,
+            ValidacionTransaccionClient validacionTransaccionClient,
+            ObjectMapper objectMapper) {
         this.transaccionRepository = transaccionRepository;
         this.comercioRepository = comercioRepository;
         this.posComercioRepository = posComercioRepository;
         this.facturacionComercioRepository = facturacionComercioRepository;
+        this.validacionTransaccionClient = validacionTransaccionClient;
+        this.objectMapper = objectMapper;
     }
 
     public Transaccion crearTransaccionPOS(Transaccion transaccion, String codigoPos) {
@@ -240,14 +249,112 @@ public class TransaccionService {
             transaccion.setComercio(comercio);
             transaccion.setFacturacionComercio(facturacion);
 
-            // Guardar transacción
+            // Guardar transacción inicialmente como ENVIADA
+            transaccion.setEstado(ESTADO_ENVIADO);
             Transaccion transaccionGuardada = transaccionRepository.save(transaccion);
-            log.info("Transacción guardada exitosamente en el gateway con ID: {}", 
+            log.info("Transacción guardada exitosamente en el gateway con ID: {}",
                     transaccionGuardada.getCodigo());
 
-        } catch (Exception e) {
+            // Intentar validación con sistema externo
+            try {
+                ValidacionTransaccionDTO validacionDTO = prepararValidacionDTO(transaccionGuardada);
+
+                // Loguear el JSON que se enviará
+                try {
+                    String jsonRequest = objectMapper.writeValueAsString(validacionDTO);
+                    log.info("JSON a enviar al sistema externo: {}", jsonRequest);
+                } catch (Exception e) {
+                    log.error("Error al serializar DTO a JSON: {}", e.getMessage());
+                }
+
+                String respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
+                log.info("Respuesta del sistema externo: {}", respuesta);
+
+                if (respuesta != null && !respuesta.isEmpty()) {
+                    transaccionGuardada.setEstado(ESTADO_AUTORIZADO);
+                    transaccionRepository.save(transaccionGuardada);
+                    log.info("Transacción autorizada por sistema externo");
+                }
+            } catch (Exception e) {
+                log.error("Error en validación externa: {}. Manteniendo transacción en estado ENVIADO", e.getMessage());
+                // No propagamos el error, solo lo registramos
+                // La transacción se mantiene en estado ENVIADO para posterior validación
+            }
+
+        } catch (EntityNotFoundException e) {
             log.error("Error al procesar transacción POS: {}", e.getMessage());
             throw e;
+        } catch (Exception e) {
+            log.error("Error inesperado al procesar transacción POS: {}", e.getMessage());
+            throw new RuntimeException("Error al procesar transacción", e);
+        }
+    }
+
+    private ValidacionTransaccionDTO prepararValidacionDTO(Transaccion transaccion) {
+        ValidacionTransaccionDTO dto = new ValidacionTransaccionDTO();
+        DatosTarjeta datosTarjeta = extraerDatosTarjeta(transaccion.getTarjeta());
+
+        // Configurar datos del banco
+        ValidacionTransaccionDTO.Banco banco = new ValidacionTransaccionDTO.Banco();
+        banco.setCodigo(1); // Valor quemado
+        dto.setBanco(banco);
+
+        // Configurar datos de la transacción
+        dto.setMonto(transaccion.getMonto().doubleValue());
+        dto.setModalidad(transaccion.getTipo());
+        dto.setCodigoMoneda("USD");
+        dto.setMarca(transaccion.getMarca());
+        dto.setFechaExpiracionTarjeta(datosTarjeta.getExpiryDate());
+        dto.setNombreTarjeta(datosTarjeta.getNombreTarjeta());
+        dto.setNumeroTarjeta(datosTarjeta.getCardNumber());
+        dto.setDireccionTarjeta(datosTarjeta.getDireccionTarjeta());
+        dto.setCvv(datosTarjeta.getCvv());
+        dto.setPais("EC");
+
+        // Valores quemados
+        dto.setNumeroCuenta("00000003");
+        dto.setGtwComision(100.50);
+        dto.setGatewayCuenta("00000002"); // Nuevo campo quemado
+
+        dto.setCodigoUnicoTransaccion(transaccion.getCodigoUnicoTransaccion());
+
+        return dto;
+    }
+
+    private DatosTarjeta extraerDatosTarjeta(String jsonTarjeta) {
+        try {
+            return objectMapper.readValue(jsonTarjeta, DatosTarjeta.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al procesar datos de tarjeta", e);
+        }
+    }
+
+    private static class DatosTarjeta {
+        private String cardNumber;
+        private String expiryDate;
+        private String cvv;
+        private String nombreTarjeta;
+        private String direccionTarjeta;
+
+        // Getters
+        public String getCardNumber() {
+            return cardNumber;
+        }
+
+        public String getExpiryDate() {
+            return expiryDate;
+        }
+
+        public String getCvv() {
+            return cvv;
+        }
+
+        public String getNombreTarjeta() {
+            return nombreTarjeta;
+        }
+
+        public String getDireccionTarjeta() {
+            return direccionTarjeta;
         }
     }
 }
