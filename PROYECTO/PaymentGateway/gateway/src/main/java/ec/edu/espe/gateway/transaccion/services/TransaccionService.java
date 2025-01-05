@@ -10,6 +10,7 @@ import ec.edu.espe.gateway.comercio.repository.PosComercioRepository;
 import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
 import ec.edu.espe.gateway.comercio.model.PosComercioPK;
+import org.hibernate.StaleObjectStateException;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import org.springframework.transaction.annotation.Isolation;
 
 @Service
 @Transactional
@@ -216,21 +218,68 @@ public class TransaccionService {
                 codigoComercio, fechaInicio, fechaFin);
     }
 
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void procesarTransaccionPOS(Transaccion transaccionPOS) {
-        // Validar que la transacción no exista ya
-        if (transaccionRepository.existsByCodigoUnicoTransaccion(transaccionPOS.getCodigoUnicoTransaccion())) {
-            throw new IllegalStateException("La transacción ya existe en el sistema");
-        }
+        try {
+            // Validar que la transacción no exista ya
+            if (transaccionRepository.existsByCodigoUnicoTransaccion(transaccionPOS.getCodigoUnicoTransaccion())) {
+                throw new IllegalStateException("La transacción ya existe en el sistema");
+            }
 
-        Comercio comercio = comercioRepository.findById(transaccionPOS.getComercio().getCodigo())
-            .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
+            // Obtener el comercio con lock
+            Comercio comercio = comercioRepository.findById(transaccionPOS.getComercio().getCodigo())
+                .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
 
-        // Obtener la facturación activa del comercio
-        FacturacionComercio facturacion = facturacionComercioRepository
+            // Validar estado del comercio
+            if (!"ACT".equals(comercio.getEstado())) {
+                throw new IllegalStateException("El comercio no está activo");
+            }
+
+            // Obtener la facturación activa del comercio
+            FacturacionComercio facturacion = facturacionComercioRepository
                 .findFacturaActivaPorComercio(comercio.getCodigo());
+            
+            if (facturacion == null) {
+                throw new IllegalStateException("No existe facturación activa para el comercio");
+            }
 
-        transaccionPOS.setComercio(comercio);
-        transaccionPOS.setFacturacionComercio(facturacion);
-        transaccionRepository.save(transaccionPOS);
+            // Configurar la transacción
+            transaccionPOS.setComercio(comercio);
+            transaccionPOS.setFacturacionComercio(facturacion);
+            transaccionPOS.setPais("EC");
+            
+            // Validar campos obligatorios
+            validarCamposObligatorios(transaccionPOS);
+
+            // Guardar la transacción
+            transaccionRepository.save(transaccionPOS);
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Error al procesar la transacción POS: " + e.getMessage(), e);
+        }
+    }
+
+    private void validarCamposObligatorios(Transaccion transaccion) {
+        if (transaccion.getTipo() == null || transaccion.getTipo().trim().isEmpty()) {
+            throw new IllegalArgumentException("El tipo de transacción es obligatorio");
+        }
+        if (transaccion.getMarca() == null || transaccion.getMarca().trim().isEmpty()) {
+            throw new IllegalArgumentException("La marca es obligatoria");
+        }
+        if (transaccion.getMonto() == null || transaccion.getMonto().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("El monto debe ser mayor a cero");
+        }
+        if (transaccion.getCodigoUnicoTransaccion() == null || transaccion.getCodigoUnicoTransaccion().trim().isEmpty()) {
+            throw new IllegalArgumentException("El código único de transacción es obligatorio");
+        }
+        if (transaccion.getFecha() == null) {
+            throw new IllegalArgumentException("La fecha es obligatoria");
+        }
+        if (transaccion.getEstado() == null || transaccion.getEstado().trim().isEmpty()) {
+            throw new IllegalArgumentException("El estado es obligatorio");
+        }
+        if (transaccion.getMoneda() == null || transaccion.getMoneda().trim().isEmpty()) {
+            throw new IllegalArgumentException("La moneda es obligatoria");
+        }
     }
 }
