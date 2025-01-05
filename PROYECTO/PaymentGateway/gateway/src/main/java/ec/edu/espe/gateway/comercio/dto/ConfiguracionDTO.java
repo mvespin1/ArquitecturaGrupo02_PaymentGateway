@@ -1,42 +1,27 @@
-package ec.edu.espe.pos.model;
+package ec.edu.espe.gateway.comercio.dto;
 
-import jakarta.persistence.*;
-
-import java.io.Serializable;
 import java.time.LocalDateTime;
-import jakarta.validation.constraints.NotNull;
+import ec.edu.espe.gateway.comercio.model.PosComercioPK;
 
-@Entity
-@Table(name = "POS_CONFIGURACION")
-public class Configuracion implements Serializable {
+public class ConfiguracionDTO {
 
-    @EmbeddedId
-    private ConfiguracionPK pk;
-    @NotNull
-    @Column(name = "DIRECCION_MAC", length = 32, nullable = false)
+    private PosComercioPK pk;
     private String direccionMac;
-    @NotNull
-    @Column(name = "CODIGO_COMERCIO", length = 10, nullable = false)
     private String codigoComercio;
-    @NotNull
-    @Column(name = "FECHA_ACTIVACION", nullable = false)
     private LocalDateTime fechaActivacion;
 
-    @Transient
-    private String codigoComercioPOS;
-
-    public Configuracion() {
+    public ConfiguracionDTO() {
     }
 
-    public Configuracion(ConfiguracionPK pk) {
+    public ConfiguracionDTO(PosComercioPK pk) {
         this.pk = pk;
     }
 
-    public ConfiguracionPK getPk() {
+    public PosComercioPK getPk() {
         return pk;
     }
 
-    public void setPk(ConfiguracionPK pk) {
+    public void setPk(PosComercioPK pk) {
         this.pk = pk;
     }
 
@@ -80,7 +65,7 @@ public class Configuracion implements Serializable {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Configuracion other = (Configuracion) obj;
+        ConfiguracionDTO other = (ConfiguracionDTO) obj;
         if (pk == null) {
             if (other.pk != null)
                 return false;
@@ -91,7 +76,7 @@ public class Configuracion implements Serializable {
 
     @Override
     public String toString() {
-        return "POSConfiguracion [pk=" + pk + ", direccionMac=" + direccionMac + ", codigoComercio=" + codigoComercio
+        return "ConfiguracionDTO [pk=" + pk + ", direccionMac=" + direccionMac + ", codigoComercio=" + codigoComercio
                 + ", fechaActivacion=" + fechaActivacion + "]";
     }
 

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pos-comercios")
+@RequestMapping("/api/pos-comercio")
 public class PosComercioController {
 
     private final PosComercioService posComercioService;
@@ -93,6 +93,16 @@ public class PosComercioController {
             return ResponseEntity.ok().build();
         } catch (IllegalStateException | EntityNotFoundException e) {
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/configuracion")
+    public ResponseEntity<Void> recibirConfiguracion(@RequestBody PosComercio posComercio) {
+        try {
+            posComercioService.procesarConfiguracion(posComercio);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

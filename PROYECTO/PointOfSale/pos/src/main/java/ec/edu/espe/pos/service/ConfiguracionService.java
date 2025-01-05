@@ -3,6 +3,7 @@ package ec.edu.espe.pos.service;
 import ec.edu.espe.pos.model.Configuracion;
 import ec.edu.espe.pos.model.ConfiguracionPK;
 import ec.edu.espe.pos.repository.ConfiguracionRepository;
+import ec.edu.espe.pos.client.GatewayConfiguracionClient;
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -18,12 +19,14 @@ import java.util.regex.Pattern;
 public class ConfiguracionService {
 
     private final ConfiguracionRepository configuracionRepository;
+    private final GatewayConfiguracionClient gatewayClient;
     private static final Pattern MAC_ADDRESS_PATTERN = Pattern.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$");
     private static final int CODIGO_POS_LENGTH = 10;
     private static final int MODELO_LENGTH = 10;
 
-    public ConfiguracionService(ConfiguracionRepository configuracionRepository) {
+    public ConfiguracionService(ConfiguracionRepository configuracionRepository, GatewayConfiguracionClient gatewayClient) {
         this.configuracionRepository = configuracionRepository;
+        this.gatewayClient = gatewayClient;
     }
 
     @Transactional(value = TxType.NEVER)
@@ -43,12 +46,20 @@ public class ConfiguracionService {
     public Configuracion crear(Configuracion configuracion) {
         try {
             validarConfiguracion(configuracion);
-            configuracion.setFechaActivacion(LocalDateTime.now());
-            Configuracion configuracionGuardada = this.configuracionRepository.save(configuracion);
-
-            return configuracionGuardada;
-        } catch (Exception ex) {
-            throw new RuntimeException("No se pudo crear la configuración POS. Motivo: " + ex.getMessage());
+            
+            // Asegurar que la PK esté correctamente asignada
+            ConfiguracionPK pk = new ConfiguracionPK(
+                configuracion.getPk().getCodigo(),
+                configuracion.getPk().getModelo()
+            );
+            configuracion.setPk(pk);
+            configuracion.setCodigoComercio(configuracion.getCodigoComercio());
+            configuracion.setDireccionMac(configuracion.getDireccionMac());
+            configuracion.setFechaActivacion(configuracion.getFechaActivacion());
+            
+            return configuracionRepository.save(configuracion);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al crear configuración: " + e.getMessage());
         }
     }
 
@@ -121,5 +132,13 @@ public class ConfiguracionService {
                                 "Ya existe una configuración con la dirección MAC proporcionada");
                     }
                 });
+    }
+
+    public void sincronizarConGateway(Configuracion configuracion) {
+        try {
+            gatewayClient.sincronizarConfiguracion(configuracion);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al sincronizar con gateway: " + e.getMessage());
+        }
     }
 }

@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
-import jakarta.transaction.Transactional.TxType;
+import org.springframework.transaction.annotation.Transactional;
+import ec.edu.espe.gateway.comercio.client.PosConfiguracionClient;
+import ec.edu.espe.gateway.comercio.dto.ConfiguracionDTO;
 
 @Service
-@Transactional
 public class PosComercioService {
 
     private static final Pattern MAC_ADDRESS_PATTERN = Pattern.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$");
@@ -25,33 +25,52 @@ public class PosComercioService {
 
     private final PosComercioRepository posComercioRepository;
     private final ComercioRepository comercioRepository;
+    private final PosConfiguracionClient posConfiguracionClient;
 
     public PosComercioService(PosComercioRepository posComercioRepository,
-            ComercioRepository comercioRepository) {
+            ComercioRepository comercioRepository, PosConfiguracionClient posConfiguracionClient) {
         this.posComercioRepository = posComercioRepository;
         this.comercioRepository = comercioRepository;
+        this.posConfiguracionClient = posConfiguracionClient;
+        
     }
 
-    @Transactional(value = TxType.NEVER)
     public List<PosComercio> obtenerTodos() {
         return posComercioRepository.findAll();
     }
 
-    @Transactional(value = TxType.NEVER)
     public PosComercio obtenerPorId(PosComercioPK id) {
         return posComercioRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("No existe POS con el ID proporcionado"));
     }
 
+    @Transactional
     public PosComercio crear(PosComercio posComercio) {
+        // 1. Validar y obtener comercio completo
+        validarNuevoPOS(posComercio);
+        Comercio comercioCompleto = comercioRepository.findById(posComercio.getComercio().getCodigo())
+            .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
+        
+        // 2. Preparar y guardar POS localmente
+        posComercio.setComercio(comercioCompleto);
+        posComercio.setEstado(ESTADO_INACTIVO);
+        posComercio.setFechaActivacion(null);
+        PosComercio posGuardado = posComercioRepository.save(posComercio);
+
         try {
-            validarNuevoPOS(posComercio);
-            posComercio.setEstado(ESTADO_INACTIVO);
-            posComercio.setFechaActivacion(null);
-            return posComercioRepository.save(posComercio);
+            // 3. Intentar sincronizar con el POS (solo los campos necesarios)
+            ConfiguracionDTO configuracionParaSincronizar = new ConfiguracionDTO();
+            configuracionParaSincronizar.setPk(posGuardado.getPk());
+            configuracionParaSincronizar.setDireccionMac(posGuardado.getDireccionMac());
+            configuracionParaSincronizar.setFechaActivacion(posGuardado.getFechaActivacion());
+            configuracionParaSincronizar.setCodigoComercio(comercioCompleto.getCodigoInterno());
+
+            posConfiguracionClient.enviarConfiguracion(configuracionParaSincronizar);
         } catch (Exception e) {
-            throw new RuntimeException("Error al crear POS: " + e.getMessage());
+            System.err.println("Error en sincronización con POS: " + e.getMessage());
         }
+
+        return posGuardado;
     }
 
     private void validarNuevoPOS(PosComercio posComercio) {
@@ -199,6 +218,17 @@ public class PosComercioService {
             posComercioRepository.save(pos);
         } catch (Exception e) {
             throw new RuntimeException("Error al cambiar comercio asociado: " + e.getMessage());
+        }
+    }
+
+    public void procesarConfiguracion(PosComercio posComercio) {
+        try {
+            PosComercio posExistente = this.obtenerPorId(posComercio.getPk());
+            posExistente.setDireccionMac(posComercio.getDireccionMac());
+            posExistente.setFechaActivacion(posComercio.getFechaActivacion());
+            posComercioRepository.save(posExistente);
+        } catch (EntityNotFoundException e) {
+            throw new RuntimeException("POS no encontrado para configuración: " + e.getMessage());
         }
     }
 

@@ -66,4 +66,14 @@ public class ConfiguracionController {
             return ResponseEntity.internalServerError().body("Error al actualizar la fecha de activación: " + e.getMessage());
         }
     }
+
+    @PostMapping("/sincronizar")
+    public ResponseEntity<Void> recibirConfiguracion(@RequestBody Configuracion configuracion) {
+        try {
+            configuracionService.crear(configuracion);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 } 

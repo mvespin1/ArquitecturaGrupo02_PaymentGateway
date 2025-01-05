@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "GTW_POS_COMERCIO")
@@ -26,6 +27,9 @@ public class PosComercio implements Serializable {
     @ManyToOne
     @JoinColumn(name = "COD_COMERCIO", nullable = false)
     private Comercio comercio;
+
+    @Transient
+    private String codigoComercio;
 
     // Constructor, Getters and Setters
     public PosComercio() {
@@ -86,6 +90,14 @@ public class PosComercio implements Serializable {
         this.comercio = comercio;
     }
 
+    public String getCodigoComercio() {
+        return codigoComercio;
+    }
+
+    public void setCodigoComercio(String codigoComercio) {
+        this.codigoComercio = codigoComercio;
+    }
+
     // HashCode and Equals
     @Override
     public int hashCode() {
@@ -117,6 +129,6 @@ public class PosComercio implements Serializable {
     public String toString() {
         return "GtwPosComercio [pk=" + pk + ", direccionMac=" + direccionMac + ", estado=" + estado
                 + ", fechaActivacion=" + fechaActivacion + ", ultimoUso=" + ultimoUso + ", gtwComercio=" + comercio
-                + "]";
+                + ", codigoComercio=" + codigoComercio + "]";
     }
 }
