@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import ec.edu.espe.gateway.comercio.client.PosConfiguracionClient;
-import ec.edu.espe.gateway.comercio.dto.ConfiguracionDTO;
+import ec.edu.espe.gateway.comercio.dto.Configuracion;
 
 @Service
 public class PosComercioService {
@@ -53,21 +53,29 @@ public class PosComercioService {
         
         // 2. Preparar y guardar POS localmente
         posComercio.setComercio(comercioCompleto);
-        posComercio.setEstado(ESTADO_INACTIVO);
-        posComercio.setFechaActivacion(null);
+        posComercio.setEstado(ESTADO_ACTIVO);
+        posComercio.setFechaActivacion(LocalDateTime.now());
         PosComercio posGuardado = posComercioRepository.save(posComercio);
 
         try {
             // 3. Intentar sincronizar con el POS (solo los campos necesarios)
-            ConfiguracionDTO configuracionParaSincronizar = new ConfiguracionDTO();
+            Configuracion configuracionParaSincronizar = new Configuracion();
             configuracionParaSincronizar.setPk(posGuardado.getPk());
             configuracionParaSincronizar.setDireccionMac(posGuardado.getDireccionMac());
             configuracionParaSincronizar.setFechaActivacion(posGuardado.getFechaActivacion());
             configuracionParaSincronizar.setCodigoComercio(comercioCompleto.getCodigoInterno());
 
+            // Add debug logging
+            System.out.println("Enviando configuración al POS:");
+            System.out.println("PK: " + configuracionParaSincronizar.getPk());
+            System.out.println("DireccionMac: " + configuracionParaSincronizar.getDireccionMac());
+            System.out.println("FechaActivacion: " + configuracionParaSincronizar.getFechaActivacion());
+            System.out.println("CodigoComercio: " + configuracionParaSincronizar.getCodigoComercio());
+
             posConfiguracionClient.enviarConfiguracion(configuracionParaSincronizar);
         } catch (Exception e) {
             System.err.println("Error en sincronización con POS: " + e.getMessage());
+            e.printStackTrace(); // Add stack trace for more detail
         }
 
         return posGuardado;
@@ -75,9 +83,9 @@ public class PosComercioService {
 
     private void validarNuevoPOS(PosComercio posComercio) {
         // Validar código POS
-        if (posComercio.getPk().getCodigoPos() == null ||
-                posComercio.getPk().getCodigoPos().length() != CODIGO_POS_LENGTH ||
-                !posComercio.getPk().getCodigoPos().matches("^[A-Za-z0-9]{10}$")) {
+        if (posComercio.getPk().getCodigo() == null ||
+                posComercio.getPk().getCodigo().length() != CODIGO_POS_LENGTH ||
+                !posComercio.getPk().getCodigo().matches("^[A-Za-z0-9]{10}$")) {
             throw new IllegalArgumentException("El código POS debe tener 10 caracteres alfanuméricos");
         }
 
@@ -123,7 +131,7 @@ public class PosComercioService {
             }
 
             // Validar configuración del POS antes de activar
-            validarConfiguracionPOS(pos.getPk().getCodigoPos());
+            validarConfiguracionPOS(pos.getPk().getCodigo());
 
             pos.setEstado(ESTADO_ACTIVO);
             pos.setFechaActivacion(fechaActual);

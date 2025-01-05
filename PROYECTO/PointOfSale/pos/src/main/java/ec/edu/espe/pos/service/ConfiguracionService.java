@@ -3,7 +3,6 @@ package ec.edu.espe.pos.service;
 import ec.edu.espe.pos.model.Configuracion;
 import ec.edu.espe.pos.model.ConfiguracionPK;
 import ec.edu.espe.pos.repository.ConfiguracionRepository;
-import ec.edu.espe.pos.client.GatewayConfiguracionClient;
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -19,14 +18,12 @@ import java.util.regex.Pattern;
 public class ConfiguracionService {
 
     private final ConfiguracionRepository configuracionRepository;
-    private final GatewayConfiguracionClient gatewayClient;
     private static final Pattern MAC_ADDRESS_PATTERN = Pattern.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$");
     private static final int CODIGO_POS_LENGTH = 10;
     private static final int MODELO_LENGTH = 10;
 
-    public ConfiguracionService(ConfiguracionRepository configuracionRepository, GatewayConfiguracionClient gatewayClient) {
+    public ConfiguracionService(ConfiguracionRepository configuracionRepository) {
         this.configuracionRepository = configuracionRepository;
-        this.gatewayClient = gatewayClient;
     }
 
     @Transactional(value = TxType.NEVER)
@@ -111,8 +108,8 @@ public class ConfiguracionService {
     }
 
     private void validarFechaActivacion(LocalDateTime fechaActivacion) {
-        if (fechaActivacion != null && fechaActivacion.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("La fecha de activación no puede ser anterior a la fecha actual");
+        if (fechaActivacion != null && fechaActivacion.isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("La fecha de activación no puede ser posterior a la fecha actual");
         }
     }
 
@@ -132,13 +129,5 @@ public class ConfiguracionService {
                                 "Ya existe una configuración con la dirección MAC proporcionada");
                     }
                 });
-    }
-
-    public void sincronizarConGateway(Configuracion configuracion) {
-        try {
-            gatewayClient.sincronizarConfiguracion(configuracion);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al sincronizar con gateway: " + e.getMessage());
-        }
     }
 }

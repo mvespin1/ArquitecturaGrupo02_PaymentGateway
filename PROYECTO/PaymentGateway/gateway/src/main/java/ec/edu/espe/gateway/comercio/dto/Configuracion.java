@@ -3,17 +3,17 @@ package ec.edu.espe.gateway.comercio.dto;
 import java.time.LocalDateTime;
 import ec.edu.espe.gateway.comercio.model.PosComercioPK;
 
-public class ConfiguracionDTO {
+public class Configuracion {
 
     private PosComercioPK pk;
     private String direccionMac;
     private String codigoComercio;
     private LocalDateTime fechaActivacion;
 
-    public ConfiguracionDTO() {
+    public Configuracion() {
     }
 
-    public ConfiguracionDTO(PosComercioPK pk) {
+    public Configuracion(PosComercioPK pk) {
         this.pk = pk;
     }
 
@@ -65,7 +65,7 @@ public class ConfiguracionDTO {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        ConfiguracionDTO other = (ConfiguracionDTO) obj;
+        Configuracion other = (Configuracion) obj;
         if (pk == null) {
             if (other.pk != null)
                 return false;

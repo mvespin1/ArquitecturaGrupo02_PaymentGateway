@@ -91,6 +91,9 @@ public class TransaccionService {
             String codigoUnico = "TRX" + System.currentTimeMillis() + transaccion.getFecha();
             transaccion.setCodigoUnicoTransaccion(codigoUnico);
 
+            // Convertir la marca de la tarjeta a código
+            transaccion.setMarca(convertirMarcaACodigo(transaccion.getMarca()));
+
             // Validar la transacción con los nuevos datos
             validarTransaccion(transaccion);
             validarCodigoUnicoTransaccion(transaccion.getCodigoUnicoTransaccion());
