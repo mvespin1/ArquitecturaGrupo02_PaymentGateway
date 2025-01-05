@@ -1,5 +1,7 @@
 package ec.edu.espe.gateway.transaccion.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ec.edu.espe.gateway.transaccion.model.Transaccion;
@@ -13,6 +15,7 @@ import java.util.List;
 @RequestMapping("/api/transacciones")
 public class TransaccionController {
 
+    private static final Logger log = LoggerFactory.getLogger(TransaccionController.class);
     private final TransaccionService transaccionService;
     private final RecurrenceService recurrenceService;
 
@@ -92,8 +95,29 @@ public class TransaccionController {
     }
 
     @PostMapping("/sincronizar")
-    public void sincronizarTransaccion(@RequestBody Transaccion transaccionPOS) {
-        // El servicio se encargará de completar los campos faltantes
-        transaccionService.procesarTransaccionPOS(transaccionPOS);
+    public ResponseEntity<String> sincronizarTransaccion(@RequestBody Transaccion transaccion) {
+        log.info("Recibiendo petición de sincronización desde POS");
+        log.info("Datos de transacción recibidos: {}", transaccion);
+        log.info("Comercio ID: {}", transaccion.getComercio().getCodigo());
+        log.info("Facturación ID: {}", transaccion.getFacturacionComercio().getCodigo());
+        
+        try {
+            transaccionService.procesarTransaccionPOS(transaccion);
+            log.info("Sincronización completada exitosamente");
+            return ResponseEntity.ok("Transacción sincronizada exitosamente");
+            
+        } catch (EntityNotFoundException e) {
+            log.error("Entidad no encontrada: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+            
+        } catch (IllegalArgumentException e) {
+            log.error("Error de validación: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+            
+        } catch (Exception e) {
+            log.error("Error inesperado al sincronizar: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body("Error al sincronizar la transacción: " + e.getMessage());
+        }
     }
 }

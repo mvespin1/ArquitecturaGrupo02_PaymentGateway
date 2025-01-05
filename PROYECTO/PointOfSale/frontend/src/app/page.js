@@ -8,7 +8,7 @@ const MainPage = () => {
     cardNumber: "",
     expiryDate: "",
     cvv: "",
-    cardName: "MasterCard",
+    cardName: "MSCD",
     transactionAmount: "",
   });
 
@@ -74,6 +74,8 @@ const MainPage = () => {
         cvv: formData.cvv
       });
 
+      console.log("Marca seleccionada:", formData.cardName); // Para debug
+
       // 3. Encriptar datos sensibles
       /*const encryptResponse = await fetch("http://localhost:8082/api/seguridad-gateway/encriptar", {
         method: "POST",
@@ -90,12 +92,22 @@ const MainPage = () => {
       }*/
       //const { datosEncriptados } = await encryptResponse.json();
 
+      // Mapeo de marcas a códigos de 4 caracteres
+      const marcaMapping = {
+        "MasterCard": "MSCD",
+        "Visa": "VISA",
+        "American Express": "AMEX",
+        "Diners Club": "DINE"
+      };
+
       // 4. Enviar transacción con datos encriptados
       const transactionPayload = {
         monto: parseFloat(formData.transactionAmount),
         marca: formData.cardName,
-        encryptedData: datosSensibles
+        datosTarjeta: datosSensibles
       };
+
+      console.log("Payload a enviar:", transactionPayload); // Para debug
 
       const response = await fetch("http://localhost:8082/api/pagos/procesar", {
         method: "POST",

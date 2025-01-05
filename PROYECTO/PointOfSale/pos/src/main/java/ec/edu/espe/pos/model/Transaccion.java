@@ -5,17 +5,10 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
-import ec.edu.espe.pos.dto.Comercio;
-import ec.edu.espe.pos.dto.FacturacionComercio;
 import jakarta.validation.constraints.NotNull;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "POS_TRANSACCION")
-@JsonIgnoreProperties({"facturacionComercio", "codigoComercioPOS", "tarjeta", "comercio", "facturacionComercio", "encryptedData"})
 public class Transaccion implements Serializable {
 
     @Id
@@ -51,16 +44,6 @@ public class Transaccion implements Serializable {
     @Column(name = "MONEDA", length = 3, nullable = false)
     private String moneda;
 
-    @Transient
-    private String codigoComercioPOS;
-    @Transient
-    private String tarjeta;
-    @Transient
-    @JsonProperty("comercio")
-    private Comercio comercio;
-    @Transient
-    @JsonIgnore
-    private FacturacionComercio facturacionComercio;
 
     public Transaccion() {
     }
@@ -159,38 +142,6 @@ public class Transaccion implements Serializable {
         this.moneda = moneda;
     }
 
-    public String getCodigoComercioPOS() {
-        return codigoComercioPOS;
-    }
-
-    public void setCodigoComercioPOS(String codigoComercioPOS) {
-        this.codigoComercioPOS = codigoComercioPOS;
-    }
-
-    public String getTarjeta() {
-        return tarjeta;
-    }
-
-    public void setTarjeta(String tarjeta) {
-        this.tarjeta = tarjeta;
-    }
-
-    public Comercio getComercio() {
-        return comercio;
-    }
-
-    public void setComercio(Comercio comercio) {
-        this.comercio = comercio;
-    }
-
-    public FacturacionComercio getFacturacionComercio() {
-        return facturacionComercio;
-    }
-
-    public void setFacturacionComercio(FacturacionComercio facturacionComercio) {
-        this.facturacionComercio = facturacionComercio;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -230,16 +181,7 @@ public class Transaccion implements Serializable {
                 ", estado='" + estado + '\'' +
                 ", estadoRecibo='" + estadoRecibo + '\'' +
                 ", moneda='" + moneda + '\'' +
-                ", codigoComercioPOS='" + codigoComercioPOS + '\'' +
-                ", tarjeta='" + tarjeta + '\'' +
-                ", comercio=" + comercio +
-                ", facturacionComercio=" + facturacionComercio +
                 '}';
-    }
-
-    public String getEncryptedData() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getEncryptedData'");
     }
 
 }
