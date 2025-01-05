@@ -63,7 +63,7 @@ public class PosComercioService {
             configuracionParaSincronizar.setPk(posGuardado.getPk());
             configuracionParaSincronizar.setDireccionMac(posGuardado.getDireccionMac());
             configuracionParaSincronizar.setFechaActivacion(posGuardado.getFechaActivacion());
-            configuracionParaSincronizar.setCodigoComercio(comercioCompleto.getCodigoInterno());
+            configuracionParaSincronizar.setCodigoComercio(comercioCompleto.getCodigo());
 
             // Add debug logging
             System.out.println("Enviando configuración al POS:");

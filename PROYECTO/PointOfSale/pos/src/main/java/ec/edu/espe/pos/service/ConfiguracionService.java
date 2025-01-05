@@ -4,9 +4,8 @@ import ec.edu.espe.pos.model.Configuracion;
 import ec.edu.espe.pos.model.ConfiguracionPK;
 import ec.edu.espe.pos.repository.ConfiguracionRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
-import jakarta.transaction.Transactional.TxType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,7 +13,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Service
-@Transactional
 public class ConfiguracionService {
 
     private final ConfiguracionRepository configuracionRepository;
@@ -26,12 +24,12 @@ public class ConfiguracionService {
         this.configuracionRepository = configuracionRepository;
     }
 
-    @Transactional(value = TxType.NEVER)
+    @Transactional(readOnly = true)
     public List<Configuracion> obtenerTodos() {
         return this.configuracionRepository.findAll();
     }
 
-    @Transactional(value = TxType.NEVER)
+    @Transactional(readOnly = true)
     public Configuracion obtenerPorId(ConfiguracionPK id) {
         Optional<Configuracion> configuracionOpt = this.configuracionRepository.findById(id);
         if (configuracionOpt.isPresent()) {
@@ -113,9 +111,9 @@ public class ConfiguracionService {
         }
     }
 
-    private void validarCodigoComercio(String codigoComercio) {
-        if (codigoComercio == null || codigoComercio.trim().isEmpty()) {
-            throw new IllegalArgumentException("El código de comercio no puede estar vacío");
+    private void validarCodigoComercio(Integer codigoComercio) {
+        if (codigoComercio == null || codigoComercio <= 0) {
+            throw new IllegalArgumentException("El código de comercio debe ser un número positivo");
         }
     }
 
@@ -129,5 +127,17 @@ public class ConfiguracionService {
                                 "Ya existe una configuración con la dirección MAC proporcionada");
                     }
                 });
+    }
+
+    @Transactional(readOnly = true)
+    public Configuracion obtenerConfiguracionActual() {
+        List<Configuracion> configuraciones = configuracionRepository.findAll();
+        if (configuraciones.isEmpty()) {
+            throw new EntityNotFoundException("No existe configuración para este POS");
+        }
+        if (configuraciones.size() > 1) {
+            throw new IllegalStateException("Existe más de una configuración para este POS");
+        }
+        return configuraciones.get(0);
     }
 }

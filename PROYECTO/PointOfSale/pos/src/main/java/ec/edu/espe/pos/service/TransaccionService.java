@@ -1,8 +1,10 @@
 package ec.edu.espe.pos.service;
 
+import ec.edu.espe.pos.model.Configuracion;
 import ec.edu.espe.pos.model.Transaccion;
 import ec.edu.espe.pos.repository.TransaccionRepository;
 import ec.edu.espe.pos.client.GatewayTransaccionClient;
+import ec.edu.espe.pos.client.GatewayComercioClient;
 import ec.edu.espe.pos.dto.GatewayTransaccionDTO;
 import ec.edu.espe.pos.dto.ComercioDTO;
 import ec.edu.espe.pos.dto.FacturacionComercioDTO;
@@ -10,9 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -20,9 +19,9 @@ import java.util.Set;
 
 @Service
 public class TransaccionService {
-    
+
     private static final Logger log = LoggerFactory.getLogger(TransaccionService.class);
-    
+
     // Constantes para tipos de transacción
     public static final String TIPO_PAGO = "PAG";
     public static final String TIPO_REVERSO = "REV";
@@ -47,24 +46,30 @@ public class TransaccionService {
 
     private final TransaccionRepository transaccionRepository;
     private final GatewayTransaccionClient gatewayClient;
+    private final GatewayComercioClient comercioClient;
+    private final ConfiguracionService configuracionService;
 
     public TransaccionService(TransaccionRepository transaccionRepository,
-                            GatewayTransaccionClient gatewayClient) {
+            GatewayTransaccionClient gatewayClient,
+            GatewayComercioClient comercioClient,
+            ConfiguracionService configuracionService) {
         this.transaccionRepository = transaccionRepository;
         this.gatewayClient = gatewayClient;
+        this.comercioClient = comercioClient;
+        this.configuracionService = configuracionService;
     }
 
     @Transactional
     public Transaccion crear(Transaccion transaccion, String datosSensibles) {
         log.info("Iniciando creación de transacción. Datos recibidos: {}", transaccion);
-        
+
         // Validar y transformar marca si es necesario
-        if (transaccion.getMarca() == null || transaccion.getMarca().length() > 4 
-            || !MARCAS_VALIDAS.contains(transaccion.getMarca())) {
+        if (transaccion.getMarca() == null || transaccion.getMarca().length() > 4
+                || !MARCAS_VALIDAS.contains(transaccion.getMarca())) {
             throw new IllegalArgumentException(
-                "Marca inválida. Debe ser una de: " + String.join(", ", MARCAS_VALIDAS));
+                    "Marca inválida. Debe ser una de: " + String.join(", ", MARCAS_VALIDAS));
         }
-        
+
         // Establecer valores predeterminados
         transaccion.setTipo(TIPO_PAGO);
         transaccion.setModalidad(MODALIDAD_SIMPLE);
@@ -72,13 +77,13 @@ public class TransaccionService {
         transaccion.setFecha(LocalDateTime.now());
         transaccion.setEstado(ESTADO_ENVIADO);
         transaccion.setEstadoRecibo(ESTADO_RECIBO_PENDIENTE);
-        
+
         // Generar código único y detalle
         String codigoUnico = "TRX" + System.currentTimeMillis();
         transaccion.setCodigoUnicoTransaccion(codigoUnico);
         transaccion.setDetalle("Transacción POS - " + transaccion.getMarca());
 
-        log.info("Valores establecidos para transacción: marca={}, monto={}", 
+        log.info("Valores establecidos para transacción: marca={}, monto={}",
                 transaccion.getMarca(), transaccion.getMonto());
 
         // Validar campos obligatorios
@@ -93,15 +98,16 @@ public class TransaccionService {
             // Preparar y enviar al gateway
             GatewayTransaccionDTO gatewayDTO = convertirAGatewayDTO(transaccionGuardada, datosSensibles);
             log.info("Enviando al gateway DTO con datos de tarjeta incluidos");
-            
+
             String respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
             log.info("Respuesta del gateway: {}", respuesta);
 
             return transaccionGuardada;
-            
+
         } catch (Exception e) {
             log.error("Error al sincronizar con el gateway: {}", e.getMessage());
-            // Aquí podrías decidir si revertir la transacción local o manejar el error de otra manera
+            // Aquí podrías decidir si revertir la transacción local o manejar el error de
+            // otra manera
             throw new RuntimeException("Error al procesar la transacción: " + e.getMessage());
         }
     }
@@ -125,13 +131,22 @@ public class TransaccionService {
         GatewayTransaccionDTO dto = new GatewayTransaccionDTO();
         
         try {
-            // Configurar comercio y facturación con los nombres correctos de campos
+            // Obtener configuración local del POS
+            log.info("Obteniendo configuración actual del POS");
+            Configuracion config = configuracionService.obtenerConfiguracionActual();
+            log.info("Configuración obtenida: codigoComercio={}, codigoPOS={}, modelo={}",
+                    config.getCodigoComercio(), config.getPk().getCodigo(), config.getPk().getModelo());
+            
+            // Crear DTO de comercio con el código de la configuración
             ComercioDTO comercio = new ComercioDTO();
-            comercio.setCodigo(4);
+            comercio.setCodigo(config.getCodigoComercio());
+            
+            // Obtener facturación usando el código del comercio
+            log.info("Consultando facturación para el comercio: {}", comercio.getCodigo());
+            FacturacionComercioDTO facturacion = comercioClient.obtenerFacturacionPorComercio(comercio.getCodigo());
+            log.info("Facturación obtenida: {}", facturacion);
+            
             dto.setComercio(comercio);
-
-            FacturacionComercioDTO facturacion = new FacturacionComercioDTO();
-            facturacion.setCodigo(2);
             dto.setFacturacionComercio(facturacion);
 
             // Datos de la transacción
@@ -144,20 +159,24 @@ public class TransaccionService {
             dto.setEstado(transaccion.getEstado());
             dto.setMoneda(transaccion.getMoneda());
             dto.setPais("EC");
-            
+
+            // Agregar datos del POS
+            dto.setCodigoPos(config.getPk().getCodigo());
+            dto.setModeloPos(config.getPk().getModelo());
+
             // Agregar datos sensibles de la tarjeta
             dto.setTarjeta(datosSensibles);
             dto.setFechaEjecucionRecurrencia(null);
             dto.setFechaFinRecurrencia(null);
-            
-            log.info("DTO preparado para enviar al gateway. Comercio código: {}, Facturación código: {}", 
-                    comercio.getCodigo(), facturacion.getCodigo());
-            
+
+            log.info("DTO preparado para enviar al gateway. Comercio código: {}, POS código: {}, modelo: {}",
+                    comercio.getCodigo(), config.getPk().getCodigo(), config.getPk().getModelo());
+
         } catch (Exception e) {
-            log.error("Error al convertir a DTO del gateway: {}", e.getMessage());
+            log.error("Error al obtener datos del comercio: {}", e.getMessage());
             throw new RuntimeException("Error al preparar datos para el gateway", e);
         }
-        
+
         return dto;
     }
 }

@@ -19,6 +19,8 @@ public class GatewayTransaccionDTO {
     private String tarjeta;
     private LocalDate fechaEjecucionRecurrencia;
     private LocalDate fechaFinRecurrencia;
+    private String codigoPos;
+    private String modeloPos;
 
     // Constructor
     public GatewayTransaccionDTO() {
@@ -136,6 +138,22 @@ public class GatewayTransaccionDTO {
         this.fechaFinRecurrencia = fechaFinRecurrencia;
     }
 
+    public String getCodigoPos() {
+        return codigoPos;
+    }
+
+    public void setCodigoPos(String codigoPos) {
+        this.codigoPos = codigoPos;
+    }
+
+    public String getModeloPos() {
+        return modeloPos;
+    }
+
+    public void setModeloPos(String modeloPos) {
+        this.modeloPos = modeloPos;
+    }
+
     @Override
     public String toString() {
         return "GatewayTransaccionDTO{" +
@@ -153,6 +171,8 @@ public class GatewayTransaccionDTO {
                 ", tarjeta='" + tarjeta + '\'' +
                 ", fechaEjecucionRecurrencia=" + fechaEjecucionRecurrencia +
                 ", fechaFinRecurrencia=" + fechaFinRecurrencia +
+                ", codigoPos='" + codigoPos + '\'' +
+                ", modeloPos='" + modeloPos + '\'' +
                 '}';
     }
 }

@@ -39,8 +39,6 @@ public class ComercioService {
     private final ComisionRepository comisionRepository;
     private final FacturacionComercioRepository facturacionComercioRepository;
     private final TransaccionRepository transaccionRepository;
-    private final FacturaService facturaService;
-    private final ComisionService comisionService;
 
     public ComercioService(ComercioRepository comercioRepository,
             PosComercioRepository posComercioRepository,
@@ -54,8 +52,6 @@ public class ComercioService {
         this.comisionRepository = comisionRepository;
         this.facturacionComercioRepository = facturacionComercioRepository;
         this.transaccionRepository = transaccionRepository;
-        this.facturaService = facturaService;
-        this.comisionService = comisionService;
     }
 
     @Transactional(value = TxType.NEVER)
@@ -329,10 +325,11 @@ public class ComercioService {
             throw new IllegalStateException("El comercio debe estar activo para iniciar la facturación");
         }
 
-        FacturacionComercio facturaActiva = facturacionComercioRepository
-                .findFacturaActivaPorComercio(comercio.getCodigo());
+        boolean existeFacturaActiva = facturacionComercioRepository
+                .findFacturaActivaPorComercio(comercio.getCodigo())
+                .isPresent();
 
-        if (facturaActiva == null) {
+        if (!existeFacturaActiva) {
             LocalDate fechaInicio = comercio.getFechaActivacion().toLocalDate();
             LocalDate fechaFin = fechaInicio.plusMonths(1);
 
@@ -352,5 +349,32 @@ public class ComercioService {
 
             facturacionComercioRepository.save(nuevaFactura);
         }
+    }
+
+    @Transactional(value = TxType.NEVER)
+    public Comercio obtenerComercioActivo() {
+        return comercioRepository.findByEstado(ESTADO_ACTIVO)
+            .stream()
+            .findFirst()
+            .orElseThrow(() -> new EntityNotFoundException("No se encontró ningún comercio activo"));
+    }
+
+    @Transactional(value = TxType.NEVER)
+    public FacturacionComercio obtenerFacturacionActiva() {
+        Comercio comercio = obtenerComercioActivo();
+        return facturacionComercioRepository.findFacturaActivaPorComercio(comercio.getCodigo())
+            .orElseThrow(() -> new EntityNotFoundException("No se encontró facturación activa para el comercio"));
+    }
+
+    @Transactional(value = TxType.NEVER)
+    public FacturacionComercio obtenerFacturacionPorComercio(Integer codigoComercio) {
+        Comercio comercio = comercioRepository.findById(codigoComercio)
+            .orElseThrow(() -> new EntityNotFoundException("No existe el comercio con código: " + codigoComercio));
+            
+        return facturacionComercioRepository.findByComercioAndEstado(comercio, "ACT")
+            .stream()
+            .findFirst()
+            .orElseThrow(() -> new EntityNotFoundException(
+                "No se encontró facturación activa para el comercio: " + codigoComercio));
     }
 }

@@ -7,7 +7,7 @@ public class Configuracion {
 
     private PosComercioPK pk;
     private String direccionMac;
-    private String codigoComercio;
+    private Integer codigoComercio;
     private LocalDateTime fechaActivacion;
 
     public Configuracion() {
@@ -33,11 +33,11 @@ public class Configuracion {
         this.direccionMac = direccionMac;
     }
 
-    public String getCodigoComercio() {
+    public Integer getCodigoComercio() {
         return codigoComercio;
     }
 
-    public void setCodigoComercio(String codigoComercio) {
+    public void setCodigoComercio(Integer codigoComercio) {
         this.codigoComercio = codigoComercio;
     }
 
