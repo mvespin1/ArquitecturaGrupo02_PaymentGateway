@@ -1,15 +1,15 @@
 package ec.edu.espe.pos.client;
 
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
 import ec.edu.espe.pos.dto.GatewayTransaccionDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-@FeignClient(name = "gateway-transaccion", url = "http://localhost:8083")
+@FeignClient(name = "gateway-transaccion", url = "http://localhost:8083/api/transacciones")
 public interface GatewayTransaccionClient {
-    
+
     @PostMapping("/api/transacciones/sincronizar")
-    void sincronizarTransaccion(@RequestBody GatewayTransaccionDTO transaccion);
-    
-    @PutMapping("/api/transacciones/{id}/estado")
-    void actualizarEstadoTransaccion(@PathVariable("id") Integer id, @RequestParam("estado") String estado);
+    @ResponseBody
+    String sincronizarTransaccion(@RequestBody GatewayTransaccionDTO transaccion);
 }

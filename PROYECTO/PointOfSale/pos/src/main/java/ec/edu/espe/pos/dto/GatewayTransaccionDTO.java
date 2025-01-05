@@ -1,89 +1,91 @@
 package ec.edu.espe.pos.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import ec.edu.espe.pos.model.Transaccion;
 
 public class GatewayTransaccionDTO {
-    private Integer codigo;
+    private ComercioDTO comercio;
+    private FacturacionComercioDTO facturacionComercio;
     private String tipo;
     private String marca;
-    private String modalidad;
     private String detalle;
     private BigDecimal monto;
     private String codigoUnicoTransaccion;
     private LocalDateTime fecha;
     private String estado;
     private String moneda;
-    private GatewayComercioPosDTO comercio;
+    private String pais;
+    private String tarjeta;
+    private LocalDate fechaEjecucionRecurrencia;
+    private LocalDate fechaFinRecurrencia;
 
+    // Constructor
     public GatewayTransaccionDTO() {
     }
 
-    public void setCodigo(Integer codigo) { this.codigo = codigo; }
-    public void setTipo(String tipo) { this.tipo = tipo; }
-    public void setMarca(String marca) { this.marca = marca; }
-    public void setModalidad(String modalidad) { this.modalidad = modalidad; }
-    public void setDetalle(String detalle) { this.detalle = detalle; }
-    public void setMonto(BigDecimal monto) { this.monto = monto; }
-    public void setCodigoUnicoTransaccion(String codigoUnicoTransaccion) { this.codigoUnicoTransaccion = codigoUnicoTransaccion; }
-    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
-    public void setEstado(String estado) { this.estado = estado; }
-    public void setMoneda(String moneda) { this.moneda = moneda; }
-    public void setComercio(GatewayComercioPosDTO comercio) { this.comercio = comercio; }
-
-    public static GatewayTransaccionDTO fromTransaccion(Transaccion transaccion, Integer idComercio) {
-        GatewayTransaccionDTO dto = new GatewayTransaccionDTO();
-        dto.setCodigo(transaccion.getCodigo());
-        dto.setTipo(transaccion.getModalidad());
-        dto.setMarca(transaccion.getMarca());
-        dto.setModalidad(transaccion.getModalidad());
-        dto.setDetalle(transaccion.getDetalle());
-        dto.setMonto(transaccion.getMonto());
-        dto.setCodigoUnicoTransaccion(transaccion.getCodigoUnicoTransaccion());
-        dto.setFecha(transaccion.getFecha());
-        dto.setEstado(transaccion.getEstado());
-        dto.setMoneda(transaccion.getMoneda());
-        dto.setComercio(new GatewayComercioPosDTO(idComercio));
-        return dto;
+    public ComercioDTO getComercio() {
+        return comercio;
     }
 
-    public Integer getCodigo() { return codigo; }
-    public String getTipo() { return tipo; }
-    public String getMarca() { return marca; }
-    public String getModalidad() { return modalidad; }
-    public String getDetalle() { return detalle; }
-    public BigDecimal getMonto() { return monto; }
-    public String getCodigoUnicoTransaccion() { return codigoUnicoTransaccion; }
-    public LocalDateTime getFecha() { return fecha; }
-    public String getEstado() { return estado; }
-    public String getMoneda() { return moneda; }
-    public GatewayComercioPosDTO getComercio() { return comercio; }
-}
-
-class GatewayComercioPosDTO {
-    private Integer codigo;
-    private String codigoInterno;
-    private String estado = "ACT"; // Valor por defecto
-
-    public GatewayComercioPosDTO(Integer codigo) {
-        this.codigo = codigo;
+    public void setComercio(ComercioDTO comercio) {
+        this.comercio = comercio;
     }
 
-    public Integer getCodigo() {
-        return codigo;
+    public FacturacionComercioDTO getFacturacionComercio() {
+        return facturacionComercio;
     }
 
-    public void setCodigo(Integer codigo) {
-        this.codigo = codigo;
+    public void setFacturacionComercio(FacturacionComercioDTO facturacionComercio) {
+        this.facturacionComercio = facturacionComercio;
     }
 
-    public String getCodigoInterno() {
-        return codigoInterno;
+    public String getTipo() {
+        return tipo;
     }
 
-    public void setCodigoInterno(String codigoInterno) {
-        this.codigoInterno = codigoInterno;
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public String getMarca() {
+        return marca;
+    }
+
+    public void setMarca(String marca) {
+        this.marca = marca;
+    }
+
+    public String getDetalle() {
+        return detalle;
+    }
+
+    public void setDetalle(String detalle) {
+        this.detalle = detalle;
+    }
+
+    public BigDecimal getMonto() {
+        return monto;
+    }
+
+    public void setMonto(BigDecimal monto) {
+        this.monto = monto;
+    }
+
+    public String getCodigoUnicoTransaccion() {
+        return codigoUnicoTransaccion;
+    }
+
+    public void setCodigoUnicoTransaccion(String codigoUnicoTransaccion) {
+        this.codigoUnicoTransaccion = codigoUnicoTransaccion;
+    }
+
+    public LocalDateTime getFecha() {
+        return fecha;
+    }
+
+    public void setFecha(LocalDateTime fecha) {
+        this.fecha = fecha;
     }
 
     public String getEstado() {
@@ -94,4 +96,63 @@ class GatewayComercioPosDTO {
         this.estado = estado;
     }
 
+    public String getMoneda() {
+        return moneda;
+    }
+
+    public void setMoneda(String moneda) {
+        this.moneda = moneda;
+    }
+
+    public String getPais() {
+        return pais;
+    }
+
+    public void setPais(String pais) {
+        this.pais = pais;
+    }
+
+    public String getTarjeta() {
+        return tarjeta;
+    }
+
+    public void setTarjeta(String tarjeta) {
+        this.tarjeta = tarjeta;
+    }
+
+    public LocalDate getFechaEjecucionRecurrencia() {
+        return fechaEjecucionRecurrencia;
+    }
+
+    public void setFechaEjecucionRecurrencia(LocalDate fechaEjecucionRecurrencia) {
+        this.fechaEjecucionRecurrencia = fechaEjecucionRecurrencia;
+    }
+
+    public LocalDate getFechaFinRecurrencia() {
+        return fechaFinRecurrencia;
+    }
+
+    public void setFechaFinRecurrencia(LocalDate fechaFinRecurrencia) {
+        this.fechaFinRecurrencia = fechaFinRecurrencia;
+    }
+
+    @Override
+    public String toString() {
+        return "GatewayTransaccionDTO{" +
+                "comercio=" + comercio +
+                ", facturacionComercio=" + facturacionComercio +
+                ", tipo='" + tipo + '\'' +
+                ", marca='" + marca + '\'' +
+                ", detalle='" + detalle + '\'' +
+                ", monto=" + monto +
+                ", codigoUnicoTransaccion='" + codigoUnicoTransaccion + '\'' +
+                ", fecha=" + fecha +
+                ", estado='" + estado + '\'' +
+                ", moneda='" + moneda + '\'' +
+                ", pais='" + pais + '\'' +
+                ", tarjeta='" + tarjeta + '\'' +
+                ", fechaEjecucionRecurrencia=" + fechaEjecucionRecurrencia +
+                ", fechaFinRecurrencia=" + fechaFinRecurrencia +
+                '}';
+    }
 }
