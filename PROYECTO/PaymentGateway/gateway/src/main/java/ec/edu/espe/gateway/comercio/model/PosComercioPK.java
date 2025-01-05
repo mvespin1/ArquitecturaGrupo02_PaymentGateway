@@ -12,16 +12,16 @@ public class PosComercioPK implements Serializable {
     private String modelo;
     @NotNull
     @Column(name = "CODIGO_POS", length = 10, nullable = false)
-    private String codigoPos;
+    private String codigo;
 
     // EMPTY CONSTRUCTOR
     public PosComercioPK() {
     }
 
     // CONSTRUCTOR
-    public PosComercioPK(String modelo, String codigoPos) {
+    public PosComercioPK(String modelo, String codigo) {
         this.modelo = modelo;
-        this.codigoPos = codigoPos;
+        this.codigo = codigo;
     }
 
     // GETTERS AND SETTERS
@@ -33,12 +33,12 @@ public class PosComercioPK implements Serializable {
         this.modelo = modelo;
     }
 
-    public String getCodigoPos() {
-        return this.codigoPos;
+    public String getCodigo() {
+        return this.codigo;
     }
 
-    public void setCodigoPos(String codigoPos) {
-        this.codigoPos = codigoPos;
+    public void setCodigo(String codigo) {
+        this.codigo = codigo;
     }
 
     // toString
@@ -46,7 +46,7 @@ public class PosComercioPK implements Serializable {
     public String toString() {
         return "{" +
                 " modelo='" + getModelo() + "'" +
-                ", codigoPos='" + getCodigoPos() + "'" +
+                ", codigo='" + getCodigo() + "'" +
                 "}";
     }
 
@@ -57,7 +57,7 @@ public class PosComercioPK implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((modelo == null) ? 0 : modelo.hashCode());
-        result = prime * result + ((codigoPos == null) ? 0 : codigoPos.hashCode());
+        result = prime * result + ((codigo == null) ? 0 : codigo.hashCode());
         return result;
     }
 
@@ -75,10 +75,10 @@ public class PosComercioPK implements Serializable {
                 return false;
         } else if (!modelo.equals(other.modelo))
             return false;
-        if (codigoPos == null) {
-            if (other.codigoPos != null)
+        if (codigo == null) {
+            if (other.codigo != null)
                 return false;
-        } else if (!codigoPos.equals(other.codigoPos))
+        } else if (!codigo.equals(other.codigo))
             return false;
         return true;
     }

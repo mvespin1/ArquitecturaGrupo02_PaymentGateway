@@ -70,9 +70,18 @@ public class ConfiguracionController {
     @PostMapping("/sincronizar")
     public ResponseEntity<Void> recibirConfiguracion(@RequestBody Configuracion configuracion) {
         try {
+            // Add debug logging
+            System.out.println("POS recibió configuración:");
+            System.out.println("PK: " + configuracion.getPk());
+            System.out.println("DireccionMac: " + configuracion.getDireccionMac());
+            System.out.println("FechaActivacion: " + configuracion.getFechaActivacion());
+            System.out.println("CodigoComercio: " + configuracion.getCodigoComercio());
+            
             configuracionService.crear(configuracion);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
+            System.err.println("Error al procesar configuración en POS: " + e.getMessage());
+            e.printStackTrace(); // Add stack trace for more detail
             return ResponseEntity.internalServerError().build();
         }
     }
