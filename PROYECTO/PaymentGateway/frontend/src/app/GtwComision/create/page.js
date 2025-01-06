@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import "./page.css";
 
 const CreatePage = () => {
   const [form, setForm] = useState({
@@ -11,29 +12,70 @@ const CreatePage = () => {
     ManejaSegmentos: "",
   });
 
+  const [errors, setErrors] = useState({});
   const router = useRouter();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === "ManejaSegmentos") {
-      setForm({ ...form, [name]: value });
+    setForm({ ...form, [name]: value });
 
-      if (value === "si") {
-        // Redirige a la ruta de GTW_COMISION_SEGMENTOS
-        router.push(
-          "/GtwComisionSegmento/components/"
-        );
-      }
-    } else {
-      setForm({ ...form, [name]: value });
+    if (name === "ManejaSegmentos" && value === "si") {
+      router.push("/GtwComisionSegmento/components/");
     }
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!form.Tipo) newErrors.Tipo = "Seleccione un tipo.";
+    if (!form.MontoBase || parseFloat(form.MontoBase) <= 0) {
+      newErrors.MontoBase = "Ingrese un monto base válido.";
+    }
+    if (
+      !form.TransaccionesBase ||
+      parseInt(form.TransaccionesBase, 10) <= 0
+    ) {
+      newErrors.TransaccionesBase = "Ingrese un número válido de transacciones base.";
+    }
+    if (!form.ManejaSegmentos) newErrors.ManejaSegmentos = "Seleccione una opción.";
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Registro creado:", form);
-    router.push("/");
+    if (validateForm()) {
+      // Datos a enviar
+      const dataToSend = {
+        Tipo: form.Tipo,
+        MontoBase: parseFloat(form.MontoBase),
+        TransaccionesBase: parseInt(form.TransaccionesBase, 10),
+        ManejaSegmentos: form.ManejaSegmentos === "si",
+      };
+
+      try {
+        // Envío de datos al endpoint
+        const response = await fetch("https://localhost:8082", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dataToSend),
+        });
+
+        if (!response.ok) {
+          throw new Error("Error al enviar los datos");
+        }
+
+        console.log("Datos enviados exitosamente:", dataToSend);
+        router.push("/GtwComision/components"); // Redirige a la página deseada
+      } catch (error) {
+        console.error("Error en el envío:", error);
+      }
+    }
   };
 
   const handleCancel = () => {
@@ -41,40 +83,14 @@ const CreatePage = () => {
   };
 
   return (
-    <main
-      style={{
-        maxWidth: "600px",
-        margin: "2rem auto",
-        padding: "2rem",
-        backgroundColor: "#f9fafb",
-        borderRadius: "8px",
-        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <h1
-        style={{
-          textAlign: "center",
-          color: "#000000",
-          marginBottom: "1.5rem",
-        }}
-      >
-        Crear Nueva Comisión
-      </h1>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
+    <main className="main-container">
+      <h1 className="form-title">Crear Nueva Comisión</h1>
+      <form onSubmit={handleSubmit} className="form-container">
         {/* Tipo */}
-        <div>
-          <label style={{ fontWeight: "bold", color: "#000000" }}>
-            Tipo
-          </label>
-          <div style={{ display: "flex", gap: "1rem" }}>
-            <label style={{ color: "#000000" }}>
+        <div className="form-group">
+          <label className="form-label">Tipo</label>
+          <div className="radio-group">
+            <label>
               <input
                 type="radio"
                 name="Tipo"
@@ -84,7 +100,7 @@ const CreatePage = () => {
               />
               Porcentual
             </label>
-            <label style={{ color: "#000000" }}>
+            <label>
               <input
                 type="radio"
                 name="Tipo"
@@ -95,14 +111,12 @@ const CreatePage = () => {
               Fijo
             </label>
           </div>
+          {errors.Tipo && <p className="error-text">{errors.Tipo}</p>}
         </div>
 
         {/* Monto Base */}
-        <div>
-          <label
-            htmlFor="MontoBase"
-            style={{ fontWeight: "bold", color: "#000000" }}
-          >
+        <div className="form-group">
+          <label htmlFor="MontoBase" className="form-label">
             Monto Base
           </label>
           <input
@@ -111,26 +125,17 @@ const CreatePage = () => {
             name="MontoBase"
             value={form.MontoBase}
             onChange={handleChange}
-            style={{
-              padding: "10px",
-              fontSize: "1rem",
-              borderRadius: "4px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "#ffffff",
-              color: "#000000",
-            }}
+            className="form-input"
             placeholder="Ingrese monto base"
             step="0.0001"
             max="9999999999999999.9999"
           />
+          {errors.MontoBase && <p className="error-text">{errors.MontoBase}</p>}
         </div>
 
         {/* Transacciones Base */}
-        <div>
-          <label
-            htmlFor="TransaccionesBase"
-            style={{ fontWeight: "bold", color: "#000000" }}
-          >
+        <div className="form-group">
+          <label htmlFor="TransaccionesBase" className="form-label">
             Transacciones Base
           </label>
           <input
@@ -139,26 +144,20 @@ const CreatePage = () => {
             name="TransaccionesBase"
             value={form.TransaccionesBase}
             onChange={handleChange}
-            style={{
-              padding: "10px",
-              fontSize: "1rem",
-              borderRadius: "4px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "#ffffff",
-              color: "#000000",
-            }}
+            className="form-input"
             placeholder="Ingrese transacciones base"
             max="999999999"
           />
+          {errors.TransaccionesBase && (
+            <p className="error-text">{errors.TransaccionesBase}</p>
+          )}
         </div>
 
         {/* Maneja Segmentos */}
-        <div>
-          <label style={{ fontWeight: "bold", color: "#000000" }}>
-            Maneja Segmentos
-          </label>
-          <div style={{ display: "flex", gap: "1rem" }}>
-            <label style={{ color: "#000000" }}>
+        <div className="form-group">
+          <label className="form-label">Maneja Segmentos</label>
+          <div className="radio-group">
+            <label>
               <input
                 type="radio"
                 name="ManejaSegmentos"
@@ -168,7 +167,7 @@ const CreatePage = () => {
               />
               Sí
             </label>
-            <label style={{ color: "#000000" }}>
+            <label>
               <input
                 type="radio"
                 name="ManejaSegmentos"
@@ -179,42 +178,20 @@ const CreatePage = () => {
               No
             </label>
           </div>
+          {errors.ManejaSegmentos && (
+            <p className="error-text">{errors.ManejaSegmentos}</p>
+          )}
         </div>
 
         {/* Botones */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: "1rem",
-          }}
-        >
-          <button
-            type="submit"
-            style={{
-              backgroundColor: "#10b981",
-              color: "#000000",
-              padding: "10px 20px",
-              fontSize: "1rem",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
+        <div className="button-group">
+          <button type="submit" className="button save">
             Guardar
           </button>
           <button
             type="button"
             onClick={handleCancel}
-            style={{
-              backgroundColor: "#ef4444",
-              color: "#000000",
-              padding: "10px 20px",
-              fontSize: "1rem",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
+            className="button cancel"
           >
             Cancelar
           </button>
