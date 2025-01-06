@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // Importamos useRouter para navegación
+import { useRouter } from "next/navigation";
+import "./page.css";
 
 const CreatePage = () => {
   const [form, setForm] = useState({
@@ -11,17 +12,56 @@ const CreatePage = () => {
     ESTADO: "pendiente",
   });
 
-  const router = useRouter(); // Inicializamos el router para redirigir
+  const [errors, setErrors] = useState({});
+  const router = useRouter();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!form.CLAVE.trim()) {
+      newErrors.CLAVE = "La clave es obligatoria.";
+    }
+    if (!form.ESTADO) {
+      newErrors.ESTADO = "Seleccione un estado.";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Registro creado:", form);
-    router.push("/"); // Redirige a la página principal después de guardar
+    if (validateForm()) {
+      const dataToSend = {
+        ...form, // Datos del formulario
+        FECHA_CREACION: new Date().toISOString().split("T")[0], // Fecha actual como ejemplo
+      };
+
+      try {
+        const response = await fetch("https://localhost:8082", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dataToSend),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error en la solicitud: ${response.statusText}`);
+        }
+
+        console.log("Datos enviados exitosamente:", dataToSend);
+        router.push("/"); // Redirige a la página principal después del envío
+      } catch (error) {
+        console.error("Error al enviar los datos:", error.message);
+      }
+    }
   };
 
   const handleCancel = () => {
@@ -29,42 +69,12 @@ const CreatePage = () => {
   };
 
   return (
-    <main
-      style={{
-        maxWidth: "600px",
-        margin: "2rem auto",
-        padding: "2rem",
-        backgroundColor: "#f9fafb",
-        borderRadius: "8px",
-        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <h1
-        style={{
-          textAlign: "center",
-          color: "#1e40af",
-          marginBottom: "1.5rem",
-        }}
-      >
-        Crear Nueva Seguridad
-      </h1>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
+    <main className="main-container">
+      <h1 className="form-title">Crear Nueva Seguridad</h1>
+      <form onSubmit={handleSubmit} className="form">
         {/* CLAVE */}
-        <div>
-          <label
-            htmlFor="CLAVE"
-            style={{
-              fontWeight: "bold",
-              color: "#1f2937",
-            }}
-          >
+        <div className="form-group">
+          <label htmlFor="CLAVE" className="form-label">
             Clave
           </label>
           <input
@@ -73,27 +83,16 @@ const CreatePage = () => {
             name="CLAVE"
             value={form.CLAVE}
             onChange={handleChange}
-            style={{
-              padding: "10px",
-              fontSize: "1rem",
-              borderRadius: "4px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "#ffffff",
-            }}
+            className={`form-input ${errors.CLAVE ? "error-border" : ""}`}
             placeholder="Ingrese clave"
-            maxLength="128" // Longitud máxima de 128 caracteres
+            maxLength="128"
           />
+          {errors.CLAVE && <p className="error-text">{errors.CLAVE}</p>}
         </div>
 
         {/* FECHA_CREACION */}
-        <div>
-          <label
-            htmlFor="FECHA_CREACION"
-            style={{
-              fontWeight: "bold",
-              color: "#1f2937",
-            }}
-          >
+        <div className="form-group">
+          <label htmlFor="FECHA_CREACION" className="form-label">
             Fecha Creación
           </label>
           <input
@@ -102,26 +101,14 @@ const CreatePage = () => {
             name="FECHA_CREACION"
             value={form.FECHA_CREACION}
             onChange={handleChange}
-            style={{
-              padding: "10px",
-              fontSize: "1rem",
-              borderRadius: "4px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "#e5e7eb", // Fondo gris para campos deshabilitados
-            }}
-            disabled // Campo deshabilitado
+            className="form-input disabled-input"
+            disabled
           />
         </div>
 
         {/* FECHA_ACTIVACION */}
-        <div>
-          <label
-            htmlFor="FECHA_ACTIVACION"
-            style={{
-              fontWeight: "bold",
-              color: "#1f2937",
-            }}
-          >
+        <div className="form-group">
+          <label htmlFor="FECHA_ACTIVACION" className="form-label">
             Fecha Activación
           </label>
           <input
@@ -130,26 +117,14 @@ const CreatePage = () => {
             name="FECHA_ACTIVACION"
             value={form.FECHA_ACTIVACION}
             onChange={handleChange}
-            style={{
-              padding: "10px",
-              fontSize: "1rem",
-              borderRadius: "4px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "#e5e7eb", // Fondo gris para campos deshabilitados
-            }}
-            disabled // Campo deshabilitado
+            className="form-input disabled-input"
+            disabled
           />
         </div>
 
         {/* ESTADO */}
-        <div>
-          <label
-            htmlFor="ESTADO"
-            style={{
-              fontWeight: "bold",
-              color: "#1f2937",
-            }}
-          >
+        <div className="form-group">
+          <label htmlFor="ESTADO" className="form-label">
             Estado
           </label>
           <select
@@ -157,54 +132,24 @@ const CreatePage = () => {
             name="ESTADO"
             value={form.ESTADO}
             onChange={handleChange}
-            style={{
-              padding: "10px",
-              fontSize: "1rem",
-              borderRadius: "4px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "#ffffff",
-            }}
+            className={`form-input ${errors.ESTADO ? "error-border" : ""}`}
           >
             <option value="pendiente">Pendiente</option>
             <option value="activo">Activo</option>
             <option value="inactivo">Inactivo</option>
           </select>
+          {errors.ESTADO && <p className="error-text">{errors.ESTADO}</p>}
         </div>
 
         {/* Botones */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: "1rem",
-          }}
-        >
-          <button
-            type="submit"
-            style={{
-              backgroundColor: "#10b981",
-              color: "#ffffff",
-              padding: "10px 20px",
-              fontSize: "1rem",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
+        <div className="button-group">
+          <button type="submit" className="button save">
             Guardar
           </button>
           <button
             type="button"
             onClick={handleCancel}
-            style={{
-              backgroundColor: "#ef4444",
-              color: "#ffffff",
-              padding: "10px 20px",
-              fontSize: "1rem",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
+            className="button cancel"
           >
             Cancelar
           </button>
