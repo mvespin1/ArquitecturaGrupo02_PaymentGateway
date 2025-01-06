@@ -271,15 +271,21 @@ public class TransaccionService {
                 RespuestaValidacionDTO respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
                 log.info("Respuesta del sistema externo: {}", respuesta.getMensaje());
                 
-                if (respuesta != null && respuesta.getMensaje() != null && !respuesta.getMensaje().isEmpty()) {
-                    transaccionGuardada.setEstado(ESTADO_AUTORIZADO);
+                if (respuesta != null && respuesta.getMensaje() != null) {
+                    // Actualizar estado basado en la respuesta
+                    if (respuesta.getMensaje().toLowerCase().contains("aceptada")) {
+                        transaccionGuardada.setEstado(ESTADO_AUTORIZADO);
+                        log.info("Transacción autorizada por sistema externo");
+                    } else if (respuesta.getMensaje().toLowerCase().contains("rechazada")) {
+                        transaccionGuardada.setEstado(ESTADO_RECHAZADO);
+                        log.info("Transacción rechazada por sistema externo");
+                    }
                     transaccionRepository.save(transaccionGuardada);
-                    log.info("Transacción autorizada por sistema externo");
                 }
             } catch (Exception e) {
-                log.error("Error en validación externa: {}. Manteniendo transacción en estado ENVIADO", e.getMessage());
-                // No propagamos el error, solo lo registramos
-                // La transacción se mantiene en estado ENVIADO para posterior validación
+                log.error("Error en validación externa: {}. Marcando transacción como rechazada", e.getMessage());
+                transaccionGuardada.setEstado(ESTADO_RECHAZADO);
+                transaccionRepository.save(transaccionGuardada);
             }
 
         } catch (EntityNotFoundException e) {

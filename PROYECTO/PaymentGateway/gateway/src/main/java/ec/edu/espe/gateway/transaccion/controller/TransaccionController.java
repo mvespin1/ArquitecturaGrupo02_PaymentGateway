@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ec.edu.espe.gateway.transaccion.model.Transaccion;
 import ec.edu.espe.gateway.transaccion.services.TransaccionService;
 import ec.edu.espe.gateway.transaccion.services.RecurrenceService;
+import ec.edu.espe.gateway.transaccion.repository.TransaccionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
@@ -17,10 +18,17 @@ public class TransaccionController {
 
     private static final Logger log = LoggerFactory.getLogger(TransaccionController.class);
     private final TransaccionService transaccionService;
+    private final TransaccionRepository transaccionRepository;
     private final RecurrenceService recurrenceService;
 
-    public TransaccionController(TransaccionService transaccionService, RecurrenceService recurrenceService) {
+    public static final String ESTADO_AUTORIZADO = "AUT";
+    public static final String ESTADO_RECHAZADO = "REC";
+
+    public TransaccionController(TransaccionService transaccionService, 
+                               TransaccionRepository transaccionRepository,
+                               RecurrenceService recurrenceService) {
         this.transaccionService = transaccionService;
+        this.transaccionRepository = transaccionRepository;
         this.recurrenceService = recurrenceService;
     }
 
@@ -104,7 +112,19 @@ public class TransaccionController {
         try {
             transaccionService.procesarTransaccionPOS(transaccion);
             log.info("Sincronización completada exitosamente");
-            return ResponseEntity.ok("Transacción sincronizada exitosamente");
+            
+            // Obtener la transacción actualizada para acceder a su estado
+            Transaccion transaccionActualizada = transaccionRepository.findById(transaccion.getCodigo())
+                    .orElseThrow(() -> new EntityNotFoundException("Transacción no encontrada"));
+            
+            // Devolver el mensaje según el estado
+            if (ESTADO_AUTORIZADO.equals(transaccionActualizada.getEstado())) {
+                return ResponseEntity.ok("Transacción aceptada");
+            } else if (ESTADO_RECHAZADO.equals(transaccionActualizada.getEstado())) {
+                return ResponseEntity.ok("Transacción rechazada");
+            } else {
+                return ResponseEntity.ok("Transacción en proceso de validación");
+            }
             
         } catch (EntityNotFoundException e) {
             log.error("Entidad no encontrada: {}", e.getMessage());

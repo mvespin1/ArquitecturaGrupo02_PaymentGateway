@@ -44,12 +44,12 @@ public class PagoController {
             // El resto de valores se establecen en el servicio
             Transaccion transaccionProcesada = transaccionService.crear(transaccion, datosSensibles, 
                                                                        interesDiferido, cuotas);
-            log.info("Transacción procesada exitosamente: {}", transaccionProcesada);
+            log.info("Transacción procesada: {}", transaccionProcesada);
             
             Map<String, String> response = new HashMap<>();
-            response.put("mensaje", "Transacción procesada exitosamente con ID: " + 
-                                   transaccionProcesada.getCodigoUnicoTransaccion());
+            response.put("mensaje", transaccionProcesada.getDetalle());
             return ResponseEntity.ok(response);
+            
         } catch (IllegalArgumentException e) {
             log.error("Error de validación: {}", e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();

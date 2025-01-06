@@ -116,14 +116,17 @@ const MainPage = () => {
 
       // Mostrar notificación según la respuesta
       if (result && result.mensaje) {
-        if (result.mensaje.includes("aceptada")) {
-          setNotification({
-            show: true,
-            message: result.mensaje,
-            type: "success"
-          });
-          
-          // Limpiar el formulario solo si la transacción fue exitosa
+        const isSuccess = result.mensaje.toLowerCase().includes("exitosamente");
+        const isRejected = result.mensaje.toLowerCase().includes("rechazada");
+        
+        setNotification({
+          show: true,
+          message: result.mensaje,
+          type: isSuccess ? "success" : isRejected ? "error" : "warning"
+        });
+        
+        // Limpiar el formulario solo si la transacción fue exitosa
+        if (isSuccess) {
           setFormData({
             cardNumber: "",
             expiryDate: "",
@@ -132,12 +135,6 @@ const MainPage = () => {
             transactionAmount: "",
             interesDiferido: false,
             cuotas: ""
-          });
-        } else {
-          setNotification({
-            show: true,
-            message: result.mensaje,
-            type: "error"
           });
         }
       }
@@ -159,7 +156,7 @@ const MainPage = () => {
       right: '20px',
       padding: '15px 25px',
       borderRadius: '5px',
-      backgroundColor: type === 'success' ? '#4CAF50' : '#f44336',
+      backgroundColor: type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#ff9800',
       color: 'white',
       boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
       zIndex: 1000,

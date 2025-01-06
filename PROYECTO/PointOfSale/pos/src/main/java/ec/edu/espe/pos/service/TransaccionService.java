@@ -104,12 +104,16 @@ public class TransaccionService {
 
             String respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
             log.info("Respuesta del gateway: {}", respuesta);
-        } catch (Exception e) {
-            log.error("Error al sincronizar con el gateway. La transacción se procesará posteriormente: {}", 
-                    e.getMessage());
-        }
 
-        return transaccionGuardada;
+            // Guardar la respuesta del gateway en el detalle de la transacción
+            transaccionGuardada.setDetalle(respuesta);
+            transaccionGuardada = transaccionRepository.save(transaccionGuardada);
+
+            return transaccionGuardada;
+        } catch (Exception e) {
+            log.error("Error al sincronizar con el gateway: {}", e.getMessage());
+            throw new RuntimeException("Error al procesar la transacción: " + e.getMessage());
+        }
     }
 
     private void validarCamposObligatorios(Transaccion transaccion) {
