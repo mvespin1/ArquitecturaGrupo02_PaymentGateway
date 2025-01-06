@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // Importamos useRouter para navegación
+import { useRouter } from "next/navigation";
+import "./page.css"; // Importamos el CSS como módulo
+
 
 const UpdatePage = () => {
   const [form, setForm] = useState({
@@ -18,7 +20,7 @@ const UpdatePage = () => {
     FechaSuspension: "2024-12-20",
   });
 
-  const router = useRouter(); // Inicializamos el router para redirigir
+  const router = useRouter();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,59 +30,22 @@ const UpdatePage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Registro actualizado:", form);
-    router.push("/"); // Redirige a la página principal después de guardar
+    router.push("/");
   };
 
   const handleCancel = () => {
-    router.push("/"); // Redirige a la página principal sin guardar
+    router.push("/");
   };
 
   return (
-    <main
-      style={{
-        maxWidth: "600px",
-        margin: "2rem auto",
-        padding: "2rem",
-        backgroundColor: "#f9fafb",
-        borderRadius: "8px",
-        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <h1
-        style={{
-          textAlign: "center",
-          color: "#1e40af",
-          marginBottom: "1.5rem",
-        }}
-      >
-        Actualizar Comercio
-      </h1>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
+    <main className="update-container">
+      <h1 className="update-title">Actualizar Comercio</h1>
+      <form onSubmit={handleSubmit} className="update-form">
         {Object.keys(form).map((field) => {
           if (field === "Estado") {
             return (
-              <div
-                key={field}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.5rem",
-                }}
-              >
-                <label
-                  htmlFor={field}
-                  style={{
-                    fontWeight: "bold",
-                    color: "#1f2937",
-                  }}
-                >
+              <div key={field} className="form-group">
+                <label htmlFor={field} className="form-label">
                   Estado
                 </label>
                 <select
@@ -88,13 +53,7 @@ const UpdatePage = () => {
                   name={field}
                   value={form[field]}
                   onChange={handleChange}
-                  style={{
-                    padding: "10px",
-                    fontSize: "1rem",
-                    borderRadius: "4px",
-                    border: "1px solid #d1d5db",
-                    backgroundColor: "#ffffff",
-                  }}
+                  className="form-select"
                 >
                   <option value="Activo">Activo</option>
                   <option value="Inactivo">Inactivo</option>
@@ -105,21 +64,8 @@ const UpdatePage = () => {
             );
           } else if (field === "CodigoComision") {
             return (
-              <div
-                key={field}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.5rem",
-                }}
-              >
-                <label
-                  htmlFor={field}
-                  style={{
-                    fontWeight: "bold",
-                    color: "#1f2937",
-                  }}
-                >
+              <div key={field} className="form-group">
+                <label htmlFor={field} className="form-label">
                   Código Comisión
                 </label>
                 <select
@@ -127,13 +73,7 @@ const UpdatePage = () => {
                   name={field}
                   value={form[field]}
                   onChange={handleChange}
-                  style={{
-                    padding: "10px",
-                    fontSize: "1rem",
-                    borderRadius: "4px",
-                    border: "1px solid #d1d5db",
-                    backgroundColor: "#ffffff",
-                  }}
+                  className="form-select"
                 >
                   <option value="1">Comisión 1</option>
                   <option value="2">Comisión 2</option>
@@ -143,21 +83,8 @@ const UpdatePage = () => {
             );
           } else {
             return (
-              <div
-                key={field}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.5rem",
-                }}
-              >
-                <label
-                  htmlFor={field}
-                  style={{
-                    fontWeight: "bold",
-                    color: "#1f2937",
-                  }}
-                >
+              <div key={field} className="form-group">
+                <label htmlFor={field} className="form-label">
                   {field
                     .replace(/([A-Z])/g, " $1")
                     .replace(/^./, (str) => str.toUpperCase())}
@@ -168,53 +95,18 @@ const UpdatePage = () => {
                   name={field}
                   value={form[field]}
                   onChange={handleChange}
-                  disabled // Deshabilita todos los campos excepto Estado y CodigoComision
-                  style={{
-                    padding: "10px",
-                    fontSize: "1rem",
-                    borderRadius: "4px",
-                    border: "1px solid #d1d5db",
-                    backgroundColor: "#e5e7eb", // Fondo gris claro para campos deshabilitados
-                  }}
+                  disabled
+                  className="form-input disabled-input"
                 />
               </div>
             );
           }
         })}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: "1rem",
-          }}
-        >
-          <button
-            type="submit"
-            style={{
-              backgroundColor: "#10b981",
-              color: "#ffffff",
-              padding: "10px 20px",
-              fontSize: "1rem",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
+        <div className="form-actions">
+          <button type="submit" className="btn btn-success">
             Guardar
           </button>
-          <button
-            type="button"
-            onClick={handleCancel}
-            style={{
-              backgroundColor: "#ef4444",
-              color: "#ffffff",
-              padding: "10px 20px",
-              fontSize: "1rem",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
+          <button type="button" onClick={handleCancel} className="btn btn-danger">
             Cancelar
           </button>
         </div>
