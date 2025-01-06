@@ -314,7 +314,11 @@ public class TransaccionService {
         // Valores quemados
         dto.setNumeroCuenta("00000003");
         dto.setGtwComision(100.50);
-        dto.setGatewayCuenta("00000002"); // Nuevo campo quemado
+        dto.setGatewayCuenta("00000002");
+
+        // Configurar datos de pago diferido
+        dto.setInteresDiferido(datosTarjeta.getInteresDiferido());
+        dto.setCuotas(datosTarjeta.getCuotas());
 
         dto.setCodigoUnicoTransaccion(transaccion.getCodigoUnicoTransaccion());
 
@@ -335,6 +339,8 @@ public class TransaccionService {
         private String cvv;
         private String nombreTarjeta;
         private String direccionTarjeta;
+        private Boolean interesDiferido;
+        private Integer cuotas;
 
         // Getters
         public String getCardNumber() {
@@ -355,6 +361,14 @@ public class TransaccionService {
 
         public String getDireccionTarjeta() {
             return direccionTarjeta;
+        }
+
+        public Boolean getInteresDiferido() {
+            return interesDiferido;
+        }
+
+        public Integer getCuotas() {
+            return cuotas;
         }
     }
 }

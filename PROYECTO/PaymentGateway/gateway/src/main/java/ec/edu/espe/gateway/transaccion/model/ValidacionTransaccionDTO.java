@@ -16,6 +16,8 @@ public class ValidacionTransaccionDTO {
     private String gatewayCuenta;
     private String codigoUnicoTransaccion;
     private Double gtwComision;
+    private Boolean interesDiferido;
+    private Integer cuotas;
 
     public static class Banco {
         private Integer codigo;
@@ -148,5 +150,21 @@ public class ValidacionTransaccionDTO {
 
     public void setGtwComision(Double gtwComision) {
         this.gtwComision = gtwComision;
+    }
+
+    public Boolean getInteresDiferido() {
+        return interesDiferido;
+    }
+
+    public void setInteresDiferido(Boolean interesDiferido) {
+        this.interesDiferido = interesDiferido;
+    }
+
+    public Integer getCuotas() {
+        return cuotas;
+    }
+
+    public void setCuotas(Integer cuotas) {
+        this.cuotas = cuotas;
     }
 } 

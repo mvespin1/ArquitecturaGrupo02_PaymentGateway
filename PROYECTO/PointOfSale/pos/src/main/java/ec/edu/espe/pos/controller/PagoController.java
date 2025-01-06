@@ -31,7 +31,23 @@ public class PagoController {
             
             // Obtener datos sensibles encriptados
             String datosSensibles = payload.get("datosTarjeta").toString();
+            
+            // Manejar el campo interesDiferido
+            Boolean interesDiferido = Boolean.valueOf(String.valueOf(payload.get("interesDiferido")));
+            
+            // Manejar el campo cuotas de manera segura
+            Integer cuotas = null;
+            if (interesDiferido && payload.get("cuotas") != null) {
+                try {
+                    cuotas = Integer.valueOf(String.valueOf(payload.get("cuotas")));
+                } catch (NumberFormatException e) {
+                    log.warn("Error al convertir cuotas a número: {}", e.getMessage());
+                }
+            }
+            
             log.info("Datos sensibles recibidos (encriptados)");
+            log.info("Interés diferido: {}", interesDiferido);
+            log.info("Cuotas: {}", cuotas);
             
             // El resto de valores se establecen en el servicio
             Transaccion transaccionProcesada = transaccionService.crear(transaccion, datosSensibles);
