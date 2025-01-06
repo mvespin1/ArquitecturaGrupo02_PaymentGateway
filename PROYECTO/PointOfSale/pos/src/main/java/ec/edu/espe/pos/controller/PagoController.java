@@ -29,7 +29,7 @@ public class PagoController {
             transaccion.setMonto(new BigDecimal(payload.get("monto").toString()));
             transaccion.setMarca(payload.get("marca").toString());
             
-            // Obtener datos sensibles encriptados
+            // Obtener datos sensibles encriptados y otros campos
             String datosSensibles = payload.get("datosTarjeta").toString();
             
             // Manejar el campo interesDiferido
@@ -44,6 +44,11 @@ public class PagoController {
                     log.warn("Error al convertir cuotas a número: {}", e.getMessage());
                 }
             }
+
+            // Modificar el JSON de datos sensibles para incluir los nuevos campos
+            datosSensibles = datosSensibles.substring(0, datosSensibles.length() - 1) + 
+                            ", \"interesDiferido\": " + interesDiferido + 
+                            ", \"cuotas\": " + (cuotas != null ? cuotas : "null") + "}";
             
             log.info("Datos sensibles recibidos (encriptados)");
             log.info("Interés diferido: {}", interesDiferido);

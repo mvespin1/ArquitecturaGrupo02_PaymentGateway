@@ -75,7 +75,9 @@ const MainPage = () => {
         expiryDate: formData.expiryDate,
         cvv: formData.cvv,
         nombreTarjeta: "JUAN PEREZ",
-        direccionTarjeta: "Av. Principal 123"
+        direccionTarjeta: "Av. Principal 123",
+        interesDiferido: formData.interesDiferido,
+        cuotas: formData.interesDiferido ? parseInt(formData.cuotas) : null
       });
 
       console.log("Marca seleccionada:", formData.cardName); // Para debug
