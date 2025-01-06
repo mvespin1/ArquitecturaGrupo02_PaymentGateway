@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // Importa el hook para navegación
 import { FaEye } from "react-icons/fa";
+import "../../Css/general.css"; // Importa el archivo de estilos generales
 
 const CrudTable = () => {
   const [data, setData] = useState([
@@ -36,78 +37,48 @@ const CrudTable = () => {
   };
 
   return (
-    <main>
-      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Transacciones</h1>
+    <main className="main-container">
+      <h1 className="main-title">Gestión de Transacciones</h1>
       <div>
-        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Transacciones</h2>
-        <table>
+        <h2 className="section-title">Transacciones</h2>
+        <table className="data-table">
           <thead>
             <tr>
-              <th>Codigo Transaccion</th>
-              <th>Codigo Comercio</th>
-              <th>Facturacion Comercio</th>
+              <th>Código Transacción</th>
+              <th>Código Comercio</th>
+              <th>Facturación Comercio</th>
               <th>Marca</th>
               <th>Estado</th>
               <th>Monto</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {data.map((item, index) => (
-              <tr key={item.id || index}>
+              <tr key={item.id || index} className={index % 2 === 0 ? "row-even" : "row-odd"}>
                 <td>{item.CodigoTransaccion}</td>
                 <td>{item.CodigoComercio}</td>
                 <td>{item.FacturacionComercio}</td>
                 <td>{item.Marca}</td>
                 <td>{item.Estado}</td>
                 <td>{item.Monto}</td>
-                <td>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <button
-                      style={{
-                        backgroundColor: "#38bdf8",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => handleView(item.id)} // Redirige a la página de visualización
-                    >
-                      <FaEye />
-                    </button>
-                  </div>
+                <td className="action-buttons">
+                  <button className="view-button" onClick={() => handleView(item.id)}>
+                    <FaEye />
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        <div className="pagination" style={{ marginTop: "1rem" }}>
+        <div className="pagination">
           <button>&lt;</button>
           <button>1</button>
           <button className="active">2</button>
           <button>3</button>
           <button>&gt;</button>
         </div>
-        <button
-          style={{
-            marginTop: "2rem",
-            backgroundColor: "#3b82f6",
-            color: "#ffffff",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            width: "100%",
-            textAlign: "center",
-          }}
-          onClick={handleBackToHome}
-        >
+        <button className="back-button" onClick={handleBackToHome}>
           Volver al Inicio
         </button>
       </div>
