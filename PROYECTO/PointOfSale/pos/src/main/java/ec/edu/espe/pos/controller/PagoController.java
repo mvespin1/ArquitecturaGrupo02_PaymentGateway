@@ -8,6 +8,7 @@ import ec.edu.espe.pos.service.TransaccionService;
 import ec.edu.espe.pos.model.Transaccion;
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.HashMap;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -45,15 +46,20 @@ public class PagoController {
                                                                        interesDiferido, cuotas);
             log.info("Transacción procesada exitosamente: {}", transaccionProcesada);
             
-            return ResponseEntity.ok("Transacción procesada exitosamente con ID: " + 
+            Map<String, String> response = new HashMap<>();
+            response.put("mensaje", "Transacción procesada exitosamente con ID: " + 
                                    transaccionProcesada.getCodigoUnicoTransaccion());
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             log.error("Error de validación: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         } catch (Exception e) {
             log.error("Error inesperado al procesar pago: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError()
-                    .body("Error al procesar el pago: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("mensaje", "Error al procesar el pago: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
 }

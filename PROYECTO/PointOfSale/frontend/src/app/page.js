@@ -15,6 +15,7 @@ const MainPage = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [notification, setNotification] = useState({ show: false, message: "", type: "" });
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -102,18 +103,81 @@ const MainPage = () => {
         body: JSON.stringify(transactionPayload),
       });
 
-      if (!response.ok) throw new Error("Error al procesar los datos en el backend");
-      const result = await response.text();
-      alert(`Transacción exitosa: ${result}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        setNotification({
+          show: true,
+          message: result.mensaje || "Error al procesar los datos en el backend",
+          type: "error"
+        });
+        return;
+      }
+
+      // Mostrar notificación según la respuesta
+      if (result && result.mensaje) {
+        if (result.mensaje.includes("aceptada")) {
+          setNotification({
+            show: true,
+            message: result.mensaje,
+            type: "success"
+          });
+          
+          // Limpiar el formulario solo si la transacción fue exitosa
+          setFormData({
+            cardNumber: "",
+            expiryDate: "",
+            cvv: "",
+            cardName: "MSCD",
+            transactionAmount: "",
+            interesDiferido: false,
+            cuotas: ""
+          });
+        } else {
+          setNotification({
+            show: true,
+            message: result.mensaje,
+            type: "error"
+          });
+        }
+      }
     } catch (error) {
       console.error('Error detallado:', error);
-      alert(`Error al procesar la transacción: ${error.message}`);
+      setNotification({
+        show: true,
+        message: `Error: ${error.message}`,
+        type: "error"
+      });
     }
   };  
+
+  // Agregar el componente de notificación
+  const Notification = ({ message, type }) => (
+    <div className={`notification ${type}`} style={{
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      padding: '15px 25px',
+      borderRadius: '5px',
+      backgroundColor: type === 'success' ? '#4CAF50' : '#f44336',
+      color: 'white',
+      boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+      zIndex: 1000,
+      animation: 'slideIn 0.5s ease-out'
+    }}>
+      {message}
+    </div>
+  );
 
   return (
     <main className="main-container">
       <h1 className="main-title">Realizar Transacción</h1>
+      {notification.show && (
+        <Notification 
+          message={notification.message} 
+          type={notification.type} 
+        />
+      )}
       <form onSubmit={handleFormSubmit} className="form">
         <div className="form-group">
           <label htmlFor="cardNumber">Número de la Tarjeta</label>

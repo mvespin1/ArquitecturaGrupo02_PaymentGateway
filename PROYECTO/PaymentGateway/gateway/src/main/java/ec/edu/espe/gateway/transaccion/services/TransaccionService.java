@@ -14,6 +14,7 @@ import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
 import ec.edu.espe.gateway.comercio.model.PosComercioPK;
 import ec.edu.espe.gateway.transaccion.client.ValidacionTransaccionClient;
+import ec.edu.espe.gateway.transaccion.model.RespuestaValidacionDTO;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -267,10 +268,10 @@ public class TransaccionService {
                     log.error("Error al serializar DTO a JSON: {}", e.getMessage());
                 }
                 
-                String respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
-                log.info("Respuesta del sistema externo: {}", respuesta);
+                RespuestaValidacionDTO respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
+                log.info("Respuesta del sistema externo: {}", respuesta.getMensaje());
                 
-                if (respuesta != null && !respuesta.isEmpty()) {
+                if (respuesta != null && respuesta.getMensaje() != null && !respuesta.getMensaje().isEmpty()) {
                     transaccionGuardada.setEstado(ESTADO_AUTORIZADO);
                     transaccionRepository.save(transaccionGuardada);
                     log.info("Transacción autorizada por sistema externo");
