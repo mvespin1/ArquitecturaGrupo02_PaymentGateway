@@ -60,7 +60,8 @@ public class TransaccionService {
     }
 
     @Transactional
-    public Transaccion crear(Transaccion transaccion, String datosSensibles) {
+    public Transaccion crear(Transaccion transaccion, String datosSensibles, 
+                           Boolean interesDiferido, Integer cuotas) {
         log.info("Iniciando creación de transacción. Datos recibidos: {}", transaccion);
 
         // Validar y transformar marca si es necesario
@@ -97,16 +98,15 @@ public class TransaccionService {
         // Intentar sincronizar con el gateway
         try {
             // Preparar y enviar al gateway
-            GatewayTransaccionDTO gatewayDTO = convertirAGatewayDTO(transaccionGuardada, datosSensibles);
+            GatewayTransaccionDTO gatewayDTO = convertirAGatewayDTO(transaccionGuardada, datosSensibles, 
+                                                                   interesDiferido, cuotas);
             log.info("Enviando al gateway DTO con datos de tarjeta incluidos");
 
             String respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
             log.info("Respuesta del gateway: {}", respuesta);
         } catch (Exception e) {
-            // Si falla la sincronización, solo logueamos el error pero no lo propagamos
             log.error("Error al sincronizar con el gateway. La transacción se procesará posteriormente: {}", 
                     e.getMessage());
-            // Aquí podrías implementar un mecanismo de reintentos o cola de sincronización
         }
 
         return transaccionGuardada;
@@ -127,15 +127,14 @@ public class TransaccionService {
         }
     }
 
-    private GatewayTransaccionDTO convertirAGatewayDTO(Transaccion transaccion, String datosSensibles) {
+    private GatewayTransaccionDTO convertirAGatewayDTO(Transaccion transaccion, String datosSensibles, 
+                                                      Boolean interesDiferido, Integer cuotas) {
         GatewayTransaccionDTO dto = new GatewayTransaccionDTO();
         
         try {
             // Obtener configuración local del POS
             log.info("Obteniendo configuración actual del POS");
             Configuracion config = configuracionService.obtenerConfiguracionActual();
-            log.info("Configuración obtenida: codigoComercio={}, codigoPOS={}, modelo={}",
-                    config.getCodigoComercio(), config.getPk().getCodigo(), config.getPk().getModelo());
             
             // Crear DTO de comercio con el código de la configuración
             ComercioDTO comercio = new ComercioDTO();
@@ -144,7 +143,6 @@ public class TransaccionService {
             // Obtener facturación usando el código del comercio
             log.info("Consultando facturación para el comercio: {}", comercio.getCodigo());
             FacturacionComercioDTO facturacion = comercioClient.obtenerFacturacionPorComercio(comercio.getCodigo());
-            log.info("Facturación obtenida: {}", facturacion);
             
             dto.setComercio(comercio);
             dto.setFacturacionComercio(facturacion);
@@ -166,8 +164,10 @@ public class TransaccionService {
 
             // Agregar datos sensibles de la tarjeta
             dto.setTarjeta(datosSensibles);
-            dto.setFechaEjecucionRecurrencia(null);
-            dto.setFechaFinRecurrencia(null);
+            
+            // Agregar datos de diferido
+            dto.setInteresDiferido(interesDiferido);
+            dto.setCuotas(cuotas);
 
             log.info("DTO preparado para enviar al gateway. Comercio código: {}, POS código: {}, modelo: {}",
                     comercio.getCodigo(), config.getPk().getCodigo(), config.getPk().getModelo());

@@ -1,8 +1,8 @@
 package ec.edu.espe.pos.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class GatewayTransaccionDTO {
     private ComercioDTO comercio;
@@ -17,15 +17,12 @@ public class GatewayTransaccionDTO {
     private String moneda;
     private String pais;
     private String tarjeta;
-    private LocalDate fechaEjecucionRecurrencia;
-    private LocalDate fechaFinRecurrencia;
     private String codigoPos;
     private String modeloPos;
+    private Boolean interesDiferido;
+    private Integer cuotas;
 
-    // Constructor
-    public GatewayTransaccionDTO() {
-    }
-
+    // Getters y Setters
     public ComercioDTO getComercio() {
         return comercio;
     }
@@ -122,22 +119,6 @@ public class GatewayTransaccionDTO {
         this.tarjeta = tarjeta;
     }
 
-    public LocalDate getFechaEjecucionRecurrencia() {
-        return fechaEjecucionRecurrencia;
-    }
-
-    public void setFechaEjecucionRecurrencia(LocalDate fechaEjecucionRecurrencia) {
-        this.fechaEjecucionRecurrencia = fechaEjecucionRecurrencia;
-    }
-
-    public LocalDate getFechaFinRecurrencia() {
-        return fechaFinRecurrencia;
-    }
-
-    public void setFechaFinRecurrencia(LocalDate fechaFinRecurrencia) {
-        this.fechaFinRecurrencia = fechaFinRecurrencia;
-    }
-
     public String getCodigoPos() {
         return codigoPos;
     }
@@ -154,25 +135,19 @@ public class GatewayTransaccionDTO {
         this.modeloPos = modeloPos;
     }
 
-    @Override
-    public String toString() {
-        return "GatewayTransaccionDTO{" +
-                "comercio=" + comercio +
-                ", facturacionComercio=" + facturacionComercio +
-                ", tipo='" + tipo + '\'' +
-                ", marca='" + marca + '\'' +
-                ", detalle='" + detalle + '\'' +
-                ", monto=" + monto +
-                ", codigoUnicoTransaccion='" + codigoUnicoTransaccion + '\'' +
-                ", fecha=" + fecha +
-                ", estado='" + estado + '\'' +
-                ", moneda='" + moneda + '\'' +
-                ", pais='" + pais + '\'' +
-                ", tarjeta='" + tarjeta + '\'' +
-                ", fechaEjecucionRecurrencia=" + fechaEjecucionRecurrencia +
-                ", fechaFinRecurrencia=" + fechaFinRecurrencia +
-                ", codigoPos='" + codigoPos + '\'' +
-                ", modeloPos='" + modeloPos + '\'' +
-                '}';
+    public Boolean getInteresDiferido() {
+        return interesDiferido;
+    }
+
+    public void setInteresDiferido(Boolean interesDiferido) {
+        this.interesDiferido = interesDiferido;
+    }
+
+    public Integer getCuotas() {
+        return cuotas;
+    }
+
+    public void setCuotas(Integer cuotas) {
+        this.cuotas = cuotas;
     }
 }

@@ -10,12 +10,14 @@ const MainPage = () => {
     cvv: "",
     cardName: "MSCD",
     transactionAmount: "",
+    interesDiferido: false,
+    cuotas: ""
   });
 
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
     if (name === "cvv" && value.length > 3) return;
 
@@ -27,10 +29,19 @@ const MainPage = () => {
       return;
     }
 
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    if (type === "radio") {
+      setFormData({
+        ...formData,
+        [name]: checked,
+        // Resetear cuotas cuando se desmarca el diferido
+        cuotas: !checked ? "" : formData.cuotas
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
 
     setErrors({
       ...errors,
@@ -55,6 +66,9 @@ const MainPage = () => {
     if (!formData.transactionAmount || isNaN(formData.transactionAmount)) {
       newErrors.transactionAmount = "El monto debe ser un número válido.";
     }
+    if (formData.interesDiferido && !formData.cuotas) {
+      newErrors.cuotas = "Debe seleccionar el número de cuotas para el pago diferido.";
+    }
   
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -62,12 +76,7 @@ const MainPage = () => {
     }
   
     try {
-      // 1. Obtener la clave activa
-      /*const claveResponse = await fetch("http://localhost:8082/api/seguridad-gateway/clave-activa");
-      if (!claveResponse.ok) throw new Error("Error al obtener la clave de encriptación");
-      const claveData = await claveResponse.json();*/
-
-      // 2. Preparar datos sensibles para encriptar
+      // Preparar datos sensibles para encriptar
       const datosSensibles = JSON.stringify({
         cardNumber: formData.cardNumber.replace(/\s/g, ""),
         expiryDate: formData.expiryDate,
@@ -76,40 +85,16 @@ const MainPage = () => {
         direccionTarjeta: "Av. Principal 123"
       });
 
-      console.log("Marca seleccionada:", formData.cardName); // Para debug
-
-      // 3. Encriptar datos sensibles
-      /*const encryptResponse = await fetch("http://localhost:8082/api/seguridad-gateway/encriptar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          informacion: datosSensibles,
-          clave: claveData.clave
-        })
-      });*/
-
-      /*if (!encryptResponse.ok) {
-        const errorText = await encryptResponse.text();
-        throw new Error(Error al encriptar los datos: ${errorText});
-      }*/
-      //const { datosEncriptados } = await encryptResponse.json();
-
-      // Mapeo de marcas a códigos de 4 caracteres
-      const marcaMapping = {
-        "MasterCard": "MSCD",
-        "Visa": "VISA",
-        "American Express": "AMEX",
-        "Diners Club": "DINE"
-      };
-
-      // 4. Enviar transacción con datos encriptados
+      // Enviar transacción con datos encriptados y datos de diferido
       const transactionPayload = {
         monto: parseFloat(formData.transactionAmount),
         marca: formData.cardName,
-        datosTarjeta: datosSensibles
+        datosTarjeta: datosSensibles,
+        interesDiferido: formData.interesDiferido,
+        cuotas: formData.interesDiferido && formData.cuotas ? parseInt(formData.cuotas) : null
       };
 
-      console.log("Payload a enviar:", transactionPayload); // Para debug
+      console.log("Payload a enviar:", transactionPayload);
 
       const response = await fetch("http://localhost:8082/api/pagos/procesar", {
         method: "POST",
@@ -197,6 +182,40 @@ const MainPage = () => {
           />
           {errors.transactionAmount && <p className="error-message">{errors.transactionAmount}</p>}
         </div>
+
+        <div className="form-group">
+          <label>
+            <input
+              type="radio"
+              name="interesDiferido"
+              checked={formData.interesDiferido}
+              onChange={handleInputChange}
+              className="form-radio"
+            />
+            ¿Pago diferido?
+          </label>
+        </div>
+
+        {formData.interesDiferido && (
+          <div className="form-group">
+            <label htmlFor="cuotas">Número de Cuotas</label>
+            <select
+              id="cuotas"
+              name="cuotas"
+              value={formData.cuotas}
+              onChange={handleInputChange}
+              className="form-input"
+            >
+              <option value="">Seleccione el número de cuotas</option>
+              <option value="3">3 meses</option>
+              <option value="6">6 meses</option>
+              <option value="9">9 meses</option>
+              <option value="12">12 meses</option>
+            </select>
+            {errors.cuotas && <p className="error-message">{errors.cuotas}</p>}
+          </div>
+        )}
+
         <button type="submit" className="form-button">
           Realizar Transacción
         </button>

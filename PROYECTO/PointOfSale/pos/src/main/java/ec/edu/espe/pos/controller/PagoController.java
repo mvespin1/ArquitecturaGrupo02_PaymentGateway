@@ -31,10 +31,18 @@ public class PagoController {
             
             // Obtener datos sensibles encriptados
             String datosSensibles = payload.get("datosTarjeta").toString();
-            log.info("Datos sensibles recibidos (encriptados)");
+            
+            // Obtener datos de diferido
+            Boolean interesDiferido = payload.get("interesDiferido") != null ? 
+                                    (Boolean) payload.get("interesDiferido") : false;
+            Integer cuotas = interesDiferido && payload.get("cuotas") != null ? 
+                           Integer.valueOf(payload.get("cuotas").toString()) : null;
+            
+            log.info("Datos de diferido - Interés: {}, Cuotas: {}", interesDiferido, cuotas);
             
             // El resto de valores se establecen en el servicio
-            Transaccion transaccionProcesada = transaccionService.crear(transaccion, datosSensibles);
+            Transaccion transaccionProcesada = transaccionService.crear(transaccion, datosSensibles, 
+                                                                       interesDiferido, cuotas);
             log.info("Transacción procesada exitosamente: {}", transaccionProcesada);
             
             return ResponseEntity.ok("Transacción procesada exitosamente con ID: " + 

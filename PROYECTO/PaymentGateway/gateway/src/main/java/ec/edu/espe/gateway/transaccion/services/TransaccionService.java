@@ -312,10 +312,12 @@ public class TransaccionService {
         dto.setPais("EC"); // Valor quemado
         dto.setNumeroCuenta("00000003"); // Valor quemado
         dto.setCodigoUnicoTransaccion(transaccion.getCodigoUnicoTransaccion());
-        dto.setGtwComision("100.55"); // Valor quemado
+        dto.setGtwComision("10.50"); // Valor quemado
         dto.setGtwCuenta("00000002"); // Valor quemado
-        dto.setCuotas(3); // Valor quemado
-        dto.setInteresDiferido(true); // Valor quemado
+
+        // Configurar datos de diferido
+        dto.setInteresDiferido(transaccion.getInteresDiferido());
+        dto.setCuotas(transaccion.getCuotas());
 
         return dto;
     }

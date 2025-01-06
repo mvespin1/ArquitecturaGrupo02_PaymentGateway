@@ -63,6 +63,10 @@ public class Transaccion implements Serializable {
     private LocalDate fechaFinRecurrencia;
     @Transient
     private String codigoInterno;
+    @Transient
+    private Boolean interesDiferido;
+    @Transient
+    private Integer cuotas;
 
     // Empty Constructor
 
@@ -207,6 +211,22 @@ public class Transaccion implements Serializable {
 
     public void setCodigoInterno(String codigoInterno) {
         this.codigoInterno = codigoInterno;
+    }
+
+    public Boolean getInteresDiferido() {
+        return interesDiferido;
+    }
+
+    public void setInteresDiferido(Boolean interesDiferido) {
+        this.interesDiferido = interesDiferido;
+    }
+
+    public Integer getCuotas() {
+        return cuotas;
+    }
+
+    public void setCuotas(Integer cuotas) {
+        this.cuotas = cuotas;
     }
 
     // HashCode and Equals
