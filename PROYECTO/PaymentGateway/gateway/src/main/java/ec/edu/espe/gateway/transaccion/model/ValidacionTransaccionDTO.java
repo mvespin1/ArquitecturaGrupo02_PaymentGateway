@@ -13,11 +13,11 @@ public class ValidacionTransaccionDTO {
     private String cvv;
     private String pais;
     private String numeroCuenta;
-    private String gatewayCuenta;
     private String codigoUnicoTransaccion;
-    private Double gtwComision;
-    private Boolean interesDiferido;
+    private String gtwComision;
+    private String gtwCuenta;
     private Integer cuotas;
+    private Boolean interesDiferido;
 
     public static class Banco {
         private Integer codigo;
@@ -31,7 +31,7 @@ public class ValidacionTransaccionDTO {
         }
     }
 
-    // Getters y Setters
+    // Getters and Setters
     public Banco getBanco() {
         return banco;
     }
@@ -128,14 +128,6 @@ public class ValidacionTransaccionDTO {
         this.numeroCuenta = numeroCuenta;
     }
 
-    public String getGatewayCuenta() {
-        return gatewayCuenta;
-    }
-
-    public void setGatewayCuenta(String gatewayCuenta) {
-        this.gatewayCuenta = gatewayCuenta;
-    }
-
     public String getCodigoUnicoTransaccion() {
         return codigoUnicoTransaccion;
     }
@@ -144,20 +136,20 @@ public class ValidacionTransaccionDTO {
         this.codigoUnicoTransaccion = codigoUnicoTransaccion;
     }
 
-    public Double getGtwComision() {
+    public String getGtwComision() {
         return gtwComision;
     }
 
-    public void setGtwComision(Double gtwComision) {
+    public void setGtwComision(String gtwComision) {
         this.gtwComision = gtwComision;
     }
 
-    public Boolean getInteresDiferido() {
-        return interesDiferido;
+    public String getGtwCuenta() {
+        return gtwCuenta;
     }
 
-    public void setInteresDiferido(Boolean interesDiferido) {
-        this.interesDiferido = interesDiferido;
+    public void setGtwCuenta(String gtwCuenta) {
+        this.gtwCuenta = gtwCuenta;
     }
 
     public Integer getCuotas() {
@@ -166,5 +158,13 @@ public class ValidacionTransaccionDTO {
 
     public void setCuotas(Integer cuotas) {
         this.cuotas = cuotas;
+    }
+
+    public Boolean getInteresDiferido() {
+        return interesDiferido;
+    }
+
+    public void setInteresDiferido(Boolean interesDiferido) {
+        this.interesDiferido = interesDiferido;
     }
 } 

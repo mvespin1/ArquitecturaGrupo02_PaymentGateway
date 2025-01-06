@@ -10,8 +10,6 @@ const MainPage = () => {
     cvv: "",
     cardName: "MSCD",
     transactionAmount: "",
-    interesDiferido: false,
-    cuotas: null
   });
 
   const [errors, setErrors] = useState({});
@@ -75,9 +73,7 @@ const MainPage = () => {
         expiryDate: formData.expiryDate,
         cvv: formData.cvv,
         nombreTarjeta: "JUAN PEREZ",
-        direccionTarjeta: "Av. Principal 123",
-        interesDiferido: formData.interesDiferido,
-        cuotas: formData.interesDiferido ? parseInt(formData.cuotas) : null
+        direccionTarjeta: "Av. Principal 123"
       });
 
       console.log("Marca seleccionada:", formData.cardName); // Para debug
@@ -110,9 +106,7 @@ const MainPage = () => {
       const transactionPayload = {
         monto: parseFloat(formData.transactionAmount),
         marca: formData.cardName,
-        datosTarjeta: datosSensibles,
-        interesDiferido: formData.interesDiferido,
-        cuotas: formData.interesDiferido ? formData.cuotas : null
+        datosTarjeta: datosSensibles
       };
 
       console.log("Payload a enviar:", transactionPayload); // Para debug
@@ -203,56 +197,6 @@ const MainPage = () => {
           />
           {errors.transactionAmount && <p className="error-message">{errors.transactionAmount}</p>}
         </div>
-        <div className="form-group">
-          <label>Pago Diferido</label>
-          <div style={{ display: "flex", gap: "20px", marginTop: "5px" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-              <input
-                type="radio"
-                name="interesDiferido"
-                checked={formData.interesDiferido === true}
-                onChange={() => setFormData({
-                  ...formData,
-                  interesDiferido: true
-                })}
-              />
-              Sí
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-              <input
-                type="radio"
-                name="interesDiferido"
-                checked={formData.interesDiferido === false}
-                onChange={() => setFormData({
-                  ...formData,
-                  interesDiferido: false,
-                  cuotas: null
-                })}
-              />
-              No
-            </label>
-          </div>
-        </div>
-
-        {formData.interesDiferido && (
-          <div className="form-group">
-            <label htmlFor="cuotas">Número de Cuotas</label>
-            <select
-              id="cuotas"
-              name="cuotas"
-              value={formData.cuotas || ""}
-              onChange={handleInputChange}
-              className="form-input"
-            >
-              <option value="">Seleccione el número de cuotas</option>
-              <option value="3">3 meses</option>
-              <option value="6">6 meses</option>
-              <option value="9">9 meses</option>
-              <option value="12">12 meses</option>
-            </select>
-          </div>
-        )}
-
         <button type="submit" className="form-button">
           Realizar Transacción
         </button>

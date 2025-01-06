@@ -252,13 +252,13 @@ public class TransaccionService {
             // Guardar transacción inicialmente como ENVIADA
             transaccion.setEstado(ESTADO_ENVIADO);
             Transaccion transaccionGuardada = transaccionRepository.save(transaccion);
-            log.info("Transacción guardada exitosamente en el gateway con ID: {}",
+            log.info("Transacción guardada exitosamente en el gateway con ID: {}", 
                     transaccionGuardada.getCodigo());
 
             // Intentar validación con sistema externo
             try {
                 ValidacionTransaccionDTO validacionDTO = prepararValidacionDTO(transaccionGuardada);
-
+                
                 // Loguear el JSON que se enviará
                 try {
                     String jsonRequest = objectMapper.writeValueAsString(validacionDTO);
@@ -266,10 +266,10 @@ public class TransaccionService {
                 } catch (Exception e) {
                     log.error("Error al serializar DTO a JSON: {}", e.getMessage());
                 }
-
+                
                 String respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
                 log.info("Respuesta del sistema externo: {}", respuesta);
-
+                
                 if (respuesta != null && !respuesta.isEmpty()) {
                     transaccionGuardada.setEstado(ESTADO_AUTORIZADO);
                     transaccionRepository.save(transaccionGuardada);
@@ -309,18 +309,13 @@ public class TransaccionService {
         dto.setNumeroTarjeta(datosTarjeta.getCardNumber());
         dto.setDireccionTarjeta(datosTarjeta.getDireccionTarjeta());
         dto.setCvv(datosTarjeta.getCvv());
-        dto.setPais("EC");
-
-        // Valores quemados
-        dto.setNumeroCuenta("00000003");
-        dto.setGtwComision(100.50);
-        dto.setGatewayCuenta("00000002");
-
-        // Configurar datos de pago diferido
-        dto.setInteresDiferido(datosTarjeta.getInteresDiferido());
-        dto.setCuotas(datosTarjeta.getCuotas());
-
+        dto.setPais("EC"); // Valor quemado
+        dto.setNumeroCuenta("00000003"); // Valor quemado
         dto.setCodigoUnicoTransaccion(transaccion.getCodigoUnicoTransaccion());
+        dto.setGtwComision("100.55"); // Valor quemado
+        dto.setGtwCuenta("00000002"); // Valor quemado
+        dto.setCuotas(3); // Valor quemado
+        dto.setInteresDiferido(true); // Valor quemado
 
         return dto;
     }
@@ -339,36 +334,12 @@ public class TransaccionService {
         private String cvv;
         private String nombreTarjeta;
         private String direccionTarjeta;
-        private Boolean interesDiferido;
-        private Integer cuotas;
 
         // Getters
-        public String getCardNumber() {
-            return cardNumber;
-        }
-
-        public String getExpiryDate() {
-            return expiryDate;
-        }
-
-        public String getCvv() {
-            return cvv;
-        }
-
-        public String getNombreTarjeta() {
-            return nombreTarjeta;
-        }
-
-        public String getDireccionTarjeta() {
-            return direccionTarjeta;
-        }
-
-        public Boolean getInteresDiferido() {
-            return interesDiferido;
-        }
-
-        public Integer getCuotas() {
-            return cuotas;
-        }
+        public String getCardNumber() { return cardNumber; }
+        public String getExpiryDate() { return expiryDate; }
+        public String getCvv() { return cvv; }
+        public String getNombreTarjeta() { return nombreTarjeta; }
+        public String getDireccionTarjeta() { return direccionTarjeta; }
     }
 }
