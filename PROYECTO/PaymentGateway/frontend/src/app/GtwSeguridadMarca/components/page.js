@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // Importa el hook para navegación
+import { useRouter } from "next/navigation"; 
 import { FaEye } from "react-icons/fa";
-import "../../Css/general.css"; // Importa el archivo de estilos generales
+import "../../Css/general.css";
 
 const CrudTable = () => {
   const [data, setData] = useState([
@@ -14,10 +14,10 @@ const CrudTable = () => {
     },
   ]);
 
-  const router = useRouter(); // Inicializa el router para redirigir
+  const router = useRouter(); 
 
   const handleView = async (item) => {
-    // Crear el objeto transactionPayload con los datos de la fila seleccionada
+    
     const transactionPayload = {
       marca: item.marca,
       clave: item.clave,
