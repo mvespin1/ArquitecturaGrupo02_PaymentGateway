@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // Importa el hook para navegación
 import { FaEdit, FaEye } from "react-icons/fa";
+import "../../Css/general.css"; // Importa el archivo de estilos generales
 
 const CrudTable = () => {
   const [data, setData] = useState([
@@ -47,7 +48,6 @@ const CrudTable = () => {
 
     console.log("Payload para actualización:", transactionPayload);
 
-    // Simular envío de datos (puedes usar fetch para un POST real)
     try {
       const response = await fetch("http://localhost:8082/api/pagos/procesar", {
         method: "POST",
@@ -91,7 +91,6 @@ const CrudTable = () => {
 
     console.log("Payload para visualización:", transactionPayload);
 
-    // Simular envío de datos
     try {
       const response = await fetch("http://localhost:8082/api/pagos/procesar", {
         method: "POST",
@@ -119,11 +118,11 @@ const CrudTable = () => {
   };
 
   return (
-    <main>
-      <h1 style={{ textAlign: "center", color: "#94a3b8" }}>Gestión de Facturación</h1>
+    <main className="main-container">
+      <h1 className="main-title">Gestión de Facturación</h1>
       <div>
-        <h2 style={{ marginBottom: "1rem", color: "#e2e8f0" }}>Facturación por Comercio</h2>
-        <table>
+        <h2 className="section-title">Facturación por Comercio</h2>
+        <table className="data-table">
           <thead>
             <tr>
               <th>Facturación Comercio</th>
@@ -137,47 +136,21 @@ const CrudTable = () => {
             </tr>
           </thead>
           <tbody>
-            {data.map((item) => (
-              <tr key={item.id}>
+            {data.map((item, index) => (
+              <tr key={item.id || index}className={index % 2 === 0 ? "row-even" : "row-odd"}>
                 <td>{item.facturacionComercio}</td>
                 <td>{item.comercio}</td>
                 <td>{item.fechaInicio}</td>
                 <td>{item.fechaFin}</td>
-                <td>{item.comision}</td>
+                <td>{item.codComision}</td>
                 <td>{item.valor}</td>
                 <td>{item.estado}</td>
                 <td>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <button
-                      style={{
-                        backgroundColor: "#3b82f6",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => handleUpdate(item)} // Redirige al formulario de actualización
-                    >
+                  <div className="action-buttons">
+                    <button className="edit-button" onClick={() => handleUpdate(item)}>
                       <FaEdit />
                     </button>
-                    <button
-                      style={{
-                        backgroundColor: "#38bdf8",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => handleView(item)} // Redirige a la página de visualización
-                    >
+                    <button className="view-button" onClick={() => handleView(item)}>
                       <FaEye />
                     </button>
                   </div>
@@ -186,27 +159,14 @@ const CrudTable = () => {
             ))}
           </tbody>
         </table>
-        <div className="pagination" style={{ marginTop: "1rem" }}>
+        <div className="pagination">
           <button>&lt;</button>
           <button>1</button>
           <button className="active">2</button>
           <button>3</button>
           <button>&gt;</button>
         </div>
-        <button
-          style={{
-            marginTop: "2rem",
-            backgroundColor: "#3b82f6",
-            color: "#ffffff",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            width: "100%",
-            textAlign: "center",
-          }}
-          onClick={handleBackToHome}
-        >
+        <button className="back-button" onClick={handleBackToHome}>
           Volver al Inicio
         </button>
       </div>
