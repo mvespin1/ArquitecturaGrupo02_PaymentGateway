@@ -46,19 +46,32 @@ public class PagoController {
                                                                        interesDiferido, cuotas);
             log.info("Transacción procesada: {}", transaccionProcesada);
             
-            Map<String, String> response = new HashMap<>();
-            response.put("mensaje", transaccionProcesada.getDetalle());
+            Map<String, Object> response = new HashMap<>();
+            // Determinar el mensaje basado en el estado
+            if (TransaccionService.ESTADO_AUTORIZADO.equals(transaccionProcesada.getEstado())) {
+                response.put("mensaje", "Transacción autorizada");
+                response.put("estado", "success");
+            } else if (TransaccionService.ESTADO_RECHAZADO.equals(transaccionProcesada.getEstado())) {
+                response.put("mensaje", "Transacción rechazada");
+                response.put("estado", "error");
+            } else {
+                response.put("mensaje", "Transacción en proceso");
+                response.put("estado", "pending");
+            }
+            response.put("transaccion", transaccionProcesada);
             return ResponseEntity.ok(response);
             
         } catch (IllegalArgumentException e) {
             log.error("Error de validación: {}", e.getMessage());
-            Map<String, String> errorResponse = new HashMap<>();
+            Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("mensaje", e.getMessage());
+            errorResponse.put("estado", "error");
             return ResponseEntity.badRequest().body(errorResponse);
         } catch (Exception e) {
             log.error("Error inesperado al procesar pago: {}", e.getMessage(), e);
-            Map<String, String> errorResponse = new HashMap<>();
+            Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("mensaje", "Error al procesar el pago: " + e.getMessage());
+            errorResponse.put("estado", "error");
             return ResponseEntity.internalServerError().body(errorResponse);
         }
     }

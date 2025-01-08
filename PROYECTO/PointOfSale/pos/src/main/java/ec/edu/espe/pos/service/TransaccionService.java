@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -91,9 +92,10 @@ public class TransaccionService {
         validarCamposObligatorios(transaccion);
         log.info("Validación de campos completada exitosamente");
 
-        // Guardar localmente primero
+        // Guardar localmente primero con estado ENVIADO
         Transaccion transaccionGuardada = transaccionRepository.save(transaccion);
-        log.info("Transacción guardada localmente con ID: {}", transaccionGuardada.getCodigo());
+        log.info("Transacción guardada localmente con ID: {} y estado: {}", 
+                transaccionGuardada.getCodigo(), transaccionGuardada.getEstado());
 
         // Intentar sincronizar con el gateway
         try {
@@ -102,17 +104,35 @@ public class TransaccionService {
                                                                    interesDiferido, cuotas);
             log.info("Enviando al gateway DTO con datos de tarjeta incluidos");
 
-            String respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
-            log.info("Respuesta del gateway: {}", respuesta);
+            ResponseEntity<String> respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
+            log.info("Respuesta del gateway - Status: {}, Body: {}", 
+                    respuesta.getStatusCode(), respuesta.getBody());
 
-            // Guardar la respuesta del gateway en el detalle de la transacción
-            transaccionGuardada.setDetalle(respuesta);
+            // Actualizar estado basado en el código HTTP y el mensaje
+            if (respuesta.getStatusCode().is2xxSuccessful() && 
+                respuesta.getBody() != null && 
+                respuesta.getBody().contains("aceptada")) {
+                transaccionGuardada.setEstado(ESTADO_AUTORIZADO);
+                log.info("Transacción autorizada");
+            } else if (respuesta.getStatusCode().value() == 405 || 
+                     (respuesta.getBody() != null && respuesta.getBody().contains("rechazada"))) {
+                transaccionGuardada.setEstado(ESTADO_RECHAZADO);
+                log.info("Transacción rechazada");
+            }
+            
+            // Actualizar la transacción con el nuevo estado
             transaccionGuardada = transaccionRepository.save(transaccionGuardada);
+            log.info("Estado de transacción actualizado a: {}", transaccionGuardada.getEstado());
 
             return transaccionGuardada;
+
         } catch (Exception e) {
             log.error("Error al sincronizar con el gateway: {}", e.getMessage());
-            throw new RuntimeException("Error al procesar la transacción: " + e.getMessage());
+            // En caso de error, marcar como rechazada
+            transaccionGuardada.setEstado(ESTADO_RECHAZADO);
+            transaccionGuardada = transaccionRepository.save(transaccionGuardada);
+            log.info("Transacción marcada como rechazada debido a error de comunicación");
+            return transaccionGuardada;
         }
     }
 

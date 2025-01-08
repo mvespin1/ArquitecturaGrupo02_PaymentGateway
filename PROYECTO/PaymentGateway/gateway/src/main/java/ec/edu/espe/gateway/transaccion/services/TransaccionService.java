@@ -246,15 +246,15 @@ public class TransaccionService {
                     .orElseThrow(() -> new EntityNotFoundException("Facturación no encontrada"));
             log.info("Facturación encontrada: {}", facturacion);
 
-            // Establecer relaciones
+            // Establecer relaciones y estado inicial
             transaccion.setComercio(comercio);
             transaccion.setFacturacionComercio(facturacion);
-
-            // Guardar transacción inicialmente como ENVIADA
             transaccion.setEstado(ESTADO_ENVIADO);
+
+            // Guardar transacción inmediatamente con estado ENVIADO
             Transaccion transaccionGuardada = transaccionRepository.save(transaccion);
-            log.info("Transacción guardada exitosamente en el gateway con ID: {}", 
-                    transaccionGuardada.getCodigo());
+            log.info("Transacción guardada inicialmente en el gateway con ID: {} y estado: {}", 
+                    transaccionGuardada.getCodigo(), transaccionGuardada.getEstado());
 
             // Intentar validación con sistema externo
             try {
@@ -268,24 +268,38 @@ public class TransaccionService {
                     log.error("Error al serializar DTO a JSON: {}", e.getMessage());
                 }
                 
-                RespuestaValidacionDTO respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
-                log.info("Respuesta del sistema externo: {}", respuesta.getMensaje());
-                
-                if (respuesta != null && respuesta.getMensaje() != null) {
-                    // Actualizar estado basado en la respuesta
-                    if (respuesta.getMensaje().toLowerCase().contains("aceptada")) {
-                        transaccionGuardada.setEstado(ESTADO_AUTORIZADO);
-                        log.info("Transacción autorizada por sistema externo");
-                    } else if (respuesta.getMensaje().toLowerCase().contains("rechazada")) {
-                        transaccionGuardada.setEstado(ESTADO_RECHAZADO);
-                        log.info("Transacción rechazada por sistema externo");
+                try {
+                    RespuestaValidacionDTO respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
+                    log.info("Respuesta del sistema externo: {}", respuesta);
+                    
+                    // Actualizar estado basado en el código HTTP
+                    if (respuesta != null) {
+                        if (respuesta.getCodigoRespuesta() == 200) {
+                            transaccionGuardada.setEstado(ESTADO_AUTORIZADO);
+                            log.info("Transacción autorizada por sistema externo");
+                        } else if (respuesta.getCodigoRespuesta() == 405) {
+                            transaccionGuardada.setEstado(ESTADO_RECHAZADO);
+                            log.info("Transacción rechazada por sistema externo");
+                        }
+                        // Guardar la actualización del estado
+                        transaccionGuardada = transaccionRepository.save(transaccionGuardada);
+                        log.info("Estado de transacción actualizado en gateway a: {}", 
+                                transaccionGuardada.getEstado());
                     }
-                    transaccionRepository.save(transaccionGuardada);
+                } catch (feign.FeignException.MethodNotAllowed e) {
+                    // Manejar específicamente el error 405
+                    log.info("Transacción rechazada por el sistema externo con código 405");
+                    transaccionGuardada.setEstado(ESTADO_RECHAZADO);
+                    transaccionGuardada = transaccionRepository.save(transaccionGuardada);
+                } catch (Exception e) {
+                    log.error("Error en validación externa: {}. Marcando transacción como rechazada", e.getMessage());
+                    transaccionGuardada.setEstado(ESTADO_RECHAZADO);
+                    transaccionGuardada = transaccionRepository.save(transaccionGuardada);
                 }
             } catch (Exception e) {
-                log.error("Error en validación externa: {}. Marcando transacción como rechazada", e.getMessage());
+                log.error("Error al preparar validación: {}", e.getMessage());
                 transaccionGuardada.setEstado(ESTADO_RECHAZADO);
-                transaccionRepository.save(transaccionGuardada);
+                transaccionGuardada = transaccionRepository.save(transaccionGuardada);
             }
 
         } catch (EntityNotFoundException e) {

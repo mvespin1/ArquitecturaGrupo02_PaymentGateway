@@ -117,13 +117,16 @@ public class TransaccionController {
             Transaccion transaccionActualizada = transaccionRepository.findById(transaccion.getCodigo())
                     .orElseThrow(() -> new EntityNotFoundException("Transacción no encontrada"));
             
-            // Devolver el mensaje según el estado
+            // Devolver el mensaje y código HTTP según el estado
             if (ESTADO_AUTORIZADO.equals(transaccionActualizada.getEstado())) {
-                return ResponseEntity.ok("Transacción aceptada");
+                return ResponseEntity.ok()
+                        .body("Transacción aceptada");
             } else if (ESTADO_RECHAZADO.equals(transaccionActualizada.getEstado())) {
-                return ResponseEntity.ok("Transacción rechazada");
+                return ResponseEntity.status(405)
+                        .body("Transacción rechazada");
             } else {
-                return ResponseEntity.ok("Transacción en proceso de validación");
+                return ResponseEntity.ok()
+                        .body("Transacción en proceso de validación");
             }
             
         } catch (EntityNotFoundException e) {
@@ -135,9 +138,10 @@ public class TransaccionController {
             return ResponseEntity.badRequest().body(e.getMessage());
             
         } catch (Exception e) {
-            log.error("Error inesperado al sincronizar: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError()
-                    .body("Error al sincronizar la transacción: " + e.getMessage());
+            log.error("Error inesperado al sincronizar: {}", e.getMessage());
+            // Si hay un error, asumimos que la transacción fue rechazada
+            return ResponseEntity.status(405)
+                    .body("Transacción rechazada");
         }
     }
 }
