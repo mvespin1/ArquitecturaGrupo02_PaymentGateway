@@ -111,6 +111,7 @@ const MainPage = () => {
           message: result.mensaje || "Error al procesar los datos en el backend",
           type: "error"
         });
+        resetForm();
         return;
       }
 
@@ -123,29 +124,18 @@ const MainPage = () => {
           show: true,
           message: result.mensaje,
           type: isSuccess ? "success" : isRejected ? "error" : "warning"
-        });
-        
-        // Limpiar el formulario solo si la transacción fue exitosa
-        if (isSuccess) {
-          setFormData({
-            cardNumber: "",
-            expiryDate: "",
-            cvv: "",
-            cardName: "MSCD",
-            transactionAmount: "",
-            interesDiferido: false,
-            cuotas: ""
-          });
-        }
+        });     
+        resetForm();       
+        } 
+      } catch (error) {
+       console.error('Error detallado:', error);
+       setNotification({
+         show: true,
+         message: `Error: ${error.message}`,
+         type: "error"
+       });
+       resetForm();
       }
-    } catch (error) {
-      console.error('Error detallado:', error);
-      setNotification({
-        show: true,
-        message: `Error: ${error.message}`,
-        type: "error"
-      });
-    }
   };  
 
   // Agregar el componente de notificación
@@ -165,6 +155,18 @@ const MainPage = () => {
       {message}
     </div>
   );
+
+  const resetForm = () => {
+    setFormData({
+      cardNumber: "",
+      expiryDate: "",
+      cvv: "",
+      cardName: "MSCD",
+      transactionAmount: "",
+      interesDiferido: false,
+      cuotas: ""
+    });
+  };
 
   return (
     <main className="main-container">
