@@ -15,6 +15,8 @@ import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
 import ec.edu.espe.gateway.comercio.model.PosComercioPK;
 import ec.edu.espe.gateway.transaccion.client.ValidacionTransaccionClient;
 import ec.edu.espe.gateway.transaccion.model.RespuestaValidacionDTO;
+import ec.edu.espe.gateway.transaccion.client.PosClient;
+import ec.edu.espe.gateway.transaccion.dto.ActualizacionEstadoDTO;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -41,6 +43,7 @@ public class TransaccionService {
     private final PosComercioRepository posComercioRepository;
     private final FacturacionComercioRepository facturacionComercioRepository;
     private final ValidacionTransaccionClient validacionTransaccionClient;
+    private final PosClient posClient;
     private final ObjectMapper objectMapper;
 
     public TransaccionService(TransaccionRepository transaccionRepository,
@@ -48,12 +51,14 @@ public class TransaccionService {
             PosComercioRepository posComercioRepository,
             FacturacionComercioRepository facturacionComercioRepository,
             ValidacionTransaccionClient validacionTransaccionClient,
+            PosClient posClient,
             ObjectMapper objectMapper) {
         this.transaccionRepository = transaccionRepository;
         this.comercioRepository = comercioRepository;
         this.posComercioRepository = posComercioRepository;
         this.facturacionComercioRepository = facturacionComercioRepository;
         this.validacionTransaccionClient = validacionTransaccionClient;
+        this.posClient = posClient;
         this.objectMapper = objectMapper;
     }
 
@@ -235,72 +240,19 @@ public class TransaccionService {
         log.info("Iniciando procesamiento de transacción POS: {}", transaccion);
 
         try {
-            // Validar y obtener comercio
-            Comercio comercio = comercioRepository.findById(transaccion.getComercio().getCodigo())
-                    .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
-            log.info("Comercio encontrado: {}", comercio);
+            // Fase 1: Validación y guardado inicial
+            Transaccion transaccionInicial = guardarTransaccionInicial(transaccion);
+            log.info("Transacción guardada inicialmente en gateway con ID: {} y estado: {}", 
+                    transaccionInicial.getCodigo(), transaccionInicial.getEstado());
 
-            // Validar y obtener facturación
-            FacturacionComercio facturacion = facturacionComercioRepository
-                    .findById(transaccion.getFacturacionComercio().getCodigo())
-                    .orElseThrow(() -> new EntityNotFoundException("Facturación no encontrada"));
-            log.info("Facturación encontrada: {}", facturacion);
-
-            // Establecer relaciones y estado inicial
-            transaccion.setComercio(comercio);
-            transaccion.setFacturacionComercio(facturacion);
-            transaccion.setEstado(ESTADO_ENVIADO);
-
-            // Guardar transacción inmediatamente con estado ENVIADO
-            Transaccion transaccionGuardada = transaccionRepository.save(transaccion);
-            log.info("Transacción guardada inicialmente en el gateway con ID: {} y estado: {}", 
-                    transaccionGuardada.getCodigo(), transaccionGuardada.getEstado());
-
-            // Intentar validación con sistema externo
-            try {
-                ValidacionTransaccionDTO validacionDTO = prepararValidacionDTO(transaccionGuardada);
-                
-                // Loguear el JSON que se enviará
+            // Fase 2: Procesamiento asíncrono con sistema externo
+            new Thread(() -> {
                 try {
-                    String jsonRequest = objectMapper.writeValueAsString(validacionDTO);
-                    log.info("JSON a enviar al sistema externo: {}", jsonRequest);
+                    procesarConSistemaExterno(transaccionInicial);
                 } catch (Exception e) {
-                    log.error("Error al serializar DTO a JSON: {}", e.getMessage());
+                    log.error("Error en procesamiento asíncrono: {}", e.getMessage());
                 }
-                
-                try {
-                    RespuestaValidacionDTO respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
-                    log.info("Respuesta del sistema externo: {}", respuesta);
-                    
-                    // Actualizar estado basado en el código HTTP
-                    if (respuesta != null) {
-                        if (respuesta.getCodigoRespuesta() == 200) {
-                            transaccionGuardada.setEstado(ESTADO_AUTORIZADO);
-                            log.info("Transacción autorizada por sistema externo");
-                        } else if (respuesta.getCodigoRespuesta() == 405) {
-                            transaccionGuardada.setEstado(ESTADO_RECHAZADO);
-                            log.info("Transacción rechazada por sistema externo");
-                        }
-                        // Guardar la actualización del estado
-                        transaccionGuardada = transaccionRepository.save(transaccionGuardada);
-                        log.info("Estado de transacción actualizado en gateway a: {}", 
-                                transaccionGuardada.getEstado());
-                    }
-                } catch (feign.FeignException.MethodNotAllowed e) {
-                    // Manejar específicamente el error 405
-                    log.info("Transacción rechazada por el sistema externo con código 405");
-                    transaccionGuardada.setEstado(ESTADO_RECHAZADO);
-                    transaccionGuardada = transaccionRepository.save(transaccionGuardada);
-                } catch (Exception e) {
-                    log.error("Error en validación externa: {}. Marcando transacción como rechazada", e.getMessage());
-                    transaccionGuardada.setEstado(ESTADO_RECHAZADO);
-                    transaccionGuardada = transaccionRepository.save(transaccionGuardada);
-                }
-            } catch (Exception e) {
-                log.error("Error al preparar validación: {}", e.getMessage());
-                transaccionGuardada.setEstado(ESTADO_RECHAZADO);
-                transaccionGuardada = transaccionRepository.save(transaccionGuardada);
-            }
+            }).start();
 
         } catch (EntityNotFoundException e) {
             log.error("Error al procesar transacción POS: {}", e.getMessage());
@@ -308,6 +260,101 @@ public class TransaccionService {
         } catch (Exception e) {
             log.error("Error inesperado al procesar transacción POS: {}", e.getMessage());
             throw new RuntimeException("Error al procesar transacción", e);
+        }
+    }
+
+    @Transactional
+    public Transaccion guardarTransaccionInicial(Transaccion transaccion) throws EntityNotFoundException {
+        // Validar y obtener comercio
+        Comercio comercio = comercioRepository.findById(transaccion.getComercio().getCodigo())
+                .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
+        log.info("Comercio encontrado: {}", comercio);
+
+        // Validar y obtener facturación
+        FacturacionComercio facturacion = facturacionComercioRepository
+                .findById(transaccion.getFacturacionComercio().getCodigo())
+                .orElseThrow(() -> new EntityNotFoundException("Facturación no encontrada"));
+        log.info("Facturación encontrada: {}", facturacion);
+
+        // Establecer relaciones y estado inicial
+        transaccion.setComercio(comercio);
+        transaccion.setFacturacionComercio(facturacion);
+        transaccion.setEstado(ESTADO_ENVIADO);
+
+        // Guardar transacción inmediatamente
+        return transaccionRepository.save(transaccion);
+    }
+
+    @Transactional
+    public void procesarConSistemaExterno(Transaccion transaccion) {
+        try {
+            ValidacionTransaccionDTO validacionDTO = prepararValidacionDTO(transaccion);
+            
+            // Loguear el JSON que se enviará
+            try {
+                String jsonRequest = objectMapper.writeValueAsString(validacionDTO);
+                log.info("JSON a enviar al sistema externo: {}", jsonRequest);
+            } catch (Exception e) {
+                log.error("Error al serializar DTO a JSON: {}", e.getMessage());
+            }
+            
+            try {
+                RespuestaValidacionDTO respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
+                log.info("Respuesta del sistema externo: {}", respuesta);
+                
+                // Actualizar estado basado en el código HTTP
+                if (respuesta != null) {
+                    String mensaje;
+                    if (respuesta.getCodigoRespuesta() == 200) {
+                        transaccion.setEstado(ESTADO_AUTORIZADO);
+                        mensaje = "Transacción autorizada";
+                        log.info("Transacción autorizada por sistema externo");
+                    } else if (respuesta.getCodigoRespuesta() == 405) {
+                        transaccion.setEstado(ESTADO_RECHAZADO);
+                        mensaje = "Transacción rechazada";
+                        log.info("Transacción rechazada por sistema externo");
+                    } else {
+                        mensaje = "Estado de transacción desconocido";
+                    }
+                    // Guardar la actualización del estado
+                    transaccion = transaccionRepository.save(transaccion);
+                    log.info("Estado de transacción actualizado en gateway a: {}", 
+                            transaccion.getEstado());
+
+                    // Notificar al POS
+                    notificarActualizacionAlPOS(transaccion, mensaje);
+                }
+            } catch (feign.FeignException.MethodNotAllowed e) {
+                // Manejar específicamente el error 405
+                log.info("Transacción rechazada por el sistema externo con código 405");
+                transaccion.setEstado(ESTADO_RECHAZADO);
+                transaccion = transaccionRepository.save(transaccion);
+                notificarActualizacionAlPOS(transaccion, "Transacción rechazada");
+            } catch (Exception e) {
+                log.error("Error en validación externa: {}. Marcando transacción como rechazada", e.getMessage());
+                transaccion.setEstado(ESTADO_RECHAZADO);
+                transaccion = transaccionRepository.save(transaccion);
+                notificarActualizacionAlPOS(transaccion, "Error en validación: " + e.getMessage());
+            }
+        } catch (Exception e) {
+            log.error("Error al preparar validación: {}", e.getMessage());
+            transaccion.setEstado(ESTADO_RECHAZADO);
+            transaccion = transaccionRepository.save(transaccion);
+            notificarActualizacionAlPOS(transaccion, "Error al preparar validación: " + e.getMessage());
+        }
+    }
+
+    private void notificarActualizacionAlPOS(Transaccion transaccion, String mensaje) {
+        try {
+            ActualizacionEstadoDTO actualizacion = new ActualizacionEstadoDTO();
+            actualizacion.setCodigoUnicoTransaccion(transaccion.getCodigoUnicoTransaccion());
+            actualizacion.setEstado(transaccion.getEstado());
+            actualizacion.setMensaje(mensaje);
+
+            posClient.actualizarEstadoTransaccion(actualizacion);
+            log.info("Notificación enviada al POS exitosamente");
+        } catch (Exception e) {
+            log.error("Error al notificar al POS: {}", e.getMessage());
         }
     }
 

@@ -41,25 +41,27 @@ public class PagoController {
             
             log.info("Datos de diferido - Interés: {}, Cuotas: {}", interesDiferido, cuotas);
             
-            // El resto de valores se establecen en el servicio
-            Transaccion transaccionProcesada = transaccionService.crear(transaccion, datosSensibles, 
-                                                                       interesDiferido, cuotas);
-            log.info("Transacción procesada: {}", transaccionProcesada);
-            
-            Map<String, Object> response = new HashMap<>();
-            // Determinar el mensaje basado en el estado
-            if (TransaccionService.ESTADO_AUTORIZADO.equals(transaccionProcesada.getEstado())) {
-                response.put("mensaje", "Transacción autorizada");
-                response.put("estado", "success");
-            } else if (TransaccionService.ESTADO_RECHAZADO.equals(transaccionProcesada.getEstado())) {
-                response.put("mensaje", "Transacción rechazada");
-                response.put("estado", "error");
-            } else {
-                response.put("mensaje", "Transacción en proceso");
-                response.put("estado", "pending");
-            }
-            response.put("transaccion", transaccionProcesada);
-            return ResponseEntity.ok(response);
+            // Primero guardamos la transacción inicial
+            Transaccion transaccionInicial = transaccionService.guardarTransaccionInicial(transaccion);
+            log.info("Transacción guardada inicialmente: {}", transaccionInicial);
+
+            // Devolvemos respuesta inmediata
+            Map<String, Object> responseInicial = new HashMap<>();
+            responseInicial.put("mensaje", "Transacción registrada, procesando pago...");
+            responseInicial.put("estado", "pending");
+            responseInicial.put("transaccion", transaccionInicial);
+
+            // Procesamos en segundo plano
+            new Thread(() -> {
+                try {
+                    transaccionService.procesarConGateway(transaccionInicial, datosSensibles, 
+                                                        interesDiferido, cuotas);
+                } catch (Exception e) {
+                    log.error("Error en procesamiento asíncrono: {}", e.getMessage());
+                }
+            }).start();
+
+            return ResponseEntity.ok(responseInicial);
             
         } catch (IllegalArgumentException e) {
             log.error("Error de validación: {}", e.getMessage());
