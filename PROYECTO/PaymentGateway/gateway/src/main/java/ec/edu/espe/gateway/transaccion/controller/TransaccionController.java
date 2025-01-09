@@ -119,13 +119,13 @@ public class TransaccionController {
             
             // Devolver el mensaje y código HTTP según el estado
             if (ESTADO_AUTORIZADO.equals(transaccionActualizada.getEstado())) {
-                return ResponseEntity.ok()
+                return ResponseEntity.status(201)
                         .body("Transacción aceptada");
             } else if (ESTADO_RECHAZADO.equals(transaccionActualizada.getEstado())) {
                 return ResponseEntity.status(400)
                         .body("Transacción rechazada");
             } else {
-                return ResponseEntity.ok()
+                return ResponseEntity.status(201)
                         .body("Transacción en proceso de validación");
             }
             
@@ -139,7 +139,6 @@ public class TransaccionController {
             
         } catch (Exception e) {
             log.error("Error inesperado al sincronizar: {}", e.getMessage());
-            // Si hay un error, asumimos que la transacción fue rechazada
             return ResponseEntity.status(400)
                     .body("Transacción rechazada");
         }

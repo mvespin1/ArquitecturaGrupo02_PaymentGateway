@@ -61,20 +61,20 @@ public class PagoController {
                 }
             }).start();
 
-            return ResponseEntity.ok(responseInicial);
+            return ResponseEntity.status(201).body(responseInicial);
             
         } catch (IllegalArgumentException e) {
             log.error("Error de validación: {}", e.getMessage());
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("mensaje", e.getMessage());
             errorResponse.put("estado", "error");
-            return ResponseEntity.badRequest().body(errorResponse);
+            return ResponseEntity.status(400).body(errorResponse);
         } catch (Exception e) {
             log.error("Error inesperado al procesar pago: {}", e.getMessage(), e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("mensaje", "Error al procesar el pago: " + e.getMessage());
             errorResponse.put("estado", "error");
-            return ResponseEntity.internalServerError().body(errorResponse);
+            return ResponseEntity.status(400).body(errorResponse);
         }
     }
 }

@@ -17,6 +17,9 @@ public class TransaccionController {
     private static final Logger log = LoggerFactory.getLogger(TransaccionController.class);
     private final TransaccionService transaccionService;
 
+    public static final String ESTADO_AUTORIZADO = "AUT";
+    public static final String ESTADO_RECHAZADO = "REC";
+
     public TransaccionController(TransaccionService transaccionService) {
         this.transaccionService = transaccionService;
     }
@@ -42,10 +45,18 @@ public class TransaccionController {
         log.info("Recibiendo actualización de estado desde Gateway: {}", actualizacion);
         try {
             transaccionService.actualizarEstadoTransaccion(actualizacion);
-            return ResponseEntity.ok().build();
+            
+            // Retornar código según el estado
+            if (ESTADO_AUTORIZADO.equals(actualizacion.getEstado())) {
+                return ResponseEntity.status(201).build();
+            } else if (ESTADO_RECHAZADO.equals(actualizacion.getEstado())) {
+                return ResponseEntity.status(400).build();
+            } else {
+                return ResponseEntity.status(201).build();
+            }
         } catch (Exception e) {
             log.error("Error al actualizar estado: {}", e.getMessage());
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.status(400).build();
         }
     }
 } 

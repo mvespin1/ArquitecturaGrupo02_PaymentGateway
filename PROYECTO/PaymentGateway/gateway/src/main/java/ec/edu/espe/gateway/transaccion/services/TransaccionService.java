@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import org.springframework.http.ResponseEntity;
 
 @Service
 @Transactional
@@ -299,32 +300,31 @@ public class TransaccionService {
             }
             
             try {
-                RespuestaValidacionDTO respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
-                log.info("Respuesta del sistema externo: {}", respuesta);
+                ResponseEntity<RespuestaValidacionDTO> respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
+                log.info("Respuesta del sistema externo - Status: {}, Body: {}", 
+                        respuesta.getStatusCode(), respuesta.getBody());
                 
+                String mensaje;
                 // Actualizar estado basado en el código HTTP
-                if (respuesta != null) {
-                    String mensaje;
-                    if (respuesta.getCodigoRespuesta() == 201) {
-                        transaccion.setEstado(ESTADO_AUTORIZADO);
-                        mensaje = "Transacción autorizada";
-                        log.info("Transacción autorizada por sistema externo");
-                    } else if (respuesta.getCodigoRespuesta() == 400) {
-                        transaccion.setEstado(ESTADO_RECHAZADO);
-                        mensaje = "Transacción rechazada";
-                        log.info("Transacción rechazada por sistema externo");
-                    } else {
-                        mensaje = "Estado de transacción desconocido";
-                    }
-                    // Guardar la actualización del estado
-                    transaccion = transaccionRepository.save(transaccion);
-                    log.info("Estado de transacción actualizado en gateway a: {}", 
-                            transaccion.getEstado());
-
-                    // Notificar al POS
-                    notificarActualizacionAlPOS(transaccion, mensaje);
+                if (respuesta.getStatusCode().value() == 201) {
+                    transaccion.setEstado(ESTADO_AUTORIZADO);
+                    mensaje = respuesta.getBody() != null ? respuesta.getBody().getMensaje() : "Transacción autorizada";
+                    log.info("Transacción autorizada por sistema externo");
+                } else {
+                    transaccion.setEstado(ESTADO_RECHAZADO);
+                    mensaje = respuesta.getBody() != null ? respuesta.getBody().getMensaje() : "Transacción rechazada";
+                    log.info("Transacción rechazada por sistema externo");
                 }
-            } catch (feign.FeignException.MethodNotAllowed e) {
+
+                // Guardar la actualización del estado
+                transaccion = transaccionRepository.save(transaccion);
+                log.info("Estado de transacción actualizado en gateway a: {}", 
+                        transaccion.getEstado());
+
+                // Notificar al POS
+                notificarActualizacionAlPOS(transaccion, mensaje);
+                
+            } catch (feign.FeignException.BadRequest e) {
                 // Manejar específicamente el error 400
                 log.info("Transacción rechazada por el sistema externo con código 400");
                 transaccion.setEstado(ESTADO_RECHAZADO);
