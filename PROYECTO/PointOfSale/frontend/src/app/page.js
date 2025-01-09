@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./index.css";
 
 const MainPage = () => {
@@ -16,6 +16,49 @@ const MainPage = () => {
 
   const [errors, setErrors] = useState({});
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
+  const [currentTransaction, setCurrentTransaction] = useState(null);
+  const [pollingInterval, setPollingInterval] = useState(null);
+
+  // Función para consultar el estado de la transacción
+  const checkTransactionStatus = async (transactionId) => {
+    try {
+      const response = await fetch(`http://localhost:8082/api/transacciones/${transactionId}/estado`);
+      const result = await response.json();
+      
+      if (result.estado === "AUT") {
+        setNotification({
+          show: true,
+          message: "Transacción autorizada",
+          type: "success"
+        });
+        clearInterval(pollingInterval);
+        setCurrentTransaction(null);
+      } else if (result.estado === "REC") {
+        setNotification({
+          show: true,
+          message: "Transacción rechazada",
+          type: "error"
+        });
+        clearInterval(pollingInterval);
+        setCurrentTransaction(null);
+      }
+    } catch (error) {
+      console.error("Error al consultar estado:", error);
+    }
+  };
+
+  // Efecto para iniciar el polling cuando hay una transacción en curso
+  useEffect(() => {
+    if (currentTransaction) {
+      const interval = setInterval(() => {
+        checkTransactionStatus(currentTransaction.codigoUnicoTransaccion);
+      }, 2000); // Consultar cada 2 segundos
+      
+      setPollingInterval(interval);
+      
+      return () => clearInterval(interval);
+    }
+  }, [currentTransaction]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -34,7 +77,6 @@ const MainPage = () => {
       setFormData({
         ...formData,
         [name]: checked,
-        // Resetear cuotas cuando se desmarca el diferido
         cuotas: !checked ? "" : formData.cuotas
       });
     } else {
@@ -115,28 +157,27 @@ const MainPage = () => {
         return;
       }
 
-      // Mostrar notificación según la respuesta
-      if (result && result.mensaje) {
-        const isSuccess = result.mensaje.toLowerCase().includes("exitosamente");
-        const isRejected = result.mensaje.toLowerCase().includes("rechazada");
-        
+      // Guardar la transacción actual y mostrar mensaje de procesamiento
+      if (result.transaccion) {
+        setCurrentTransaction(result.transaccion);
         setNotification({
           show: true,
-          message: result.mensaje,
-          type: isSuccess ? "success" : isRejected ? "error" : "warning"
-        });     
-        resetForm();       
-        } 
-      } catch (error) {
-       console.error('Error detallado:', error);
-       setNotification({
-         show: true,
-         message: `Error: ${error.message}`,
-         type: "error"
-       });
-       resetForm();
+          message: "Transacción registrada, procesando pago...",
+          type: "warning"
+        });
       }
-  };  
+      
+      resetForm();
+    } catch (error) {
+      console.error('Error detallado:', error);
+      setNotification({
+        show: true,
+        message: `Error: ${error.message}`,
+        type: "error"
+      });
+      resetForm();
+    }
+  };
 
   // Agregar el componente de notificación
   const Notification = ({ message, type }) => (

@@ -305,11 +305,11 @@ public class TransaccionService {
                 // Actualizar estado basado en el código HTTP
                 if (respuesta != null) {
                     String mensaje;
-                    if (respuesta.getCodigoRespuesta() == 200) {
+                    if (respuesta.getCodigoRespuesta() == 201) {
                         transaccion.setEstado(ESTADO_AUTORIZADO);
                         mensaje = "Transacción autorizada";
                         log.info("Transacción autorizada por sistema externo");
-                    } else if (respuesta.getCodigoRespuesta() == 405) {
+                    } else if (respuesta.getCodigoRespuesta() == 400) {
                         transaccion.setEstado(ESTADO_RECHAZADO);
                         mensaje = "Transacción rechazada";
                         log.info("Transacción rechazada por sistema externo");
@@ -325,8 +325,8 @@ public class TransaccionService {
                     notificarActualizacionAlPOS(transaccion, mensaje);
                 }
             } catch (feign.FeignException.MethodNotAllowed e) {
-                // Manejar específicamente el error 405
-                log.info("Transacción rechazada por el sistema externo con código 405");
+                // Manejar específicamente el error 400
+                log.info("Transacción rechazada por el sistema externo con código 400");
                 transaccion.setEstado(ESTADO_RECHAZADO);
                 transaccion = transaccionRepository.save(transaccion);
                 notificarActualizacionAlPOS(transaccion, "Transacción rechazada");

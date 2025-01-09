@@ -122,7 +122,7 @@ public class TransaccionController {
                 return ResponseEntity.ok()
                         .body("Transacción aceptada");
             } else if (ESTADO_RECHAZADO.equals(transaccionActualizada.getEstado())) {
-                return ResponseEntity.status(405)
+                return ResponseEntity.status(400)
                         .body("Transacción rechazada");
             } else {
                 return ResponseEntity.ok()
@@ -140,7 +140,7 @@ public class TransaccionController {
         } catch (Exception e) {
             log.error("Error inesperado al sincronizar: {}", e.getMessage());
             // Si hay un error, asumimos que la transacción fue rechazada
-            return ResponseEntity.status(405)
+            return ResponseEntity.status(400)
                     .body("Transacción rechazada");
         }
     }

@@ -6,6 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ec.edu.espe.pos.service.TransaccionService;
 import ec.edu.espe.pos.dto.ActualizacionEstadoDTO;
+import ec.edu.espe.pos.model.Transaccion;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/transacciones")
@@ -16,6 +19,22 @@ public class TransaccionController {
 
     public TransaccionController(TransaccionService transaccionService) {
         this.transaccionService = transaccionService;
+    }
+
+    @GetMapping("/{codigoUnicoTransaccion}/estado")
+    public ResponseEntity<Map<String, String>> consultarEstado(
+            @PathVariable String codigoUnicoTransaccion) {
+        log.info("Consultando estado de transacción: {}", codigoUnicoTransaccion);
+        try {
+            Transaccion transaccion = transaccionService.obtenerPorCodigoUnico(codigoUnicoTransaccion);
+            Map<String, String> response = new HashMap<>();
+            response.put("estado", transaccion.getEstado());
+            response.put("mensaje", transaccion.getDetalle());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error al consultar estado: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/actualizar-estado")

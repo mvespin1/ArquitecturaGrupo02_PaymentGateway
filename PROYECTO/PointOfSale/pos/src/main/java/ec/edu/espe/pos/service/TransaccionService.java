@@ -126,7 +126,7 @@ public class TransaccionService {
                 respuesta.getBody().contains("aceptada")) {
                 transaccion.setEstado(ESTADO_AUTORIZADO);
                 log.info("Transacción autorizada");
-            } else if (respuesta.getStatusCode().value() == 405 || 
+            } else if (respuesta.getStatusCode().value() == 400 || 
                      (respuesta.getBody() != null && respuesta.getBody().contains("rechazada"))) {
                 transaccion.setEstado(ESTADO_RECHAZADO);
                 log.info("Transacción rechazada");
@@ -230,5 +230,11 @@ public class TransaccionService {
         // Guardar cambios
         transaccionRepository.save(transaccion);
         log.info("Estado de transacción actualizado a: {}", actualizacion.getEstado());
+    }
+
+    @Transactional(readOnly = true)
+    public Transaccion obtenerPorCodigoUnico(String codigoUnicoTransaccion) {
+        return transaccionRepository.findByCodigoUnicoTransaccion(codigoUnicoTransaccion)
+                .orElseThrow(() -> new RuntimeException("Transacción no encontrada"));
     }
 }
