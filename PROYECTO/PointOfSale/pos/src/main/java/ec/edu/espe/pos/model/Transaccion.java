@@ -25,7 +25,7 @@ public class Transaccion implements Serializable {
     @Column(name = "MODALIDAD", length = 3, nullable = false)
     private String modalidad;
     @NotNull(message = "El detalle no puede ser nulo")
-    @Column(name = "DETALLE", length = 50, nullable = false)
+    @Column(name = "DETALLE", length = 255, nullable = false)
     private String detalle;
     @NotNull(message = "El monto no puede ser nulo")
     @Column(name = "MONTO", precision = 20, scale = 2, nullable = false)
