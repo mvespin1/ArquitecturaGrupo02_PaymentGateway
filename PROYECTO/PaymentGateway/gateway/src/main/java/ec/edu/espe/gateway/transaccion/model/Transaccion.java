@@ -34,7 +34,7 @@ public class Transaccion implements Serializable {
     @Column(name = "MARCA", length = 4, nullable = false)
     private String marca;
     @NotNull
-    @Column(name = "DETALLE", length = 50, nullable = false)
+    @Column(name = "DETALLE", length = 255, nullable = false)
     private String detalle;
     @NotNull
     @Column(name = "MONTO", precision = 20, scale = 2, nullable = false)
