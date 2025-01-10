@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.HashMap;
 
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "https://frontend-blond-theta.vercel.app")
 @RestController
 @RequestMapping("/api/pagos")
 public class PagoController {

@@ -22,7 +22,7 @@ const MainPage = () => {
   // Función para consultar el estado de la transacción
   const checkTransactionStatus = async (transactionId) => {
     try {
-      const response = await fetch(`http://localhost:8082/api/transacciones/${transactionId}/estado`);
+      const response = await fetch(`http://18.118.255.136/api/transacciones/${transactionId}/estado`);
       const result = await response.json();
       
       if (result.estado === "AUT") {
@@ -139,7 +139,7 @@ const MainPage = () => {
 
       console.log("Payload a enviar:", transactionPayload);
 
-      const response = await fetch("http://localhost:8082/api/pagos/procesar", {
+      const response = await fetch("http://18.118.255.136/api/pagos/procesar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transactionPayload),

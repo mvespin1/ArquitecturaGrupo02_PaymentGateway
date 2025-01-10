@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "https://frontend-blond-theta.vercel.app")
 @RestController
 @RequestMapping("/api/seguridad-gateway")
 public class SeguridadGatewayController {

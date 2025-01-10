@@ -12,7 +12,7 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/transacciones")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "https://frontend-blond-theta.vercel.app")
 public class TransaccionController {
     private static final Logger log = LoggerFactory.getLogger(TransaccionController.class);
     private final TransaccionService transaccionService;
