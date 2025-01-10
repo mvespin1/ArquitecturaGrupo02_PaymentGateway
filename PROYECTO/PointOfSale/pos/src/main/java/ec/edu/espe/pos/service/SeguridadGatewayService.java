@@ -26,7 +26,7 @@ public class SeguridadGatewayService {
     private static final Logger log = LoggerFactory.getLogger(SeguridadGatewayService.class);
 
     
-    private static final String SEGURIDAD_URL = "http://18.116.69.173/api/seguridad/clave-activa";
+    private static final String SEGURIDAD_URL = "http://18.190.153.55/api/seguridad/clave-activa";
 
     public SeguridadGatewayService(RestTemplate restTemplate, 
                                   SeguridadGatewayRepository seguridadGatewayRepository) {

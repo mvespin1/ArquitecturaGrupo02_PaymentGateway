@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "gateway-transaccion", url = "http://18.116.69.173")
+@FeignClient(name = "gateway-transaccion", url = "http://18.190.153.55")
 public interface GatewayTransaccionClient {
 
     @PostMapping("/api/transacciones/sincronizar")
