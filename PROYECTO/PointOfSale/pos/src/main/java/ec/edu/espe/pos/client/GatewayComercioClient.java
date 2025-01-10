@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import ec.edu.espe.pos.dto.ComercioDTO;
 import ec.edu.espe.pos.dto.FacturacionComercioDTO;
 
-@FeignClient(name = "gateway-comercio", url = "http://18.191.49.5")
+@FeignClient(name = "gateway-comercio", url = "http://18.116.69.173")
 public interface GatewayComercioClient {
     
     @GetMapping("/api/comercios/activo")
