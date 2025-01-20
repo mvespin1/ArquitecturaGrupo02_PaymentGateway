@@ -3,9 +3,8 @@
 import { useRouter } from "next/navigation";
 
 const MainPage = () => {
-  const router = useRouter(); // Inicializa el router para la navegación
+  const router = useRouter();
 
-  // Lista de tablas con sus rutas correspondientes
   const tables = [
     { id: 1, name: "GtwFacturacionComercio", route: "/GtwFacturacionComercio/components" },
     { id: 2, name: "GtwSeguridadMarca", route: "/GtwSeguridadMarca/components" },
@@ -19,74 +18,111 @@ const MainPage = () => {
   ];
 
   const handleNavigate = (route) => {
-    router.push(route); // Redirige a la ruta seleccionada
+    router.push(route);
   };
 
   return (
-    <main
+    <div
       style={{
-        maxWidth: "900px",
-        margin: "3rem auto",
-        padding: "2rem",
-        backgroundColor: "#ffffff",
-        borderRadius: "12px",
-        boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)",
-        fontFamily: "'Inter', sans-serif",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        backgroundColor: "#1e293b", // Fondo oscuro
+        padding: "1rem",
       }}
     >
-      <h1
-        style={{
-          textAlign: "center",
-          color: "#1e3a8a",
-          marginBottom: "2rem",
-          fontSize: "2rem",
-          fontWeight: "bold",
-        }}
-      >
-        Gestión de Tablas
-      </h1>
-      <p
-        style={{
-          textAlign: "center",
-          color: "#6b7280",
-          marginBottom: "2rem",
-          fontSize: "1.1rem",
-        }}
-      >
-        Selecciona una tabla para gestionar los datos correspondientes.
-      </p>
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "1.5rem",
+          width: "100%",
+          maxWidth: "900px",
+          backgroundColor: "#ffffff", // Fondo blanco para el panel
+          borderRadius: "16px",
+          boxShadow: "0 12px 24px rgba(0, 0, 0, 0.2)",
+          padding: "2rem",
+          fontFamily: "'Inter', sans-serif",
         }}
       >
-        {tables.map((table) => (
-          <button
-            key={table.id}
+        <header
+          style={{
+            borderBottom: "2px solid #e5e7eb",
+            marginBottom: "1.5rem",
+            paddingBottom: "1rem",
+          }}
+        >
+          <h1
             style={{
-              backgroundColor: "#3b82f6",
-              color: "#ffffff",
-              padding: "15px",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
+              fontSize: "2rem",
+              fontWeight: "700",
+              color: "#1e3a8a", // Azul original
               textAlign: "center",
-              fontSize: "1rem",
-              fontWeight: "500",
-              transition: "transform 0.2s, background-color 0.2s",
-              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+              marginBottom: "0.5rem",
             }}
-            onClick={() => handleNavigate(table.route)}
-            onMouseEnter={(e) => (e.target.style.backgroundColor = "#2563eb")}
-            onMouseLeave={(e) => (e.target.style.backgroundColor = "#3b82f6")}
           >
-            {table.name}
-          </button>
-        ))}
+            Gestión de Tablas
+          </h1>
+          <p
+            style={{
+              textAlign: "center",
+              color: "#6b7280", // Gris original
+              fontSize: "1.1rem",
+            }}
+          >
+            Selecciona una tabla para gestionar los datos correspondientes.
+          </p>
+        </header>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gap: "1rem",
+          }}
+        >
+          {tables.map((table) => (
+            <div
+              key={table.id}
+              style={{
+                backgroundColor: "#3b82f6", // Azul original para las tarjetas
+                borderRadius: "12px",
+                boxShadow: "0 6px 12px rgba(0, 0, 0, 0.3)",
+                padding: "1.5rem",
+                textAlign: "center",
+                transition: "transform 0.3s, box-shadow 0.3s",
+                cursor: "pointer",
+              }}
+              onClick={() => handleNavigate(table.route)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = "0 10px 20px rgba(0, 0, 0, 0.4)";
+                e.currentTarget.style.transform = "translateY(-4px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = "0 6px 12px rgba(0, 0, 0, 0.3)";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "1.2rem",
+                  fontWeight: "600",
+                  color: "#ffffff", // Blanco para texto
+                  marginBottom: "0.5rem",
+                }}
+              >
+                {table.name}
+              </h2>
+              <p
+                style={{
+                  fontSize: "0.95rem",
+                  color: "#dbeafe", // Azul claro para subtítulos
+                }}
+              >
+                Hacer clic para gestionar
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
-    </main>
+    </div>
   );
 };
 
