@@ -1,9 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import "./Css/general.css"; // Import the separated CSS file
 
 const MainPage = () => {
   const router = useRouter();
+  const [activeSection, setActiveSection] = useState("tables");
 
   const tables = [
     { id: 1, name: "GtwFacturacionComercio", route: "/GtwFacturacionComercio/components" },
@@ -21,107 +24,94 @@ const MainPage = () => {
     router.push(route);
   };
 
+  const renderTables = () => (
+    <div className="contentArea">
+      <header className="header">
+        <h1 className="headerTitle">Gestión de Tablas</h1>
+        <p className="headerDescription">Selecciona una tabla para gestionar los datos correspondientes.</p>
+      </header>
+      <div className="grid">
+        {tables.map((table) => (
+          <div
+            key={table.id}
+            className="card"
+            onClick={() => handleNavigate(table.route)}
+          >
+            <h2>{table.name}</h2>
+            <p>Hacer clic para gestionar</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderCreateCommerce = () => (
+    <div className="contentArea">
+      <h1 className="headerTitle">Crear Comercio</h1>
+      <form className="form">
+        <label className="label">
+          Nombre del Comercio:
+          <input type="text" name="commerceName" className="input" placeholder="Ejemplo: Tienda XYZ" />
+        </label>
+        <label className="label">
+          Sistema POS Conectado:
+          <select name="posSystem" className="select">
+            <option value="">Selecciona un sistema POS</option>
+            <option value="POS1">POS1</option>
+            <option value="POS2">POS2</option>
+            <option value="POS3">POS3</option>
+          </select>
+        </label>
+        <button type="submit" className="button">Crear Comercio</button>
+      </form>
+    </div>
+  );
+
+  const renderManageCommissions = () => (
+    <div className="contentArea">
+      <h1 className="headerTitle">Gestión de Comisiones</h1>
+      <div className="grid">
+        <div className="card">Crear Comisión</div>
+        <div className="card">Actualizar Comisión</div>
+        <div className="card">Eliminar Comisión</div>
+        <div className="card">Listar Comisiones</div>
+      </div>
+    </div>
+  );
+
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        backgroundColor: "#1e293b", // Fondo oscuro
-        padding: "1rem",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "900px",
-          backgroundColor: "#ffffff", // Fondo blanco para el panel
-          borderRadius: "16px",
-          boxShadow: "0 12px 24px rgba(0, 0, 0, 0.2)",
-          padding: "2rem",
-          fontFamily: "'Inter', sans-serif",
-        }}
-      >
-        <header
-          style={{
-            borderBottom: "2px solid #e5e7eb",
-            marginBottom: "1.5rem",
-            paddingBottom: "1rem",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: "2rem",
-              fontWeight: "700",
-              color: "#1e3a8a", // Azul original
-              textAlign: "center",
-              marginBottom: "0.5rem",
-            }}
+    <div className="container">
+      <aside className="sidebar">
+        <div className="logoContainer">
+          <img src="Images/logo.jpg" alt="Logo" className="logo" />
+        </div>
+        <h2 className="sidebarTitle">Menú Principal</h2>
+        <ul className="menu">
+          <li
+            className={activeSection === "tables" ? "menuItemActive" : "menuItem"}
+            onClick={() => setActiveSection("tables")}
           >
             Gestión de Tablas
-          </h1>
-          <p
-            style={{
-              textAlign: "center",
-              color: "#6b7280", // Gris original
-              fontSize: "1.1rem",
-            }}
+          </li>
+          <li
+            className={activeSection === "createCommerce" ? "menuItemActive" : "menuItem"}
+            onClick={() => setActiveSection("createCommerce")}
           >
-            Selecciona una tabla para gestionar los datos correspondientes.
-          </p>
-        </header>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "1rem",
-          }}
-        >
-          {tables.map((table) => (
-            <div
-              key={table.id}
-              style={{
-                backgroundColor: "#3b82f6", // Azul original para las tarjetas
-                borderRadius: "12px",
-                boxShadow: "0 6px 12px rgba(0, 0, 0, 0.3)",
-                padding: "1.5rem",
-                textAlign: "center",
-                transition: "transform 0.3s, box-shadow 0.3s",
-                cursor: "pointer",
-              }}
-              onClick={() => handleNavigate(table.route)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = "0 10px 20px rgba(0, 0, 0, 0.4)";
-                e.currentTarget.style.transform = "translateY(-4px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "0 6px 12px rgba(0, 0, 0, 0.3)";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: "1.2rem",
-                  fontWeight: "600",
-                  color: "#ffffff", // Blanco para texto
-                  marginBottom: "0.5rem",
-                }}
-              >
-                {table.name}
-              </h2>
-              <p
-                style={{
-                  fontSize: "0.95rem",
-                  color: "#dbeafe", // Azul claro para subtítulos
-                }}
-              >
-                Hacer clic para gestionar
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
+            Crear Comercio
+          </li>
+          <li
+            className={activeSection === "manageCommissions" ? "menuItemActive" : "menuItem"}
+            onClick={() => setActiveSection("manageCommissions")}
+          >
+            Gestión de Comisiones
+          </li>
+        </ul>
+      </aside>
+      <main className="main">
+        {activeSection === "tables" && renderTables()}
+        {activeSection === "createCommerce" && renderCreateCommerce()}
+        {activeSection === "manageCommissions" && renderManageCommissions()}
+      </main>
     </div>
   );
 };
