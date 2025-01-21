@@ -7,6 +7,8 @@ import "./Css/general.css"; // Import the separated CSS file
 const MainPage = () => {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("tables");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isTablesSubmenuOpen, setIsTablesSubmenuOpen] = useState(false);
 
   const tables = [
     { id: 1, name: "GtwFacturacionComercio", route: "/GtwFacturacionComercio/components" },
@@ -83,28 +85,50 @@ const MainPage = () => {
     <div className="container">
       <aside className="sidebar">
         <div className="logoContainer">
-          <img src="Images/logo.jpg" alt="Logo" className="logo" />
+          <img src="/Images/logo.jpg" alt="Logo" className="logo" />
         </div>
         <h2 className="sidebarTitle">Menú Principal</h2>
         <ul className="menu">
-          <li
-            className={activeSection === "tables" ? "menuItemActive" : "menuItem"}
-            onClick={() => setActiveSection("tables")}
-          >
-            Gestión de Tablas
+          <li className="menuItem" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            Menú Desplegable {isMenuOpen ? "▲" : "▼"}
           </li>
-          <li
-            className={activeSection === "createCommerce" ? "menuItemActive" : "menuItem"}
-            onClick={() => setActiveSection("createCommerce")}
-          >
-            Crear Comercio
-          </li>
-          <li
-            className={activeSection === "manageCommissions" ? "menuItemActive" : "menuItem"}
-            onClick={() => setActiveSection("manageCommissions")}
-          >
-            Gestión de Comisiones
-          </li>
+          {isMenuOpen && (
+            <ul className="submenu">
+              <li
+                className="menuItem"
+                onClick={() => {
+                  setIsTablesSubmenuOpen(!isTablesSubmenuOpen);
+                }}
+              >
+                Gestión de Tablas {isTablesSubmenuOpen ? "▲" : "▼"}
+              </li>
+              {isTablesSubmenuOpen && (
+                <ul className="submenu">
+                  {tables.map((table) => (
+                    <li
+                      key={table.id}
+                      className="menuItem"
+                      onClick={() => handleNavigate(table.route)}
+                    >
+                      {table.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <li 
+                className="menuItem"
+                onClick={() => setActiveSection("createCommerce")}
+              >
+                Crear Comercio
+              </li>
+              <li
+                className="menuItem"
+                onClick={() => setActiveSection("manageCommissions")}
+              >
+                Gestión de Comisiones
+              </li>
+            </ul>
+          )}
         </ul>
       </aside>
       <main className="main">

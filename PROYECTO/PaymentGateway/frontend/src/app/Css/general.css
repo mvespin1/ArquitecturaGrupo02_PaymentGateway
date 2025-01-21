@@ -298,3 +298,28 @@ body {
 .button:hover {
   background-color: #059669;
 }
+
+ul, ol, li {
+  list-style-type: none; /* Elimina puntos o números */
+  margin: 7;            /* Opcional: elimina márgenes predeterminados */
+  padding:0;           /* Opcional: elimina relleno predeterminado */
+}
+/* Contenedor del logo */
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white; /* Fondo blanco para resaltar el logo */
+  border-radius: 50%; /* Hace que el contenedor sea redondo */
+  overflow: hidden; /* Recorta la imagen si excede los bordes */
+  width: 100px; /* Tamaño del contenedor */
+  height: 100px; /* Tamaño del contenedor */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra para un efecto más limpio */
+  border: 2px solid #e0e0e0; /* Opcional: bordes suaves */
+}
+
+/* Imagen del logo */
+.logo {
+  width: 80%; /* Ajusta el tamaño de la imagen dentro del contenedor */
+  height: auto; /* Mantiene la proporción */
+}
