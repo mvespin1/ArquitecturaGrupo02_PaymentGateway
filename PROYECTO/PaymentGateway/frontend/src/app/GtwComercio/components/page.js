@@ -55,86 +55,94 @@ const CrudTable = () => {
       }
 
       const result = await response.json();
-      alert(`Respuesta de la API: ${JSON.stringify(result)}`);
-      router.push(`/GtwComercio/create/${item.id}`);
+      console.log("Respuesta de la API:", result);
+      router.push('/GtwComercio/create');
     } catch (error) {
       console.error("Error al enviar los datos:", error);
       alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
     }
   };
 
-  const handleBackToHome = () => {
-    router.push("/");
+  const handleRowClick = (item) => {
+    router.push(`/GtwComercio/read/${item.CodigoComercio}`);
   };
 
   return (
-    <main className="main-container">
-      <h1 className="main-title">Comercio</h1>
-      <div>
-        <h2 className="section-title">GtwComercio</h2>
-        <button className="create-button" onClick={handleCreate}>
-          <FaPlus /> Crear Comercio
+    <div className="main-container">
+      <div className="table-header">
+        <div className="header-content">
+          <h1 className="table-title">Comercios Registrados</h1>
+        </div>
+        <div className="table-summary">
+          <div className="summary-item">
+            <span className="summary-label">Total Comercios:</span>
+            <span className="summary-value">{data.length}</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">Comercios Activos:</span>
+            <span className="summary-value">
+              {data.filter(item => item.Estado === "Activo").length}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="table-responsive">
+        <button className="create-button" onClick={() => handleCreate(data[0])}>
+          <FaPlus className="button-icon" />
+          <span> Nuevo</span>
         </button>
-        <table className="data-table">
+        <table className="modern-table">
           <thead>
             <tr>
-              <th>Codigo Comercio</th>
-              <th>Codigo Interno</th>
-              <th>Ruc</th>
-              <th>Razon Social</th>
+              <th>Código</th>
+              <th>Código Interno</th>
+              <th>RUC</th>
+              <th>Razón Social</th>
               <th>Nombre Comercial</th>
-              <th>Fecha Creacion</th>
-              <th>Codigo Comision</th>
+              <th>Código Comisión</th>
               <th>Pagos Aceptados</th>
               <th>Estado</th>
-              <th>Fecha Activacion</th>
-              <th>Fecha Suspension</th>
-              <th>Acciones</th>
+              <th>Fecha Creación</th>
             </tr>
           </thead>
           <tbody>
             {data.map((item, index) => (
-              <tr key={index} className={index % 2 === 0 ? "row-even" : "row-odd"}>
-                <td>{item.CodigoComercio}</td>
-                <td>{item.CodigoInterno}</td>
-                <td>{item.Ruc}</td>
+              <tr
+                key={item.CodigoComercio}
+                className={`table-row ${index % 2 === 0 ? 'row-even' : 'row-odd'}`}
+                onClick={() => handleRowClick(item)}
+                style={{ cursor: 'pointer' }}
+              >
+                <td className="code-cell">{item.CodigoComercio}</td>
+                <td className="code-cell">{item.CodigoInterno}</td>
+                <td className="code-cell">{item.Ruc}</td>
                 <td>{item.RazonSocial}</td>
                 <td>{item.NombreComercial}</td>
-                <td>{item.FechaCreacion}</td>
-                <td>{item.CodigoComision}</td>
-                <td>{item.PagosAceptados}</td>
-                <td>{item.Estado}</td>
-                <td>{item.FechaActivacion}</td>
-                <td>{item.FechaSuspension}</td>
-                <td>
-                  <div className="action-buttons">
-                    <button className="view-button" onClick={() => handleView(item)}>
-                      <FaEye />
-                    </button>
-                    <button className="edit-button" onClick={() => handleView(item)}>
-                      <FaEdit />
-                    </button>
-                    <button className="delete-button" onClick={() => handleView(item)}>
-                      <FaTrash />
-                    </button>
-                  </div>
+                <td className="code-cell">{item.CodigoComision}</td>
+                <td className="amount-cell">{item.PagosAceptados}</td>
+                <td className="status-cell">
+                  <span className={`status-badge ${item.Estado.toLowerCase()}`}>
+                    {item.Estado}
+                  </span>
                 </td>
+                <td className="date-cell">{item.FechaCreacion}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <div className="pagination">
-          <button>&lt;</button>
-          <button>1</button>
-          <button className="active">2</button>
-          <button>3</button>
-          <button>&gt;</button>
-        </div>
-        <button className="back-button" onClick={handleBackToHome}>
-          Volver al Inicio
-        </button>
       </div>
-    </main>
+
+      <div className="table-footer">
+        <div className="pagination">
+          <button className="pagination-button">&lt;</button>
+          <button className="pagination-button active">1</button>
+          <button className="pagination-button">2</button>
+          <button className="pagination-button">3</button>
+          <button className="pagination-button">&gt;</button>
+        </div>
+      </div>
+    </div>
   );
 };
 
