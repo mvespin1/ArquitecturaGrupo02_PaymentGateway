@@ -9,7 +9,7 @@ import ec.edu.espe.gateway.comision.services.ComisionSegmentoService;
 import jakarta.persistence.EntityNotFoundException;
 
 @RestController
-@RequestMapping("/api/comision-segmentos")
+@RequestMapping("/v1/comision-segmentos")
 public class ComisionSegmentoController {
 
     private final ComisionSegmentoService segmentoService;
@@ -36,25 +36,28 @@ public class ComisionSegmentoController {
             return segmentoService.findById(comision, transaccionesDesde)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
     }
 
     @PostMapping
-    public ResponseEntity<ComisionSegmento> create(@RequestBody ComisionSegmento segmento) {
+    public ResponseEntity<?> create(@RequestBody ComisionSegmento segmento) {
         try {
             ComisionSegmento savedSegmento = segmentoService.save(segmento);
             return ResponseEntity.ok(savedSegmento);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError()
+                    .body("Error al crear el segmento: " + e.getMessage());
         }
     }
 
     @PutMapping("/{comision}/{transaccionesDesde}")
-    public ResponseEntity<ComisionSegmento> update(
+    public ResponseEntity<?> update(
             @PathVariable Integer comision,
             @PathVariable Integer transaccionesDesde,
             @RequestParam Integer transaccionesHasta,
@@ -66,14 +69,15 @@ public class ComisionSegmentoController {
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError()
+                    .body("Error al actualizar el segmento: " + e.getMessage());
         }
     }
 
     @DeleteMapping("/{comision}/{transaccionesDesde}")
-    public ResponseEntity<Void> delete(
+    public ResponseEntity<?> delete(
             @PathVariable Integer comision,
             @PathVariable Integer transaccionesDesde) {
         try {
@@ -82,9 +86,10 @@ public class ComisionSegmentoController {
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError()
+                    .body("Error al eliminar el segmento: " + e.getMessage());
         }
     }
 }

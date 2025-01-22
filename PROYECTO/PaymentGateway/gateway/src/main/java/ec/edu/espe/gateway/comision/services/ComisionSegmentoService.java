@@ -9,12 +9,13 @@ import java.util.Optional;
 import ec.edu.espe.gateway.comision.model.ComisionSegmento;
 import ec.edu.espe.gateway.comision.model.ComisionSegmentoPK;
 import ec.edu.espe.gateway.comision.repository.ComisionSegmentoRepository;
-import jakarta.persistence.EntityNotFoundException;
+import ec.edu.espe.gateway.comision.exception.NotFoundException;
 
 @Service
 public class ComisionSegmentoService {
 
     private final ComisionSegmentoRepository segmentoRepository;
+    public static final String ENTITY_NAME = "Segmento de Comisión";
 
     private static final int MAX_DIGITOS_TRANSACCION_HASTA = 9;
     private static final int MAX_DIGITOS_MONTO = 20;
@@ -37,9 +38,16 @@ public class ComisionSegmentoService {
     public Optional<ComisionSegmento> findById(Integer comision, Integer transaccionesDesde) {
         try {
             ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
-            return segmentoRepository.findById(pk);
+            ComisionSegmento segmento = segmentoRepository.findById(pk)
+                .orElseThrow(() -> new NotFoundException(
+                    pk.toString(), 
+                    ENTITY_NAME
+                ));
+            return Optional.of(segmento);
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception ex) {
-            throw new RuntimeException("No se pudo obtener el segmento de comisión. Motivo: " + ex.getMessage());
+            throw new RuntimeException("Error al obtener el segmento: " + ex.getMessage());
         }
     }
 
@@ -66,11 +74,14 @@ public class ComisionSegmentoService {
                         segmentoExistente.setMonto(monto);
                         return segmentoRepository.save(segmentoExistente);
                     })
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Segmento no encontrado para comisión " + comision +
-                                    " y transacciones desde " + transaccionesDesde));
+                    .orElseThrow(() -> new NotFoundException(
+                        pk.toString(), 
+                        ENTITY_NAME
+                    ));
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception ex) {
-            throw new RuntimeException("No se pudo actualizar el segmento de comisión. Motivo: " + ex.getMessage());
+            throw new RuntimeException("Error al actualizar el segmento: " + ex.getMessage());
         }
     }
 
@@ -79,17 +90,20 @@ public class ComisionSegmentoService {
         try {
             ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
             ComisionSegmento segmento = segmentoRepository.findById(pk)
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Segmento no encontrado para comisión " + comision +
-                                    " y transacciones desde " + transaccionesDesde));
+                    .orElseThrow(() -> new NotFoundException(
+                        pk.toString(), 
+                        ENTITY_NAME
+                    ));
 
             if (segmento.getMonto().compareTo(BigDecimal.ZERO) == 0) {
                 segmentoRepository.deleteById(pk);
             } else {
                 throw new IllegalStateException("No se puede eliminar un segmento con monto diferente a 0.");
             }
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception ex) {
-            throw new RuntimeException("No se pudo eliminar el segmento de comisión. Motivo: " + ex.getMessage());
+            throw new RuntimeException("Error al eliminar el segmento: " + ex.getMessage());
         }
     }
 
