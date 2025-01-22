@@ -39,8 +39,6 @@ const CrudTable = () => {
       FechaSuspension: item.FechaSuspension,
     };
 
-    console.log("Payload para crear:", transactionPayload);
-
     try {
       const response = await fetch("http://localhost:8082", {
         method: "POST",
@@ -63,8 +61,78 @@ const CrudTable = () => {
     }
   };
 
-  const handleRowClick = (item) => {
-    router.push(`/GtwComercio/read/${item.CodigoComercio}`);
+  const handleUpdate = async (item) => {
+    const transactionPayload = {
+      CodigoComercio: item.CodigoComercio,
+      CodigoInterno: item.CodigoInterno,
+      Ruc: item.Ruc,
+      RazonSocial: item.RazonSocial,
+      NombreComercial: item.NombreComercial,
+      FechaCreacion: item.FechaCreacion,
+      CodigoComision: item.CodigoComision,
+      PagosAceptados: item.PagosAceptados,
+      Estado: item.Estado,
+      FechaActivacion: item.FechaActivacion,
+      FechaSuspension: item.FechaSuspension,
+    };
+
+    try {
+      const response = await fetch("http://localhost:8082/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("Respuesta de la API:", result);
+      router.push(`/GtwComercio/update/${item.CodigoComercio}`);
+    } catch (error) {
+      console.error("Error al enviar los datos:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
+  };
+
+  const handleView = async (item) => {
+    const transactionPayload = {
+      CodigoComercio: item.CodigoComercio,
+      CodigoInterno: item.CodigoInterno,
+      Ruc: item.Ruc,
+      RazonSocial: item.RazonSocial,
+      NombreComercial: item.NombreComercial,
+      FechaCreacion: item.FechaCreacion,
+      CodigoComision: item.CodigoComision,
+      PagosAceptados: item.PagosAceptados,
+      Estado: item.Estado,
+      FechaActivacion: item.FechaActivacion,
+      FechaSuspension: item.FechaSuspension,
+    };
+
+    try {
+      const response = await fetch("http://localhost:8082/view", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("Respuesta de la API:", result);
+      router.push(`/GtwComercio/read/${item.CodigoComercio}`);
+    } catch (error) {
+      console.error("Error al enviar los datos:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
   };
 
   return (

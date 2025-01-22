@@ -29,19 +29,48 @@ const CrudTable = () => {
 
   const router = useRouter(); // Inicializa el router para redirigir
 
-  const handleRowClick = (item) => {
-    router.push(`/GtwComision/read/${item.CodigoComision}`);
+  const handleCreate = async (item) => {
+    const transactionPayload = {
+      CodigoComision: item.CodigoComision,
+      Tipo: item.Tipo,
+      MontoBase: item.MontoBase,
+      TransaccionesBase: item.TransaccionesBase,
+      ManejaSegmenos: item.ManejaSegmenos,
+      Estado: item.Estado,
+      FechaCreacion: item.FechaCreacion,
+    };
+
+    try {
+      const response = await fetch("http://localhost:8082", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("Respuesta de la API:", result);
+      router.push('/GtwComision/create');
+    } catch (error) {
+      console.error("Error al enviar los datos:", error);
+      alert("Ocurrió un error al enviar los datos. Inténtalo nuevamente.");
+    }
   };
 
-  const handleCreate = () => {
-    router.push('/GtwComision/create');
+  const handleRowClick = (item) => {
+    router.push(`/GtwComision/read/${item.CodigoComision}`);
   };
 
   return (
     <div className="main-container">
       <div className="table-header">
         <div className="header-content">
-          <h1 className="table-title">Comisiones Registradas</h1>
+          <h1 className="table-title">Comisiones Registradas</h1>          
         </div>
         <div className="table-summary">
           <div className="summary-item">
@@ -58,7 +87,7 @@ const CrudTable = () => {
       </div>
 
       <div className="table-responsive">
-      <button className="create-button" onClick={handleCreate}>
+      <button className="create-button" onClick={() => handleCreate(data[0])}>
             <FaPlus className="button-icon" />
             <span> Nueva</span>
           </button>
@@ -66,7 +95,7 @@ const CrudTable = () => {
           <thead>
             <tr>
               <th>Código</th>
-              <th>Tipo de Comisión</th>
+              <th>Tipo</th>
               <th>Monto Base</th>
               <th>Transacciones Base</th>
               <th>Maneja Segmentos</th>
@@ -83,14 +112,10 @@ const CrudTable = () => {
                 style={{ cursor: 'pointer' }}
               >
                 <td className="code-cell">{item.CodigoComision}</td>
-                <td className="type-cell">{item.Tipo}</td>
+                <td>{item.Tipo}</td>
                 <td className="amount-cell">{item.MontoBase}</td>
-                <td className="transactions-cell">{item.TransaccionesBase}</td>
-                <td className="segments-cell">
-                  <span className={`badge ${item.ManejaSegmenos === "Sí" ? "badge-success" : "badge-neutral"}`}>
-                    {item.ManejaSegmenos}
-                  </span>
-                </td>
+                <td className="code-cell">{item.TransaccionesBase}</td>
+                <td>{item.ManejaSegmenos}</td>
                 <td className="status-cell">
                   <span className={`status-badge ${item.Estado.toLowerCase()}`}>
                     {item.Estado}
