@@ -10,29 +10,45 @@ import ec.edu.espe.gateway.comercio.model.Comercio;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import ec.edu.espe.gateway.comercio.client.PosConfiguracionClient;
-import ec.edu.espe.gateway.comercio.dto.Configuracion;
+import ec.edu.espe.gateway.comercio.controller.dto.Configuracion;
+import ec.edu.espe.gateway.comercio.controller.mapper.ConfiguracionMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ec.edu.espe.gateway.comercio.exception.NotFoundException;
 
 @Service
 public class PosComercioService {
 
-    private static final Pattern MAC_ADDRESS_PATTERN = Pattern.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$");
-    private static final Integer CODIGO_POS_LENGTH = 10;
+    private static final Logger log = LoggerFactory.getLogger(PosComercioService.class);
+
+    // Constantes de entidad
+    public static final String ENTITY_NAME = "POS";
+    public static final String ENTITY_COMERCIO = "Comercio";
+    public static final String ENTITY_CONFIGURACION = "Configuración POS";
+
+    // Constantes de estado
     public static final String ESTADO_ACTIVO = "ACT";
     public static final String ESTADO_INACTIVO = "INA";
+
+    // Constantes de validación
+    private static final Pattern MAC_ADDRESS_PATTERN = Pattern.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$");
+    private static final Integer CODIGO_POS_LENGTH = 10;
 
     private final PosComercioRepository posComercioRepository;
     private final ComercioRepository comercioRepository;
     private final PosConfiguracionClient posConfiguracionClient;
+    private final ConfiguracionMapper configuracionMapper;
 
     public PosComercioService(PosComercioRepository posComercioRepository,
-            ComercioRepository comercioRepository, PosConfiguracionClient posConfiguracionClient) {
+            ComercioRepository comercioRepository,
+            PosConfiguracionClient posConfiguracionClient,
+            ConfiguracionMapper configuracionMapper) {
         this.posComercioRepository = posComercioRepository;
         this.comercioRepository = comercioRepository;
         this.posConfiguracionClient = posConfiguracionClient;
-        
+        this.configuracionMapper = configuracionMapper;
     }
 
     public List<PosComercio> obtenerTodos() {
@@ -40,45 +56,63 @@ public class PosComercioService {
     }
 
     public PosComercio obtenerPorId(PosComercioPK id) {
-        return posComercioRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("No existe POS con el ID proporcionado"));
+        PosComercio pos = posComercioRepository.findById(id).orElse(null);
+        if (pos == null) {
+            throw new NotFoundException(id.toString(), ENTITY_NAME);
+        }
+        return pos;
     }
 
     @Transactional
     public PosComercio crear(PosComercio posComercio) {
-        // 1. Validar y obtener comercio completo
-        validarNuevoPOS(posComercio);
-        Comercio comercioCompleto = comercioRepository.findById(posComercio.getComercio().getCodigo())
-            .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
-        
-        // 2. Preparar y guardar POS localmente
-        posComercio.setComercio(comercioCompleto);
-        posComercio.setEstado(ESTADO_ACTIVO);
-        posComercio.setFechaActivacion(LocalDateTime.now());
-        PosComercio posGuardado = posComercioRepository.save(posComercio);
-
         try {
-            // 3. Intentar sincronizar con el POS (solo los campos necesarios)
-            Configuracion configuracionParaSincronizar = new Configuracion();
-            configuracionParaSincronizar.setPk(posGuardado.getPk());
-            configuracionParaSincronizar.setDireccionMac(posGuardado.getDireccionMac());
-            configuracionParaSincronizar.setFechaActivacion(posGuardado.getFechaActivacion());
-            configuracionParaSincronizar.setCodigoComercio(comercioCompleto.getCodigo());
+            // 1. Validar y obtener comercio completo
+            validarNuevoPOS(posComercio);
+            Comercio comercioCompleto = comercioRepository.findById(posComercio.getComercio().getCodigo())
+                .orElseThrow(() -> new NotFoundException(
+                    posComercio.getComercio().getCodigo().toString(), 
+                    ENTITY_COMERCIO
+                ));
 
-            // Add debug logging
-            System.out.println("Enviando configuración al POS:");
-            System.out.println("PK: " + configuracionParaSincronizar.getPk());
-            System.out.println("DireccionMac: " + configuracionParaSincronizar.getDireccionMac());
-            System.out.println("FechaActivacion: " + configuracionParaSincronizar.getFechaActivacion());
-            System.out.println("CodigoComercio: " + configuracionParaSincronizar.getCodigoComercio());
+            // 2. Preparar y guardar POS
+            posComercio.setComercio(comercioCompleto);
+            posComercio.setEstado(ESTADO_ACTIVO);
+            posComercio.setFechaActivacion(LocalDateTime.now());
+            PosComercio posGuardado = posComercioRepository.save(posComercio);
 
-            posConfiguracionClient.enviarConfiguracion(configuracionParaSincronizar);
+            try {
+                // 3. Sincronizar con servicio de configuración
+                Configuracion configuracionParaSincronizar = configuracionMapper.toDTO(posGuardado);
+                configuracionParaSincronizar.setCodigoComercio(comercioCompleto.getCodigo());
+                posConfiguracionClient.enviarConfiguracion(configuracionParaSincronizar);
+            } catch (Exception e) {
+                log.error("Error en sincronización con POS: {}", e.getMessage());
+            }
+
+            return posGuardado;
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            System.err.println("Error en sincronización con POS: " + e.getMessage());
-            e.printStackTrace(); // Add stack trace for more detail
+            throw new RuntimeException("Error al crear POS: " + e.getMessage());
         }
+    }
 
-        return posGuardado;
+    public void actualizarUltimoUso(String codigoPos, String modeloPos, LocalDateTime fechaUltimoUso) {
+        try {
+            PosComercioPK pk = new PosComercioPK(codigoPos, modeloPos);
+            PosComercio pos = obtenerPorId(pk);
+            
+            if (!ESTADO_ACTIVO.equals(pos.getEstado())) {
+                throw new IllegalStateException("El POS debe estar activo para actualizar su último uso");
+            }
+
+            pos.setUltimoUso(fechaUltimoUso);
+            posComercioRepository.save(pos);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error al actualizar último uso: " + e.getMessage());
+        }
     }
 
     private void validarNuevoPOS(PosComercio posComercio) {
@@ -96,15 +130,13 @@ public class PosComercioService {
 
         // Validar comercio asociado
         Comercio comercio = comercioRepository.findById(posComercio.getComercio().getCodigo())
-                .orElseThrow(() -> new EntityNotFoundException("El comercio asociado no existe"));
+                .orElseThrow(() -> new NotFoundException(
+                    posComercio.getComercio().getCodigo().toString(), 
+                    ENTITY_COMERCIO
+                ));
 
-        if (!"ACT".equals(comercio.getEstado())) {
+        if (!ESTADO_ACTIVO.equals(comercio.getEstado())) {
             throw new IllegalStateException("El comercio asociado debe estar activo");
-        }
-
-        // Validar duplicados
-        if (posComercioRepository.existsByDireccionMac(posComercio.getDireccionMac())) {
-            throw new IllegalArgumentException("Ya existe un POS con la dirección MAC proporcionada");
         }
     }
 
@@ -152,45 +184,6 @@ public class PosComercioService {
         }
     }
 
-    public void actualizarUltimoUso(PosComercioPK id, LocalDateTime fechaUltimoUso) {
-        try {
-            PosComercio pos = obtenerPorId(id);
-            
-            // Validar estado del POS
-            if (!ESTADO_ACTIVO.equals(pos.getEstado())) {
-                throw new IllegalStateException("No se puede actualizar el último uso de un POS inactivo");
-            }
-
-            // Validar coherencia de fechas
-            if (fechaUltimoUso.isAfter(LocalDateTime.now())) {
-                throw new IllegalStateException("La fecha de último uso no puede ser futura");
-            }
-            if (pos.getFechaActivacion() != null && fechaUltimoUso.isBefore(pos.getFechaActivacion())) {
-                throw new IllegalStateException("La fecha de último uso no puede ser anterior a la fecha de activación");
-            }
-
-            pos.setUltimoUso(fechaUltimoUso);
-            posComercioRepository.save(pos);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al actualizar último uso: " + e.getMessage());
-        }
-    }
-
-    public void actualizarEstadoPorComercio(Integer codigoComercio, String estadoComercio) {
-        try {
-            List<PosComercio> dispositivosComercio = posComercioRepository.findByComercio_Codigo(codigoComercio);
-            for (PosComercio pos : dispositivosComercio) {
-                if ("INA".equals(estadoComercio) || "SUS".equals(estadoComercio)) {
-                    pos.setEstado(ESTADO_INACTIVO);
-                    pos.setFechaActivacion(null);
-                    posComercioRepository.save(pos);
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error al actualizar estado por comercio: " + e.getMessage());
-        }
-    }
-
     public void validarConfiguracionPOS(String codigoPos) {
         // Aquí iría la validación contra la tabla POS_CONFIGURACION
         // Como no tenemos acceso a esa tabla, solo validamos el formato
@@ -211,7 +204,10 @@ public class PosComercioService {
 
             // Validar y obtener el nuevo comercio
             Comercio nuevoComercio = comercioRepository.findById(nuevoCodigoComercio)
-                    .orElseThrow(() -> new EntityNotFoundException("El nuevo comercio no existe"));
+                    .orElseThrow(() -> new NotFoundException(
+                        nuevoCodigoComercio.toString(), 
+                        ENTITY_COMERCIO
+                    ));
 
             // Validar que el nuevo comercio esté activo
             if (!"ACT".equals(nuevoComercio.getEstado())) {
@@ -224,6 +220,8 @@ public class PosComercioService {
             pos.setComercio(nuevoComercio);
             
             posComercioRepository.save(pos);
+        } catch (NotFoundException e) {
+            throw e;  // Propagar NotFoundException directamente
         } catch (Exception e) {
             throw new RuntimeException("Error al cambiar comercio asociado: " + e.getMessage());
         }
@@ -235,33 +233,10 @@ public class PosComercioService {
             posExistente.setDireccionMac(posComercio.getDireccionMac());
             posExistente.setFechaActivacion(posComercio.getFechaActivacion());
             posComercioRepository.save(posExistente);
-        } catch (EntityNotFoundException e) {
-            throw new RuntimeException("POS no encontrado para configuración: " + e.getMessage());
+        } catch (NotFoundException e) {
+            throw e;  // Propagar NotFoundException directamente
+        } catch (Exception e) {
+            throw new RuntimeException("Error al procesar configuración: " + e.getMessage());
         }
     }
-
-    /*private void validarFechasActivacion(PosComercio pos, Comercio comercio) {
-        LocalDate fechaActual = LocalDate.now();
-        
-        // Validar que la fecha de activación no sea futura
-        if (pos.getFechaActivacion() != null && pos.getFechaActivacion().isAfter(fechaActual)) {
-            throw new IllegalStateException("La fecha de activación no puede ser posterior a la fecha actual");
-        }
-
-        // Validar que la fecha de activación sea posterior a la del comercio
-        if (comercio.getFechaActivacion() != null && pos.getFechaActivacion() != null && 
-            pos.getFechaActivacion().isBefore(comercio.getFechaActivacion())) {
-            throw new IllegalStateException("La fecha de activación del POS debe ser posterior a la del comercio");
-        }
-
-        // Validar que la fecha de último uso sea coherente
-        if (pos.getUltimoUso() != null) {
-            if (pos.getUltimoUso().isAfter(fechaActual)) {
-                throw new IllegalStateException("La fecha de último uso no puede ser futura");
-            }
-            if (pos.getFechaActivacion() != null && pos.getUltimoUso().isBefore(pos.getFechaActivacion())) {
-                throw new IllegalStateException("La fecha de último uso no puede ser anterior a la fecha de activación");
-            }
-        }
-    }*/
 }
