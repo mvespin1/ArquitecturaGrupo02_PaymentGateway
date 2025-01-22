@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import "./page.css";
+import "../../Css/general.css";
 
 const CreatePage = () => {
   const [form, setForm] = useState({
@@ -79,7 +79,7 @@ const CreatePage = () => {
   };
 
   const handleCancel = () => {
-    router.push("/GtwComision/components");
+    router.push("/");
   };
 
   return (

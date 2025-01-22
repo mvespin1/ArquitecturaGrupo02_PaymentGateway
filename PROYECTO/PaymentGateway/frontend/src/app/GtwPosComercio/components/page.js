@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaEdit, FaEye } from "react-icons/fa";
+import { FaEdit, FaEye, FaPlus } from "react-icons/fa";
 import "../../Css/general.css";
 
 const CrudTable = () => {
@@ -90,16 +90,32 @@ const CrudTable = () => {
     }
   };
 
-  const handleBackToHome = () => {
-    router.push("/");
-  };
-
   return (
-    <main className="main-container">
-      <h1 className="main-title">Gestión de POS Comercio</h1>
-      <div>
-        <h2 className="section-title">POS Comercio</h2>
-        <table className="data-table">
+    <div className="main-container">
+      <div className="table-header">
+        <div className="header-content">
+          <h1 className="table-title">POS Comercio Registrados</h1>
+        </div>
+        <div className="table-summary">
+          <div className="summary-item">
+            <span className="summary-label">Total POS:</span>
+            <span className="summary-value">{data.length}</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">POS Activos:</span>
+            <span className="summary-value">
+              {data.filter(item => item.estado === "Activo").length}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="table-responsive">
+        <button className="create-button" onClick={() => router.push('/GtwPosComercio/create')}>
+          <FaPlus className="button-icon" />
+          <span> Nuevo</span>
+        </button>
+        <table className="modern-table">
           <thead>
             <tr>
               <th>Modelo</th>
@@ -109,45 +125,38 @@ const CrudTable = () => {
               <th>Estado</th>
               <th>Fecha Activación</th>
               <th>Último Uso</th>
-              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {data.map((item, index) => (
-              <tr key={item.id || index} className={index % 2 === 0 ? "row-even" : "row-odd"}>
+              <tr key={item.codigoPos} className={`table-row ${index % 2 === 0 ? 'row-even' : 'row-odd'}`}>
                 <td>{item.modelo}</td>
-                <td>{item.codigoPos}</td>
+                <td className="code-cell">{item.codigoPos}</td>
                 <td>{item.codComercio}</td>
-                <td>{item.direccionMac}</td>
-                <td>{item.estado}</td>
-                <td>{item.fechaActivacion}</td>
-                <td>{item.ultimoUso}</td>
-                <td>
-                  <div className="action-buttons">
-                    <button className="edit-button" onClick={() => handleUpdate(item)}>
-                      <FaEdit />
-                    </button>
-                    <button className="view-button" onClick={() => handleView(item)}>
-                      <FaEye />
-                    </button>
-                  </div>
+                <td className="code-cell">{item.direccionMac}</td>
+                <td className="status-cell">
+                  <span className={`status-badge ${item.estado.toLowerCase()}`}>
+                    {item.estado}
+                  </span>
                 </td>
+                <td className="date-cell">{item.fechaActivacion}</td>
+                <td className="date-cell">{item.ultimoUso}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <div className="pagination">
-          <button>&lt;</button>
-          <button>1</button>
-          <button className="active">2</button>
-          <button>3</button>
-          <button>&gt;</button>
-        </div>
-        <button className="back-button" onClick={handleBackToHome}>
-          Volver al Inicio
-        </button>
       </div>
-    </main>
+
+      <div className="table-footer">
+        <div className="pagination">
+          <button className="pagination-button">&lt;</button>
+          <button className="pagination-button active">1</button>
+          <button className="pagination-button">2</button>
+          <button className="pagination-button">3</button>
+          <button className="pagination-button">&gt;</button>
+        </div>
+      </div>
+    </div>
   );
 };
 
