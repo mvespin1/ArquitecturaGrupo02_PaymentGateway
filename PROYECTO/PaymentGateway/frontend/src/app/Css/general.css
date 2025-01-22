@@ -301,7 +301,7 @@ body {
 
 ul, ol, li {
   list-style-type: none; /* Elimina puntos o números */
-  margin: 7;            /* Opcional: elimina márgenes predeterminados */
+  margin: 0;            /* Opcional: elimina márgenes predeterminados */
   padding:0;           /* Opcional: elimina relleno predeterminado */
 }
 /* Contenedor del logo */
