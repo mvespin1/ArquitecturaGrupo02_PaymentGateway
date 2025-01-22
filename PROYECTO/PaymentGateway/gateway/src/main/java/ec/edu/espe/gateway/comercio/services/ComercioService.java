@@ -12,6 +12,7 @@ import ec.edu.espe.gateway.transaccion.model.Transaccion;
 import ec.edu.espe.gateway.transaccion.repository.TransaccionRepository;
 import ec.edu.espe.gateway.facturacion.services.FacturaService;
 import ec.edu.espe.gateway.comision.services.ComisionService;
+import ec.edu.espe.gateway.comercio.exception.NotFoundException;
 
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
@@ -28,6 +29,10 @@ import java.time.format.DateTimeFormatter;
 @Service
 @Transactional
 public class ComercioService {
+
+    public static final String ENTITY_NAME = "Comercio";
+    public static final String ENTITY_FACTURACION = "Facturación";
+    public static final String ENTITY_COMISION = "Comisión";
 
     public static final String ESTADO_PENDIENTE = "PEN";
     public static final String ESTADO_ACTIVO = "ACT";
@@ -56,8 +61,11 @@ public class ComercioService {
 
     @Transactional(value = TxType.NEVER)
     public Comercio obtenerPorCodigo(Integer codigo) {
-        return comercioRepository.findById(codigo)
-                .orElseThrow(() -> new EntityNotFoundException("No existe comercio con el código: " + codigo));
+        Comercio comercio = comercioRepository.findById(codigo).orElse(null);
+        if (comercio == null) {
+            throw new NotFoundException(codigo.toString(), ENTITY_NAME);
+        }
+        return comercio;
     }
 
     public void registrarComercio(Comercio comercio) {
@@ -139,6 +147,14 @@ public class ComercioService {
                     for (Transaccion transaccion : transaccionesActivas) {
                         transaccion.setEstado("REC");
                         transaccionRepository.saveAndFlush(transaccion);
+                    }
+                    // Inactivar todos los POS asociados
+                    List<PosComercio> dispositivosComercio = posComercioRepository
+                            .findByComercio_Codigo(comercio.getCodigo());
+                    for (PosComercio pos : dispositivosComercio) {
+                        pos.setEstado("INA");
+                        pos.setFechaActivacion(null);
+                        posComercioRepository.save(pos);
                     }
                     break;
                 case ESTADO_PENDIENTE:
@@ -252,12 +268,15 @@ public class ComercioService {
     public void asignarComision(Integer codigoComercio, Integer codigoComision) {
         try {
             Comercio comercio = obtenerPorCodigo(codigoComercio);
-            Comision comision = comisionRepository.findById(codigoComision)
-                    .orElseThrow(
-                            () -> new EntityNotFoundException("No existe la comisión con código: " + codigoComision));
+            Comision comision = comisionRepository.findById(codigoComision).orElse(null);
+            if (comision == null) {
+                throw new NotFoundException(codigoComision.toString(), ENTITY_COMISION);
+            }
 
             comercio.setComision(comision);
             comercioRepository.save(comercio);
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Error al asignar comisión: " + e.getMessage());
         }
@@ -353,17 +372,26 @@ public class ComercioService {
 
     @Transactional(value = TxType.NEVER)
     public Comercio obtenerComercioActivo() {
-        return comercioRepository.findByEstado(ESTADO_ACTIVO)
+        Comercio comercio = comercioRepository.findByEstado(ESTADO_ACTIVO)
             .stream()
             .findFirst()
-            .orElseThrow(() -> new EntityNotFoundException("No se encontró ningún comercio activo"));
+            .orElse(null);
+        if (comercio == null) {
+            throw new NotFoundException(ESTADO_ACTIVO, ENTITY_NAME);
+        }
+        return comercio;
     }
 
     @Transactional(value = TxType.NEVER)
     public FacturacionComercio obtenerFacturacionActiva() {
         Comercio comercio = obtenerComercioActivo();
-        return facturacionComercioRepository.findFacturaActivaPorComercio(comercio.getCodigo())
-            .orElseThrow(() -> new EntityNotFoundException("No se encontró facturación activa para el comercio"));
+        FacturacionComercio facturacion = facturacionComercioRepository
+            .findFacturaActivaPorComercio(comercio.getCodigo())
+            .orElse(null);
+        if (facturacion == null) {
+            throw new NotFoundException(comercio.getCodigo().toString(), ENTITY_FACTURACION);
+        }
+        return facturacion;
     }
 
     @Transactional(value = TxType.NEVER)
@@ -371,9 +399,7 @@ public class ComercioService {
         Comercio comercio = comercioRepository.findById(codigoComercio)
             .orElseThrow(() -> new EntityNotFoundException("No existe el comercio con código: " + codigoComercio));
             
-        return facturacionComercioRepository.findByComercioAndEstado(comercio, "ACT")
-            .stream()
-            .findFirst()
+        return facturacionComercioRepository.findFacturaActivaPorComercio(codigoComercio)
             .orElseThrow(() -> new EntityNotFoundException(
                 "No se encontró facturación activa para el comercio: " + codigoComercio));
     }

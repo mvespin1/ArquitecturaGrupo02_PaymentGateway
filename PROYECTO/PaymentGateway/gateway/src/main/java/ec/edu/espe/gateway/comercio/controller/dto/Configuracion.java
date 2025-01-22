@@ -1,4 +1,4 @@
-package ec.edu.espe.gateway.comercio.dto;
+package ec.edu.espe.gateway.comercio.controller.dto;
 
 import java.time.LocalDateTime;
 import ec.edu.espe.gateway.comercio.model.PosComercioPK;

@@ -1,14 +1,13 @@
 package ec.edu.espe.gateway.facturacion.services;
 
 import java.util.List;
-import java.util.Optional;
 import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
+import ec.edu.espe.gateway.facturacion.exception.NotFoundException;
 
 @Service
 @Transactional
@@ -22,6 +21,7 @@ public class FacturacionComercioService {
     private static final int MAX_VALOR_DECIMAL = 4;
     private static final int MAX_CODIGO_FACTURACION = 20;
     private static final String REGEX_CODIGO_FACTURACION = "^[a-zA-Z0-9]{1," + MAX_CODIGO_FACTURACION + "}$";
+    public static final String ENTITY_NAME = "Facturación Comercio";
 
     private final FacturacionComercioRepository facturacionComercioRepository;
 
@@ -31,17 +31,20 @@ public class FacturacionComercioService {
 
     @Transactional(value = TxType.NEVER)
     public FacturacionComercio obtenerPorCodigo(Integer codigo) {
-        Optional<FacturacionComercio> optional = facturacionComercioRepository.findById(codigo);
-        if (optional.isPresent()) {
-            return optional.get();
-        } else {
-            throw new EntityNotFoundException("No existe ninguna facturación de comercio con el código: " + codigo);
-        }
+        return facturacionComercioRepository.findById(codigo)
+            .orElseThrow(() -> new NotFoundException(
+                codigo.toString(), 
+                ENTITY_NAME
+            ));
     }
 
     @Transactional(value = TxType.NEVER)
     public List<FacturacionComercio> obtenerPorEstado(String estado) {
-        return facturacionComercioRepository.findByEstado(estado);
+        List<FacturacionComercio> facturaciones = facturacionComercioRepository.findByEstado(estado);
+        if (facturaciones.isEmpty()) {
+            throw new NotFoundException(estado, ENTITY_NAME);
+        }
+        return facturaciones;
     }
 
     public void crear(FacturacionComercio facturacionComercio) {
@@ -49,6 +52,8 @@ public class FacturacionComercioService {
             validarFacturacion(facturacionComercio);
             facturacionComercio.setEstado(ESTADO_ACTIVO);
             facturacionComercioRepository.save(facturacionComercio);
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception ex) {
             throw new RuntimeException("No se pudo crear la facturación de comercio. Motivo: " + ex.getMessage());
         }
@@ -70,6 +75,10 @@ public class FacturacionComercioService {
             existente.setFechaFacturacion(facturacionComercio.getFechaFacturacion());
             existente.setFechaPago(facturacionComercio.getFechaPago());
             facturacionComercioRepository.save(existente);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception ex) {
             throw new RuntimeException("No se pudo actualizar la facturación de comercio. Motivo: " + ex.getMessage());
         }
@@ -120,6 +129,8 @@ public class FacturacionComercioService {
             existente.setEstado(ESTADO_PAGADO);
             existente.setFechaPago(java.time.LocalDate.now());
             facturacionComercioRepository.save(existente);
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception ex) {
             throw new RuntimeException("No se pudo marcar la facturación como pagada. Motivo: " + ex.getMessage());
         }
