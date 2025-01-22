@@ -4,12 +4,14 @@ import ec.edu.espe.gateway.seguridad.model.SeguridadMarca;
 import ec.edu.espe.gateway.seguridad.services.SeguridadMarcaService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import ec.edu.espe.gateway.seguridad.exception.NotFoundException;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/seguridad-marcas")
+@RequestMapping("/v1/seguridad-marcas")
 public class SeguridadMarcaController {
 
     private final SeguridadMarcaService marcaService;
@@ -23,23 +25,23 @@ public class SeguridadMarcaController {
         try {
             List<SeguridadMarca> marcas = marcaService.getAllMarcas();
             return ResponseEntity.ok(marcas);
-        } catch (Exception ex) {
-            return ResponseEntity.status(500).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
     @GetMapping("/{marca}")
     public ResponseEntity<SeguridadMarca> getById(@PathVariable String marca) {
         try {
-            SeguridadMarca foundMarca = marcaService.getMarcaById(marca)
-                    .orElseThrow(() -> new EntityNotFoundException("Marca con ID " + marca + " no encontrada."));
-            return ResponseEntity.ok(foundMarca);
-        } catch (EntityNotFoundException e) {
+            return marcaService.getMarcaById(marca)
+                    .map(ResponseEntity::ok)
+                    .orElseThrow(() -> new NotFoundException(marca, "Marca"));
+        } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(null);
-        } catch (Exception ex) {
-            return ResponseEntity.status(500).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -47,11 +49,11 @@ public class SeguridadMarcaController {
     public ResponseEntity<SeguridadMarca> create(@RequestBody SeguridadMarca marca) {
         try {
             SeguridadMarca savedMarca = marcaService.createMarca(marca);
-            return ResponseEntity.status(201).body(savedMarca);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedMarca);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(null);
-        } catch (Exception ex) {
-            return ResponseEntity.status(500).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 

@@ -7,12 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import ec.edu.espe.gateway.facturacion.services.FacturacionComercioService;
 import ec.edu.espe.gateway.facturacion.services.FacturaService;
 import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
+import ec.edu.espe.gateway.facturacion.exception.NotFoundException;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import org.springframework.http.HttpStatus;
 
 @RestController
-@RequestMapping("/api/facturacion")
+@RequestMapping("/v1/facturacion")
 public class FacturacionComercioController {
 
     @Autowired
@@ -27,8 +29,12 @@ public class FacturacionComercioController {
         try {
             FacturacionComercio facturacion = facturacionComercioService.obtenerPorCodigo(codigo);
             return ResponseEntity.ok(facturacion);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .build();
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .build();
         }
     }
 
@@ -38,8 +44,12 @@ public class FacturacionComercioController {
         try {
             List<FacturacionComercio> facturaciones = facturacionComercioService.obtenerPorEstado(estado);
             return ResponseEntity.ok(facturaciones);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .build();
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .build();
         }
     }
 
@@ -48,20 +58,35 @@ public class FacturacionComercioController {
     public ResponseEntity<String> crear(@Valid @RequestBody FacturacionComercio facturacionComercio) {
         try {
             facturacionComercioService.crear(facturacionComercio);
-            return ResponseEntity.status(201).body("Facturación creada exitosamente");
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body("Facturación creada exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error de validación: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(400).body("Error al crear la facturación: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al crear la facturación: " + e.getMessage());
         }
     }
 
     // Actualizar una facturación existente
-    @PutMapping
-    public ResponseEntity<String> actualizar(@Valid @RequestBody FacturacionComercio facturacionComercio) {
+    @PutMapping("/{codigo}")
+    public ResponseEntity<String> actualizar(
+            @PathVariable Integer codigo,
+            @Valid @RequestBody FacturacionComercio facturacionComercio) {
         try {
+            facturacionComercio.setCodigo(codigo);
             facturacionComercioService.actualizar(facturacionComercio);
             return ResponseEntity.ok("Facturación actualizada exitosamente");
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No se encontró la facturación: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error de validación: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(400).body("Error al actualizar la facturación: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al actualizar la facturación: " + e.getMessage());
         }
     }
 
@@ -72,7 +97,8 @@ public class FacturacionComercioController {
             List<FacturacionComercio> facturaciones = facturacionComercioService.obtenerFacturacionesPendientesPago();
             return ResponseEntity.ok(facturaciones);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .build();
         }
     }
 
@@ -81,9 +107,16 @@ public class FacturacionComercioController {
     public ResponseEntity<String> marcarComoPagado(@PathVariable Integer codigo) {
         try {
             facturacionComercioService.marcarComoPagado(codigo);
-            return ResponseEntity.ok("Facturación marcada como pagada");
+            return ResponseEntity.ok("Facturación marcada como pagada exitosamente");
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No se encontró la facturación: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error de estado: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(400).body("Error al marcar la facturación como pagada: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al marcar la facturación como pagada: " + e.getMessage());
         }
     }
 
@@ -93,8 +126,12 @@ public class FacturacionComercioController {
         try {
             facturaService.procesarFacturacionAutomatica();
             return ResponseEntity.ok("Facturación automática procesada exitosamente");
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No se encontraron facturas para procesar: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(400).body("Error al procesar la facturación automática: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al procesar la facturación automática: " + e.getMessage());
         }
     }
 }
