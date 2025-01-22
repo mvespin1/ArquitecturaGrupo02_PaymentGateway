@@ -3,8 +3,9 @@ package ec.edu.espe.pos.client;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import ec.edu.espe.pos.dto.ComercioDTO;
-import ec.edu.espe.pos.dto.FacturacionComercioDTO;
+
+import ec.edu.espe.pos.controller.dto.ComercioDTO;
+import ec.edu.espe.pos.controller.dto.FacturacionComercioDTO;
 
 @FeignClient(name = "gateway-comercio", url = "http://18.190.153.55")
 public interface GatewayComercioClient {

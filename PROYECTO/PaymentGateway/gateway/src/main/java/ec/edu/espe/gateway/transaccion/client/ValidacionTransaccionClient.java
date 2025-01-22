@@ -3,8 +3,10 @@ package ec.edu.espe.gateway.transaccion.client;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import ec.edu.espe.gateway.transaccion.model.ValidacionTransaccionDTO;
-import ec.edu.espe.gateway.transaccion.model.RespuestaValidacionDTO;
+
+import ec.edu.espe.gateway.transaccion.controller.dto.RespuestaValidacionDTO;
+import ec.edu.espe.gateway.transaccion.controller.dto.ValidacionTransaccionDTO;
+
 import org.springframework.http.ResponseEntity;
 
 @FeignClient(name = "validacionTransaccion", url = "http://3.145.167.151")

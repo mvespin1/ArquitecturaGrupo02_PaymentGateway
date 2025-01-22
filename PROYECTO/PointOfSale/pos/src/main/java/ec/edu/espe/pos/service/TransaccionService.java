@@ -4,11 +4,13 @@ import ec.edu.espe.pos.model.Configuracion;
 import ec.edu.espe.pos.model.Transaccion;
 import ec.edu.espe.pos.repository.TransaccionRepository;
 import ec.edu.espe.pos.client.GatewayTransaccionClient;
+import ec.edu.espe.pos.controller.dto.ActualizacionEstadoDTO;
+import ec.edu.espe.pos.controller.dto.ComercioDTO;
+import ec.edu.espe.pos.controller.dto.FacturacionComercioDTO;
+import ec.edu.espe.pos.controller.dto.GatewayTransaccionDTO;
 import ec.edu.espe.pos.client.GatewayComercioClient;
-import ec.edu.espe.pos.dto.GatewayTransaccionDTO;
-import ec.edu.espe.pos.dto.ComercioDTO;
-import ec.edu.espe.pos.dto.FacturacionComercioDTO;
-import ec.edu.espe.pos.dto.ActualizacionEstadoDTO;
+import ec.edu.espe.pos.exception.NotFoundException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,10 +21,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class TransaccionService {
 
     private static final Logger log = LoggerFactory.getLogger(TransaccionService.class);
+    private static final String ENTITY_NAME = "Transaccion";
 
     // Constantes para tipos de transacción
     public static final String TIPO_PAGO = "PAG";
@@ -43,7 +49,6 @@ public class TransaccionService {
 
     // Set de códigos de moneda válidos (ISO 4217)
     private static final Set<String> MONEDAS_VALIDAS = Set.of("USD", "EUR", "GBP");
-
     private static final Set<String> MARCAS_VALIDAS = Set.of("MSCD", "VISA", "AMEX", "DINE");
 
     private final TransaccionRepository transaccionRepository;
@@ -51,138 +56,122 @@ public class TransaccionService {
     private final GatewayComercioClient comercioClient;
     private final ConfiguracionService configuracionService;
 
-    public TransaccionService(TransaccionRepository transaccionRepository,
-            GatewayTransaccionClient gatewayClient,
-            GatewayComercioClient comercioClient,
-            ConfiguracionService configuracionService) {
-        this.transaccionRepository = transaccionRepository;
-        this.gatewayClient = gatewayClient;
-        this.comercioClient = comercioClient;
-        this.configuracionService = configuracionService;
+    @Transactional
+    public Transaccion crear(Transaccion transaccion, String datosSensibles, Boolean interesDiferido, Integer cuotas) {
+        log.info("Iniciando creación de transacción. Datos recibidos: {}", transaccion);
+        Transaccion transaccionInicial = guardarTransaccionInicial(transaccion);
+        log.info("Transacción guardada inicialmente: {}", transaccionInicial);
+        return procesarConGateway(transaccionInicial, datosSensibles, interesDiferido, cuotas);
+    }
+
+    @Transactional(readOnly = true)
+    public Transaccion obtenerPorCodigoUnico(String codigoUnicoTransaccion) {
+        return transaccionRepository.findByCodigoUnicoTransaccion(codigoUnicoTransaccion)
+                .orElseThrow(() -> new NotFoundException(codigoUnicoTransaccion, ENTITY_NAME));
     }
 
     @Transactional
-    public Transaccion crear(Transaccion transaccion, String datosSensibles, 
-                           Boolean interesDiferido, Integer cuotas) {
-        log.info("Iniciando creación de transacción. Datos recibidos: {}", transaccion);
-
-        // Fase 1: Validación y guardado inicial
-        Transaccion transaccionInicial = guardarTransaccionInicial(transaccion);
-        log.info("Transacción guardada inicialmente: {}", transaccionInicial);
-
-        // Fase 2: Procesamiento con gateway
-        return procesarConGateway(transaccionInicial, datosSensibles, interesDiferido, cuotas);
+    public void actualizarEstadoTransaccion(ActualizacionEstadoDTO actualizacion) {
+        log.info("Actualizando estado de transacción: {}", actualizacion.getCodigoUnicoTransaccion());
+        
+        Transaccion transaccion = obtenerPorCodigoUnico(actualizacion.getCodigoUnicoTransaccion());
+        transaccion.setEstado(actualizacion.getEstado());
+        transaccion.setDetalle(actualizacion.getMensaje());
+        
+        transaccionRepository.save(transaccion);
+        log.info("Estado de transacción actualizado a: {}", actualizacion.getEstado());
     }
 
     @Transactional
     public Transaccion guardarTransaccionInicial(Transaccion transaccion) {
-        // Validar y transformar marca si es necesario
-        if (transaccion.getMarca() == null || transaccion.getMarca().length() > 4
-                || !MARCAS_VALIDAS.contains(transaccion.getMarca())) {
-            throw new IllegalArgumentException(
-                    "Marca inválida. Debe ser una de: " + String.join(", ", MARCAS_VALIDAS));
-        }
+        validarMarca(transaccion.getMarca());
+        establecerValoresPredeterminados(transaccion);
+        validarCamposObligatorios(transaccion);
+        log.info("Validación de campos completada exitosamente");
+        return transaccionRepository.save(transaccion);
+    }
 
-        // Establecer valores predeterminados
+    @Transactional
+    public Transaccion procesarConGateway(Transaccion transaccion, String datosSensibles, Boolean interesDiferido, Integer cuotas) {
+        try {
+            GatewayTransaccionDTO gatewayDTO = convertirAGatewayDTO(transaccion, datosSensibles, interesDiferido, cuotas);
+            log.info("Enviando al gateway DTO con datos de tarjeta incluidos");
+
+            ResponseEntity<String> respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
+            log.info("Respuesta del gateway - Status: {}, Body: {}", respuesta.getStatusCode(), respuesta.getBody());
+
+            actualizarEstadoSegunRespuesta(transaccion, respuesta);
+            return transaccionRepository.save(transaccion);
+
+        } catch (Exception e) {
+            log.error("Error al procesar con gateway: {}", e.getMessage());
+            transaccion.setEstado(ESTADO_RECHAZADO);
+            return transaccionRepository.save(transaccion);
+        }
+    }
+
+    private void validarMarca(String marca) {
+        if (marca == null || marca.length() > 4 || !MARCAS_VALIDAS.contains(marca)) {
+            throw new NotFoundException(marca, "Marca válida. Debe ser una de: " + String.join(", ", MARCAS_VALIDAS));
+        }
+    }
+
+    private void establecerValoresPredeterminados(Transaccion transaccion) {
         transaccion.setTipo(TIPO_PAGO);
         transaccion.setModalidad(MODALIDAD_SIMPLE);
         transaccion.setMoneda("USD");
         transaccion.setFecha(LocalDateTime.now());
         transaccion.setEstado(ESTADO_ENVIADO);
         transaccion.setEstadoRecibo(ESTADO_RECIBO_PENDIENTE);
-
-        // Generar código único y detalle
-        String codigoUnico = "TRX" + System.currentTimeMillis();
-        transaccion.setCodigoUnicoTransaccion(codigoUnico);
+        transaccion.setCodigoUnicoTransaccion("TRX" + System.currentTimeMillis());
         transaccion.setDetalle("Transacción POS - " + transaccion.getMarca());
-
-        log.info("Valores establecidos para transacción inicial: marca={}, monto={}",
-                transaccion.getMarca(), transaccion.getMonto());
-
-        // Validar campos obligatorios
-        validarCamposObligatorios(transaccion);
-        log.info("Validación de campos completada exitosamente");
-
-        // Guardar transacción inicial
-        return transaccionRepository.save(transaccion);
-    }
-
-    @Transactional
-    public Transaccion procesarConGateway(Transaccion transaccion, String datosSensibles, 
-                                         Boolean interesDiferido, Integer cuotas) {
-        try {
-            // Preparar y enviar al gateway
-            GatewayTransaccionDTO gatewayDTO = convertirAGatewayDTO(transaccion, datosSensibles, 
-                                                                   interesDiferido, cuotas);
-            log.info("Enviando al gateway DTO con datos de tarjeta incluidos");
-
-            ResponseEntity<String> respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
-            log.info("Respuesta del gateway - Status: {}, Body: {}", 
-                    respuesta.getStatusCode(), respuesta.getBody());
-
-            // Actualizar estado basado en el código HTTP y el mensaje
-            if (respuesta.getStatusCode().is2xxSuccessful() && 
-                respuesta.getBody() != null && 
-                respuesta.getBody().contains("aceptada")) {
-                transaccion.setEstado(ESTADO_AUTORIZADO);
-                log.info("Transacción autorizada");
-            } else if (respuesta.getStatusCode().value() == 400 || 
-                     (respuesta.getBody() != null && respuesta.getBody().contains("rechazada"))) {
-                transaccion.setEstado(ESTADO_RECHAZADO);
-                log.info("Transacción rechazada");
-            }
-            
-            // Actualizar la transacción con el nuevo estado
-            transaccion = transaccionRepository.save(transaccion);
-            log.info("Estado de transacción actualizado a: {}", transaccion.getEstado());
-
-            return transaccion;
-
-        } catch (Exception e) {
-            log.error("Error al procesar con gateway: {}", e.getMessage());
-            transaccion.setEstado(ESTADO_RECHAZADO);
-            transaccion = transaccionRepository.save(transaccion);
-            log.info("Transacción marcada como rechazada debido a error de comunicación");
-            return transaccion;
-        }
     }
 
     private void validarCamposObligatorios(Transaccion transaccion) {
         if (transaccion.getMonto() == null || transaccion.getMonto().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("El monto debe ser mayor que cero");
+            throw new NotFoundException(transaccion.getMonto() != null ? transaccion.getMonto().toString() : "null", 
+                "Monto. Debe ser mayor que cero");
         }
         if (transaccion.getMarca() == null || transaccion.getMarca().trim().isEmpty()) {
-            throw new IllegalArgumentException("La marca es obligatoria");
+            throw new NotFoundException("null", "Marca. Es un campo obligatorio");
         }
         if (transaccion.getDetalle() == null || transaccion.getDetalle().trim().isEmpty()) {
-            throw new IllegalArgumentException("El detalle es obligatorio");
+            throw new NotFoundException("null", "Detalle. Es un campo obligatorio");
         }
         if (!MONEDAS_VALIDAS.contains(transaccion.getMoneda())) {
-            throw new IllegalArgumentException("Moneda no válida");
+            throw new NotFoundException(transaccion.getMoneda(), 
+                "Moneda válida. Debe ser una de: " + String.join(", ", MONEDAS_VALIDAS));
         }
     }
 
-    private GatewayTransaccionDTO convertirAGatewayDTO(Transaccion transaccion, String datosSensibles, 
-                                                      Boolean interesDiferido, Integer cuotas) {
+    private void actualizarEstadoSegunRespuesta(Transaccion transaccion, ResponseEntity<String> respuesta) {
+        if (respuesta.getStatusCode().is2xxSuccessful() && 
+            respuesta.getBody() != null && 
+            respuesta.getBody().contains("aceptada")) {
+            transaccion.setEstado(ESTADO_AUTORIZADO);
+            log.info("Transacción autorizada");
+        } else if (respuesta.getStatusCode().value() == 400 || 
+                 (respuesta.getBody() != null && respuesta.getBody().contains("rechazada"))) {
+            transaccion.setEstado(ESTADO_RECHAZADO);
+            log.info("Transacción rechazada");
+        }
+    }
+
+    private GatewayTransaccionDTO convertirAGatewayDTO(Transaccion transaccion, String datosSensibles, Boolean interesDiferido, Integer cuotas) {
         GatewayTransaccionDTO dto = new GatewayTransaccionDTO();
         
         try {
-            // Obtener configuración local del POS
             log.info("Obteniendo configuración actual del POS");
             Configuracion config = configuracionService.obtenerConfiguracionActual();
             
-            // Crear DTO de comercio con el código de la configuración
             ComercioDTO comercio = new ComercioDTO();
             comercio.setCodigo(config.getCodigoComercio());
             
-            // Obtener facturación usando el código del comercio
             log.info("Consultando facturación para el comercio: {}", comercio.getCodigo());
             FacturacionComercioDTO facturacion = comercioClient.obtenerFacturacionPorComercio(comercio.getCodigo());
             
             dto.setComercio(comercio);
             dto.setFacturacionComercio(facturacion);
-
-            // Datos de la transacción
             dto.setTipo(transaccion.getModalidad());
             dto.setMarca(transaccion.getMarca());
             dto.setDetalle(transaccion.getDetalle());
@@ -192,15 +181,9 @@ public class TransaccionService {
             dto.setEstado(transaccion.getEstado());
             dto.setMoneda(transaccion.getMoneda());
             dto.setPais("EC");
-
-            // Agregar datos del POS
             dto.setCodigoPos(config.getPk().getCodigo());
             dto.setModeloPos(config.getPk().getModelo());
-
-            // Agregar datos sensibles de la tarjeta
             dto.setTarjeta(datosSensibles);
-            
-            // Agregar datos de diferido
             dto.setInteresDiferido(interesDiferido);
             dto.setCuotas(cuotas);
 
@@ -209,32 +192,9 @@ public class TransaccionService {
 
         } catch (Exception e) {
             log.error("Error al obtener datos del comercio: {}", e.getMessage());
-            throw new RuntimeException("Error al preparar datos para el gateway", e);
+            throw new NotFoundException("Error al preparar datos", "Gateway");
         }
 
         return dto;
-    }
-
-    @Transactional
-    public void actualizarEstadoTransaccion(ActualizacionEstadoDTO actualizacion) {
-        log.info("Actualizando estado de transacción: {}", actualizacion.getCodigoUnicoTransaccion());
-        
-        Transaccion transaccion = transaccionRepository.findByCodigoUnicoTransaccion(
-                actualizacion.getCodigoUnicoTransaccion())
-                .orElseThrow(() -> new RuntimeException("Transacción no encontrada"));
-
-        // Actualizar estado
-        transaccion.setEstado(actualizacion.getEstado());
-        transaccion.setDetalle(actualizacion.getMensaje());
-        
-        // Guardar cambios
-        transaccionRepository.save(transaccion);
-        log.info("Estado de transacción actualizado a: {}", actualizacion.getEstado());
-    }
-
-    @Transactional(readOnly = true)
-    public Transaccion obtenerPorCodigoUnico(String codigoUnicoTransaccion) {
-        return transaccionRepository.findByCodigoUnicoTransaccion(codigoUnicoTransaccion)
-                .orElseThrow(() -> new RuntimeException("Transacción no encontrada"));
     }
 }

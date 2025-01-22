@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/process-payment")
+@RequestMapping("/api/v1/process-payment")
 public class PagoController {
 
     @PostMapping

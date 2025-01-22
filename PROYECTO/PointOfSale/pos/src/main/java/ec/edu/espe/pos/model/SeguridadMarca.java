@@ -1,11 +1,19 @@
 package ec.edu.espe.pos.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import jakarta.validation.constraints.NotNull;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "POS_SEGURIDAD_MARCA")
 public class SeguridadMarca implements Serializable {
@@ -13,42 +21,17 @@ public class SeguridadMarca implements Serializable {
     @Id
     @Column(name = "MARCA", length = 4, nullable = false)
     private String marca;
+
     @NotNull
     @Column(name = "CLAVE", length = 128, nullable = false)
     private String clave;
+
     @NotNull
     @Column(name = "FECHA_ACTUALIZACION", nullable = false)
     private LocalDateTime fechaActualizacion;
 
-    public SeguridadMarca() {
-    }
-
     public SeguridadMarca(String marca) {
         this.marca = marca;
-    }
-
-    public String getMarca() {
-        return marca;
-    }
-
-    public void setMarca(String marca) {
-        this.marca = marca;
-    }
-
-    public String getClave() {
-        return clave;
-    }
-
-    public void setClave(String clave) {
-        this.clave = clave;
-    }
-
-    public LocalDateTime getFechaActualizacion() {
-        return fechaActualizacion;
-    }
-
-    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
-        this.fechaActualizacion = fechaActualizacion;
     }
 
     @Override
