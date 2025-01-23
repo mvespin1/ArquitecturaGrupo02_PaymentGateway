@@ -29,21 +29,21 @@ public class SeguridadGatewayService {
 
     private static final Logger log = LoggerFactory.getLogger(SeguridadGatewayService.class);
     private static final String ENTITY_NAME = "Seguridad Gateway";
-    private static final String SEGURIDAD_URL = "http://18.190.153.55/api/seguridad/clave-activa";
+    private static final String SEGURIDAD_URL = "http://localhost:8082/api/seguridad/clave-activa";
     private static final String ESTADO_ACTIVO = "ACT";
     private static final String ESTADO_INACTIVO = "INA";
 
     private final RestTemplate restTemplate;
     private final SeguridadGatewayRepository seguridadGatewayRepository;
 
-    @PostConstruct
+    /*@PostConstruct
     @Transactional
     public void inicializarClave() {
         log.info("Inicializando clave al arrancar el servicio");
         actualizarClaveDesdeGateway();
-    }
+    }*/
 
-    @Scheduled(cron = "0 0 0 * * *")
+    /*@Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void actualizarClaveDesdeGateway() {
         try {
@@ -54,7 +54,7 @@ public class SeguridadGatewayService {
             log.error("Error al actualizar clave desde gateway: ", e);
             throw new SecurityException("actualización de clave", "Gateway");
         }
-    }
+    }*/
 
     public String encriptarInformacion(String informacion, String clave) {
         try {

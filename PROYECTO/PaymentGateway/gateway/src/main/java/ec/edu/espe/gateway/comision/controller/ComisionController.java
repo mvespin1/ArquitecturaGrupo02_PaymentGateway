@@ -8,6 +8,9 @@ import ec.edu.espe.gateway.comision.services.ComisionService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {
+    RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS
+})
 @RestController
 @RequestMapping("/v1/comisiones")
 public class ComisionController {

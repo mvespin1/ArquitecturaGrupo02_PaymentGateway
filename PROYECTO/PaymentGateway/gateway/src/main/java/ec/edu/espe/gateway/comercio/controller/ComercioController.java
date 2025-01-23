@@ -8,14 +8,27 @@ import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {
+    RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS
+})
 @RestController
-@RequestMapping("/api/comercios")
+@RequestMapping("/v1/comercios")
 public class ComercioController {
 
     private final ComercioService comercioService;
 
     public ComercioController(ComercioService comercioService) {
         this.comercioService = comercioService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Comercio>> obtenerTodos() {
+        try {
+            List<Comercio> comercios = comercioService.obtenerTodos();
+            return ResponseEntity.ok(comercios);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/{codigo}")

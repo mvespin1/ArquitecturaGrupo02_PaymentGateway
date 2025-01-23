@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/transacciones")
+@RequestMapping("/v1/transacciones")
 public class TransaccionController {
 
     private static final Logger log = LoggerFactory.getLogger(TransaccionController.class);

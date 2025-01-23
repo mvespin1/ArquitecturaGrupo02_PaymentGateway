@@ -403,4 +403,8 @@ public class ComercioService {
             .orElseThrow(() -> new EntityNotFoundException(
                 "No se encontró facturación activa para el comercio: " + codigoComercio));
     }
+
+    public List<Comercio> obtenerTodos() {
+        return comercioRepository.findAll();
+    }
 }

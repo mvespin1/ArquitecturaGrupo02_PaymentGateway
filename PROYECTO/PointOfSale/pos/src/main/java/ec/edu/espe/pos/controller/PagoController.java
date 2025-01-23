@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 
 @CrossOrigin(origins = "https://frontend-blond-theta.vercel.app")
 @RestController
-@RequestMapping("/api/v1/pagos")
+@RequestMapping("/v1/pagos")
 @RequiredArgsConstructor
 public class PagoController {
     private static final Logger log = LoggerFactory.getLogger(PagoController.class);

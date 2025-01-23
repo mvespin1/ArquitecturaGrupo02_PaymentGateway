@@ -282,7 +282,7 @@ public class TransaccionService {
 
         try {
             // Validar comercio
-            Comercio comercio = comercioRepository.findById(transaccion.getComercio().getCodigo())
+        Comercio comercio = comercioRepository.findById(transaccion.getComercio().getCodigo())
                     .orElseThrow(() -> new TransaccionValidationException("comercio", "Comercio no encontrado"));
 
             if (!"ACT".equals(comercio.getEstado())) {
@@ -298,14 +298,14 @@ public class TransaccionService {
                         "No existe facturación activa para el comercio"));
 
             // Configurar campos inmutables
-            transaccion.setComercio(comercio);
+        transaccion.setComercio(comercio);
             transaccion.setFacturacionComercio(facturacionActiva);
             transaccion.setFecha(LocalDateTime.now());
-            transaccion.setEstado(ESTADO_ENVIADO);
+        transaccion.setEstado(ESTADO_ENVIADO);
             transaccion.setCodigoUnicoTransaccion(generarCodigoUnico());
 
             validarTransaccion(transaccion);
-            return transaccionRepository.save(transaccion);
+        return transaccionRepository.save(transaccion);
 
         } catch (TransaccionValidationException | TransaccionStateException e) {
             throw e;
@@ -391,19 +391,19 @@ public class TransaccionService {
     private ValidacionTransaccionDTO prepararValidacionDTO(Transaccion transaccion) {
         try {
             ValidacionTransaccionDTO dto = transaccionMapper.toDTO(transaccion);
-            DatosTarjeta datosTarjeta = extraerDatosTarjeta(transaccion.getTarjeta());
+        DatosTarjeta datosTarjeta = extraerDatosTarjeta(transaccion.getTarjeta());
 
-            // Configurar datos del banco
+        // Configurar datos del banco
             BancoDTO banco = new BancoDTO();
             banco.setCodigo(1);
-            dto.setBanco(banco);
+        dto.setBanco(banco);
 
             // Configurar datos de tarjeta
-            dto.setFechaExpiracionTarjeta(datosTarjeta.getExpiryDate());
-            dto.setNombreTarjeta(datosTarjeta.getNombreTarjeta());
-            dto.setNumeroTarjeta(datosTarjeta.getCardNumber());
-            dto.setDireccionTarjeta(datosTarjeta.getDireccionTarjeta());
-            dto.setCvv(datosTarjeta.getCvv());
+        dto.setFechaExpiracionTarjeta(datosTarjeta.getExpiryDate());
+        dto.setNombreTarjeta(datosTarjeta.getNombreTarjeta());
+        dto.setNumeroTarjeta(datosTarjeta.getCardNumber());
+        dto.setDireccionTarjeta(datosTarjeta.getDireccionTarjeta());
+        dto.setCvv(datosTarjeta.getCvv());
 
             // Configurar valores por defecto
             dto.setCodigoMoneda("USD");
@@ -412,7 +412,7 @@ public class TransaccionService {
             dto.setGtwComision("10.50");
             dto.setGtwCuenta("00000002");
 
-            return dto;
+        return dto;
         } catch (Exception e) {
             log.error("Error al preparar DTO de validación: {}", e.getMessage());
             throw new TransaccionValidationException("preparacion_dto", 

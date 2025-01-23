@@ -8,6 +8,9 @@ import ec.edu.espe.gateway.comision.model.ComisionSegmento;
 import ec.edu.espe.gateway.comision.services.ComisionSegmentoService;
 import jakarta.persistence.EntityNotFoundException;
 
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {
+    RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS
+})
 @RestController
 @RequestMapping("/v1/comision-segmentos")
 public class ComisionSegmentoController {

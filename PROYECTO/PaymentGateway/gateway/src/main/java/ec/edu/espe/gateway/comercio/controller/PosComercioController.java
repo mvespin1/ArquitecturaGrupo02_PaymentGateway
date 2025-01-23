@@ -11,6 +11,9 @@ import java.util.List;
 import ec.edu.espe.gateway.comercio.controller.dto.Configuracion;
 import ec.edu.espe.gateway.comercio.controller.mapper.ConfiguracionMapper;
 
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {
+    RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS
+})
 @RestController
 @RequestMapping("/v1/pos-comercio")
 public class PosComercioController {

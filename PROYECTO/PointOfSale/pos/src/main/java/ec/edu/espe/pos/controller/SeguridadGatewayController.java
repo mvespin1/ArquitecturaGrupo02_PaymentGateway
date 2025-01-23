@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 @CrossOrigin(origins = "https://frontend-blond-theta.vercel.app")
 @RestController
-@RequestMapping("/api/v1/seguridad-gateway")
+@RequestMapping("/v1/seguridad-gateway")
 @RequiredArgsConstructor
 public class SeguridadGatewayController {
 

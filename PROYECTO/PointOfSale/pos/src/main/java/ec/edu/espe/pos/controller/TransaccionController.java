@@ -18,7 +18,7 @@ import java.util.HashMap;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/transacciones")
+@RequestMapping("/v1/transacciones")
 @CrossOrigin(origins = "https://frontend-blond-theta.vercel.app")
 @RequiredArgsConstructor
 public class TransaccionController {

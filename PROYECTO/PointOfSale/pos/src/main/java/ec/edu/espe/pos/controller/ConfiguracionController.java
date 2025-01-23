@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RestController
-@RequestMapping("/api/v1/pos-configuracion")
+@RequestMapping("/v1/pos-configuracion")
 @RequiredArgsConstructor
 public class ConfiguracionController {
 

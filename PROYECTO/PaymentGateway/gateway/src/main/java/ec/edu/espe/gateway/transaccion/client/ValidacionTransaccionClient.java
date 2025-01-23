@@ -12,6 +12,6 @@ import org.springframework.http.ResponseEntity;
 @FeignClient(name = "validacionTransaccion", url = "http://3.145.167.151")
 public interface ValidacionTransaccionClient {
     
-    @PostMapping("/api/v1/transacciones")
+    @PostMapping("/v1/transacciones")
     ResponseEntity<RespuestaValidacionDTO> validarTransaccion(@RequestBody ValidacionTransaccionDTO transaccion);
 } 
