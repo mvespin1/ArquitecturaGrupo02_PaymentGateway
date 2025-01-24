@@ -1,23 +1,34 @@
 package ec.edu.espe.pos.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import jakarta.validation.constraints.NotNull;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "POS_CONFIGURACION")
 public class Configuracion implements Serializable {
 
     @EmbeddedId
     private ConfiguracionPK pk;
+
     @NotNull
     @Column(name = "DIRECCION_MAC", length = 32, nullable = false)
     private String direccionMac;
+
     @NotNull
     @Column(name = "CODIGO_COMERCIO", nullable = false)
     private Integer codigoComercio;
+
     @NotNull
     @Column(name = "FECHA_ACTIVACION", nullable = false)
     private LocalDateTime fechaActivacion;
@@ -25,43 +36,8 @@ public class Configuracion implements Serializable {
     @Transient
     private String codigoComercioPOS;
 
-    public Configuracion() {
-    }
-
     public Configuracion(ConfiguracionPK pk) {
         this.pk = pk;
-    }
-
-    public ConfiguracionPK getPk() {
-        return pk;
-    }
-
-    public void setPk(ConfiguracionPK pk) {
-        this.pk = pk;
-    }
-
-    public String getDireccionMac() {
-        return direccionMac;
-    }
-
-    public void setDireccionMac(String direccionMac) {
-        this.direccionMac = direccionMac;
-    }
-
-    public Integer getCodigoComercio() {
-        return codigoComercio;
-    }
-
-    public void setCodigoComercio(Integer codigoComercio) {
-        this.codigoComercio = codigoComercio;
-    }
-
-    public LocalDateTime getFechaActivacion() {
-        return fechaActivacion;
-    }
-
-    public void setFechaActivacion(LocalDateTime fechaActivacion) {
-        this.fechaActivacion = fechaActivacion;
     }
 
     @Override

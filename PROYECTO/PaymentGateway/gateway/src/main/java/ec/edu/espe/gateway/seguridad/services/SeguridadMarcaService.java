@@ -3,16 +3,17 @@ package ec.edu.espe.gateway.seguridad.services;
 import ec.edu.espe.gateway.seguridad.model.SeguridadMarca;
 import ec.edu.espe.gateway.seguridad.repository.SeguridadMarcaRepository;
 import org.springframework.stereotype.Service;
+import ec.edu.espe.gateway.seguridad.exception.NotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class SeguridadMarcaService {
 
     private final SeguridadMarcaRepository repository;
+    public static final String ENTITY_NAME = "Marca de Seguridad";
 
     private static final String REGEX_MARCA = "^[a-zA-Z]{1,4}$";
     private static final String REGEX_CLAVE = "^[a-zA-Z0-9]{1,128}$";
@@ -43,9 +44,16 @@ public class SeguridadMarcaService {
 
     public Optional<SeguridadMarca> getMarcaById(String marca) {
         try {
-            return repository.findById(marca);
+            SeguridadMarca marcaFound = repository.findById(marca)
+                .orElseThrow(() -> new NotFoundException(
+                    marca, 
+                    ENTITY_NAME
+                ));
+            return Optional.of(marcaFound);
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception ex) {
-            throw new RuntimeException("Error al obtener la marca con ID " + marca + ". Motivo: " + ex.getMessage());
+            throw new RuntimeException("Error al obtener la marca. Motivo: " + ex.getMessage());
         }
     }
 
@@ -75,24 +83,29 @@ public class SeguridadMarcaService {
                         marcaExistente.setFechaActualizacion(LocalDateTime.now());
                         return repository.save(marcaExistente);
                     })
-                    .orElseThrow(() -> new EntityNotFoundException("Marca con ID " + marcaId + " no encontrada."));
-        } catch (EntityNotFoundException ex) {
-            throw ex;
+                    .orElseThrow(() -> new NotFoundException(
+                        marcaId, 
+                        ENTITY_NAME
+                    ));
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception ex) {
-            throw new RuntimeException(
-                    "Error al actualizar la marca con ID " + marcaId + ". Motivo: " + ex.getMessage());
+            throw new RuntimeException("Error al actualizar la marca. Motivo: " + ex.getMessage());
         }
     }
 
     public void deleteById(String marcaId) {
         try {
             repository.findById(marcaId)
-                    .orElseThrow(() -> new EntityNotFoundException("Marca con ID " + marcaId + " no encontrada."));
+                    .orElseThrow(() -> new NotFoundException(
+                        marcaId, 
+                        ENTITY_NAME
+                    ));
             repository.deleteById(marcaId);
-        } catch (EntityNotFoundException ex) {
-            throw ex;
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception ex) {
-            throw new RuntimeException("Error al eliminar la marca con ID " + marcaId + ". Motivo: " + ex.getMessage());
+            throw new RuntimeException("Error al eliminar la marca. Motivo: " + ex.getMessage());
         }
     }
 }

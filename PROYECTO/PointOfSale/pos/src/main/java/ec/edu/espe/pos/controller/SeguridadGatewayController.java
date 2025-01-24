@@ -2,55 +2,84 @@ package ec.edu.espe.pos.controller;
 
 import ec.edu.espe.pos.model.SeguridadGateway;
 import ec.edu.espe.pos.service.SeguridadGatewayService;
+import ec.edu.espe.pos.exception.NotFoundException;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.HashMap;
+
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @CrossOrigin(origins = "https://frontend-blond-theta.vercel.app")
 @RestController
-@RequestMapping("/api/seguridad-gateway")
+@RequestMapping("/v1/seguridad-gateway")
+@RequiredArgsConstructor
 public class SeguridadGatewayController {
 
+    private static final Logger log = LoggerFactory.getLogger(SeguridadGatewayController.class);
     private final SeguridadGatewayService seguridadGatewayService;
-
-    public SeguridadGatewayController(SeguridadGatewayService seguridadGatewayService) {
-        this.seguridadGatewayService = seguridadGatewayService;
-    }
     
     @GetMapping("/clave-activa")
     public ResponseEntity<Object> obtenerClaveActiva() {
+        log.info("Obteniendo clave activa");
         try {
-            SeguridadGateway claveActiva = this.seguridadGatewayService.obtenerClaveActiva();
+            SeguridadGateway claveActiva = seguridadGatewayService.obtenerClaveActiva();
+            log.info("Clave activa obtenida exitosamente");
             return ResponseEntity.ok(claveActiva);
+        } catch (NotFoundException e) {
+            log.error("Clave activa no encontrada: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
+            log.error("Error al obtener clave activa: {}", e.getMessage());
             return ResponseEntity.internalServerError()
-                    .body("Error al obtener clave activa: " + e.getMessage());
+                    .body(crearRespuestaError("Error interno", "Error al obtener clave activa"));
         }
     }
 
     @PostMapping("/encriptar")
     public ResponseEntity<Object> encriptarDatos(@RequestBody Map<String, String> datos) {
+        log.info("Iniciando proceso de encriptación de datos");
         try {
-            // Validación de datos de entrada
-            if (datos.get("informacion") == null || datos.get("clave") == null) {
-                return ResponseEntity.badRequest()
-                        .body("Los campos 'informacion' y 'clave' son requeridos");
-            }
-
+            validarDatosEncriptacion(datos);
+            
             String informacion = datos.get("informacion");
             String clave = datos.get("clave");
             
-            // Log para depuración
-            System.out.println("Información a encriptar: " + informacion);
-            System.out.println("Clave utilizada: " + clave);
-
-            String datosEncriptados = this.seguridadGatewayService.encriptarInformacion(informacion, clave);
+            log.debug("Procesando encriptación con clave de longitud: {}", clave.length());
+            String datosEncriptados = seguridadGatewayService.encriptarInformacion(informacion, clave);
+            
+            log.info("Datos encriptados exitosamente");
             return ResponseEntity.ok(Map.of("datosEncriptados", datosEncriptados));
+        } catch (IllegalArgumentException e) {
+            log.error("Error de validación: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(crearRespuestaError("Error de validación", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace(); // Para ver el stack trace completo en los logs
+            log.error("Error al encriptar datos: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
-                    .body("Error al encriptar datos: " + e.getMessage() + " | Causa: " + e.getCause());
+                    .body(crearRespuestaError("Error de encriptación", "Error al procesar los datos"));
         }
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFoundException(NotFoundException e) {
+        return ResponseEntity.status(404).body(crearRespuestaError("No encontrado", e.getMessage()));
+    }
+
+    private void validarDatosEncriptacion(Map<String, String> datos) {
+        if (datos.get("informacion") == null || datos.get("clave") == null) {
+            throw new IllegalArgumentException("Los campos 'informacion' y 'clave' son requeridos");
+        }
+    }
+
+    private Map<String, String> crearRespuestaError(String tipo, String mensaje) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", tipo);
+        response.put("mensaje", mensaje);
+        return response;
     }
 }

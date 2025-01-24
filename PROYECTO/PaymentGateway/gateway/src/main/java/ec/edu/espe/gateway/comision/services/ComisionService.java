@@ -5,9 +5,9 @@ import ec.edu.espe.gateway.comision.model.ComisionSegmento;
 import ec.edu.espe.gateway.comision.model.ComisionSegmentoPK;
 import ec.edu.espe.gateway.comision.repository.ComisionRepository;
 import ec.edu.espe.gateway.comision.repository.ComisionSegmentoRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ec.edu.espe.gateway.comision.exception.NotFoundException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,6 +24,8 @@ public class ComisionService {
     private static final int MAX_DIGITOS_DECIMAL_MONTO_BASE = 4;
     public static final String TIPO_COMISION_POR = "POR";
     public static final String TIPO_COMISION_FIJ = "FIJ";
+    public static final String ENTITY_NAME = "Comisión";
+    public static final String ENTITY_SEGMENTO = "Segmento de Comisión";
 
     public ComisionService(ComisionRepository comisionRepository, ComisionSegmentoRepository segmentoRepository) {
         this.comisionRepository = comisionRepository;
@@ -40,10 +42,16 @@ public class ComisionService {
 
     public Optional<Comision> findById(Integer codigo) {
         try {
-            return comisionRepository.findById(codigo);
+            Comision comision = comisionRepository.findById(codigo)
+                .orElseThrow(() -> new NotFoundException(
+                    codigo.toString(), 
+                    ENTITY_NAME
+                ));
+            return Optional.of(comision);
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception ex) {
-            throw new RuntimeException(
-                    "No se pudo obtener la comisión con código " + codigo + ". Motivo: " + ex.getMessage());
+            throw new RuntimeException("Error al obtener la comisión: " + ex.getMessage());
         }
     }
 
@@ -113,13 +121,16 @@ public class ComisionService {
                             throw new RuntimeException("Error durante la actualización: " + e.getMessage());
                         }
                     })
-                    .orElseThrow(() -> new EntityNotFoundException("Comisión con código " + codigo + " no encontrada."));
-        } catch (EntityNotFoundException e) {
+                    .orElseThrow(() -> new NotFoundException(
+                        codigo.toString(), 
+                        ENTITY_NAME
+                    ));
+        } catch (NotFoundException e) {
             throw e;
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception ex) {
-            throw new RuntimeException("Error inesperado al actualizar la comisión con código " + codigo + ". Motivo: " + ex.getMessage(), ex);
+            throw new RuntimeException("Error al actualizar la comisión: " + ex.getMessage());
         }
     }
 
@@ -170,26 +181,18 @@ public class ComisionService {
         try {
             ComisionSegmentoPK pk = new ComisionSegmentoPK(comision.getCodigo(), comision.getTransaccionesBase());
             
-            // Verificar si existe el segmento
-            if (!segmentoRepository.existsById(pk)) {
-                // Si no existe, crear uno nuevo
-                ComisionSegmento nuevoSegmento = new ComisionSegmento(pk);
-                nuevoSegmento.setTransaccionesHasta(comision.getTransaccionesBase());
-                nuevoSegmento.setMonto(BigDecimal.ZERO);
-                nuevoSegmento.setComision(comision);
-                segmentoRepository.save(nuevoSegmento);
-                return;
-            }
-            
             // Si existe, actualizar
             ComisionSegmento segmento = segmentoRepository.findById(pk)
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Segmento no encontrado para la comisión con código " + comision.getCodigo()));
+                    .orElseThrow(() -> new NotFoundException(
+                        pk.toString(), 
+                        ENTITY_SEGMENTO
+                    ));
             segmento.setTransaccionesHasta(comision.getTransaccionesBase());
             segmentoRepository.save(segmento);
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception ex) {
-            throw new RuntimeException("No se pudo actualizar el segmento para la comisión con código "
-                    + comision.getCodigo() + ". Motivo: " + ex.getMessage());
+            throw new RuntimeException("Error al actualizar segmento: " + ex.getMessage());
         }
     }
 

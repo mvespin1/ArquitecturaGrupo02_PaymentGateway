@@ -3,40 +3,23 @@ package ec.edu.espe.pos.model;
 import java.io.Serializable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Embeddable
 public class ConfiguracionPK implements Serializable {
 
     @NotNull
     @Column(name = "CODIGO_POS", length = 10, nullable = false)
     private String codigo;
+
     @NotNull
     @Column(name = "MODELO", length = 10, nullable = false)
     private String modelo;
-
-    public ConfiguracionPK() {
-    }
-
-    public ConfiguracionPK(@NotNull String codigo, @NotNull String modelo) {
-        this.codigo = codigo;
-        this.modelo = modelo;
-    }
-
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
-    }
-
-    public String getModelo() {
-        return modelo;
-    }
-
-    public void setModelo(String modelo) {
-        this.modelo = modelo;
-    }
 
     @Override
     public int hashCode() {

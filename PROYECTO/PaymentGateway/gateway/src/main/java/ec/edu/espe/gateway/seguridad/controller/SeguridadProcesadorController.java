@@ -4,12 +4,13 @@ import ec.edu.espe.gateway.seguridad.model.SeguridadProcesador;
 import ec.edu.espe.gateway.seguridad.services.SeguridadProcesadorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import ec.edu.espe.gateway.seguridad.exception.NotFoundException;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/seguridad-procesadores")
+@RequestMapping("/v1/seguridad-procesadores")
 public class SeguridadProcesadorController {
 
     private final SeguridadProcesadorService procesadorService;
@@ -20,25 +21,37 @@ public class SeguridadProcesadorController {
 
     @GetMapping
     public ResponseEntity<List<SeguridadProcesador>> getAll() {
-        List<SeguridadProcesador> procesadores = procesadorService.getAllProcesadores();
-        return ResponseEntity.ok(procesadores);
+        try {
+            List<SeguridadProcesador> procesadores = procesadorService.getAllProcesadores();
+            return ResponseEntity.ok(procesadores);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<SeguridadProcesador> getById(@PathVariable Integer id) {
         try {
-            SeguridadProcesador procesador = procesadorService.getProcesadorById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Procesador con ID " + id + " no encontrado."));
-            return ResponseEntity.ok(procesador);
-        } catch (EntityNotFoundException e) {
+            return procesadorService.getProcesadorById(id)
+                    .map(ResponseEntity::ok)
+                    .orElseThrow(() -> new NotFoundException(id.toString(), "Procesador"));
+        } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
     @PostMapping
     public ResponseEntity<SeguridadProcesador> create(@RequestBody SeguridadProcesador procesador) {
-        SeguridadProcesador savedProcesador = procesadorService.createProcesador(procesador);
-        return ResponseEntity.ok(savedProcesador);
+        try {
+            SeguridadProcesador savedProcesador = procesadorService.createProcesador(procesador);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedProcesador);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @PutMapping("/{id}")
@@ -48,8 +61,10 @@ public class SeguridadProcesadorController {
         try {
             SeguridadProcesador updatedProcesador = procesadorService.updateProcesador(id, updatedProcesadorDetails);
             return ResponseEntity.ok(updatedProcesador);
-        } catch (EntityNotFoundException e) {
+        } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -58,8 +73,10 @@ public class SeguridadProcesadorController {
         try {
             SeguridadProcesador deactivatedProcesador = procesadorService.deactivateProcesador(id);
             return ResponseEntity.ok(deactivatedProcesador);
-        } catch (EntityNotFoundException e) {
+        } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -68,10 +85,10 @@ public class SeguridadProcesadorController {
         try {
             procesadorService.deleteById(id);
             return ResponseEntity.noContent().build();
-        } catch (EntityNotFoundException e) {
+        } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

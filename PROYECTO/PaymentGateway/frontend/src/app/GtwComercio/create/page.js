@@ -2,109 +2,159 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import "./page.css"; // Importar el archivo CSS
+import { API_URLS } from "../../config/api";
+import "../../Css/general.css";
 
-const CreatePage = () => {
-  const [form, setForm] = useState({
-    CODIGO_INTERNO: "",
-    RUC: "",
-    RAZON_SOCIAL: "",
-    NOMBRE_COMERCIAL: "",
-    FECHA_CREACION: "",
-    COD_COMISION: "",
-    PAGOS_ACEPTADOS: "",
-    ESTADO: "pendiente",
-    FECHA_ACTIVACION: "",
-    FECHA_SUSPENSION: "",
-  });
-
+const CreateComercio = () => {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    codigoInterno: "",
+    ruc: "",
+    razonSocial: "",
+    nombreComercial: "",
+    pagosAceptados: "",
+    estado: "ACT",
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    if (name === "RUC" && value.length > 13) return;
-    if ((name === "RAZON_SOCIAL" || name === "NOMBRE_COMERCIAL") && value.length > 100) return;
-
-    setForm({ ...form, [name]: value });
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    if (!form.RAZON_SOCIAL.trim() || !form.NOMBRE_COMERCIAL.trim()) {
-      alert("Razón Social y Nombre Comercial no pueden estar vacíos.");
-      return;
+    try {
+      const response = await fetch(API_URLS.COMERCIO.BASE, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al crear el comercio");
+      }
+
+      router.push("/GtwComercio/components");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    console.log("Registro creado:", form);
-    router.push("/");
   };
 
   const handleCancel = () => {
     router.push("/GtwComercio/components");
   };
 
-  const tiposComision = ["Tipo 1", "Tipo 2", "Tipo 3"];
+  if (loading) return <div className="loading">Creando comercio...</div>;
 
   return (
-    <main>
-      <h1>Crear Nuevo Comercio</h1>
-      <form onSubmit={handleSubmit}>
-        {Object.keys(form).map((field) => (
-          <div className="form-group" key={field}>
-            <label htmlFor={field}>
-              {field
-                .replace(/_/g, " ")
-                .replace(/([A-Z])/g, " $1")
-                .replace(/^./, (str) => str.toUpperCase())}
-            </label>
-            {field === "COD_COMISION" ? (
-              <select
-                id={field}
-                name={field}
-                value={form[field]}
-                onChange={handleChange}
-              >
-                <option value="">Seleccione una opción</option>
-                {tiposComision.map((tipo, index) => (
-                  <option key={index} value={tipo}>
-                    {tipo}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                id={field}
-                type={field.includes("FECHA") ? "date" : "text"}
-                name={field}
-                value={form[field]}
-                onChange={handleChange}
-                disabled={[
-                  "CODIGO_INTERNO",
-                  "FECHA_CREACION",
-                  "PAGOS_ACEPTADOS",
-                  "ESTADO",
-                  "FECHA_ACTIVACION",
-                  "FECHA_SUSPENSION",
-                ].includes(field)}
-                placeholder={`Ingrese ${field
-                  .replace(/_/g, " ")
-                  .replace(/([A-Z])/g, " $1")
-                  .toLowerCase()}`}
-              />
-            )}
-          </div>
-        ))}
-        <div className="buttons">
-          <button type="submit">Guardar</button>
-          <button type="button" onClick={handleCancel}>
+    <div className="form-container">
+      <h1 className="form-title">Crear Nuevo Comercio</h1>
+      {error && <div className="error">{error}</div>}
+      
+      <form onSubmit={handleSubmit} className="form">
+        <div className="form-group">
+          <label htmlFor="codigoInterno">Código Interno:</label>
+          <input
+            type="text"
+            id="codigoInterno"
+            name="codigoInterno"
+            value={formData.codigoInterno}
+            onChange={handleChange}
+            required
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="ruc">RUC:</label>
+          <input
+            type="text"
+            id="ruc"
+            name="ruc"
+            value={formData.ruc}
+            onChange={handleChange}
+            required
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="razonSocial">Razón Social:</label>
+          <input
+            type="text"
+            id="razonSocial"
+            name="razonSocial"
+            value={formData.razonSocial}
+            onChange={handleChange}
+            required
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="nombreComercial">Nombre Comercial:</label>
+          <input
+            type="text"
+            id="nombreComercial"
+            name="nombreComercial"
+            value={formData.nombreComercial}
+            onChange={handleChange}
+            required
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="pagosAceptados">Pagos Aceptados:</label>
+          <input
+            type="text"
+            id="pagosAceptados"
+            name="pagosAceptados"
+            value={formData.pagosAceptados}
+            onChange={handleChange}
+            required
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="estado">Estado:</label>
+          <select
+            id="estado"
+            name="estado"
+            value={formData.estado}
+            onChange={handleChange}
+            className="form-select"
+          >
+            <option value="ACT">Activo</option>
+            <option value="INA">Inactivo</option>
+            <option value="SUS">Suspendido</option>
+          </select>
+        </div>
+
+        <div className="form-buttons">
+          <button type="submit" className="submit-button">
+            Crear Comercio
+          </button>
+          <button type="button" onClick={handleCancel} className="cancel-button">
             Cancelar
           </button>
         </div>
       </form>
-    </main>
+    </div>
   );
 };
 
-export default CreatePage;
+export default CreateComercio;

@@ -8,15 +8,24 @@ import ec.edu.espe.gateway.comercio.services.PosComercioService;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
+import ec.edu.espe.gateway.comercio.controller.dto.Configuracion;
+import ec.edu.espe.gateway.comercio.controller.mapper.ConfiguracionMapper;
 
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {
+    RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS
+})
 @RestController
-@RequestMapping("/api/pos-comercio")
+@RequestMapping("/v1/pos-comercio")
 public class PosComercioController {
 
     private final PosComercioService posComercioService;
+    private final ConfiguracionMapper configuracionMapper;
 
-    public PosComercioController(PosComercioService posComercioService) {
+    public PosComercioController(
+            PosComercioService posComercioService,
+            ConfiguracionMapper configuracionMapper) {
         this.posComercioService = posComercioService;
+        this.configuracionMapper = configuracionMapper;
     }
 
     @GetMapping
@@ -74,8 +83,7 @@ public class PosComercioController {
             @PathVariable String tipo,
             @RequestParam LocalDateTime fechaUltimoUso) {
         try {
-            PosComercioPK id = new PosComercioPK(codigoPos, tipo);
-            posComercioService.actualizarUltimoUso(id, fechaUltimoUso);
+            posComercioService.actualizarUltimoUso(codigoPos, tipo, fechaUltimoUso);
             return ResponseEntity.ok().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().build();
@@ -96,9 +104,25 @@ public class PosComercioController {
         }
     }
 
-    @PostMapping("/configuracion")
-    public ResponseEntity<Void> recibirConfiguracion(@RequestBody PosComercio posComercio) {
+    @GetMapping("/configuracion/{codigoPos}/{tipo}")
+    public ResponseEntity<Configuracion> obtenerConfiguracion(
+            @PathVariable String codigoPos, 
+            @PathVariable String tipo) {
         try {
+            PosComercioPK id = new PosComercioPK(codigoPos, tipo);
+            PosComercio posComercio = posComercioService.obtenerPorId(id);
+            Configuracion configuracion = configuracionMapper.toDTO(posComercio);
+            configuracion.setCodigoComercio(posComercio.getComercio().getCodigo());
+            return ResponseEntity.ok(configuracion);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/configuracion")
+    public ResponseEntity<Void> procesarConfiguracion(@RequestBody Configuracion configuracion) {
+        try {
+            PosComercio posComercio = configuracionMapper.toModel(configuracion);
             posComercioService.procesarConfiguracion(posComercio);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
