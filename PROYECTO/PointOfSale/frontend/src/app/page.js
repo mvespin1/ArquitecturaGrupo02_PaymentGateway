@@ -288,19 +288,48 @@ const MainPage = () => {
         </div>
 
         <div className="form-group">
-          <label>
-            <input
-              type="radio"
-              name="interesDiferido"
-              checked={formData.interesDiferido}
-              onChange={handleInputChange}
-              className="form-radio"
-            />
-            ¿Pago diferido?
-          </label>
+          <label className="radio-group-label">¿Pago diferido?</label>
+          <div className="radio-group">
+            <label className="radio-label">
+              <input
+                type="radio"
+                name="interesDiferido"
+                value="true"
+                checked={formData.interesDiferido === true}
+                onChange={(e) => {
+                  handleInputChange({
+                    target: {
+                      name: 'interesDiferido',
+                      value: true
+                    }
+                  });
+                }}
+                className="form-radio"
+              />
+              Sí
+            </label>
+            <label className="radio-label">
+              <input
+                type="radio"
+                name="interesDiferido"
+                value="false"
+                checked={formData.interesDiferido === false}
+                onChange={(e) => {
+                  handleInputChange({
+                    target: {
+                      name: 'interesDiferido',
+                      value: false
+                    }
+                  });
+                }}
+                className="form-radio"
+              />
+              No
+            </label>
+          </div>
         </div>
 
-        {formData.interesDiferido && (
+        {formData.interesDiferido === true && (
           <div className="form-group">
             <label htmlFor="cuotas">Número de Cuotas</label>
             <select
