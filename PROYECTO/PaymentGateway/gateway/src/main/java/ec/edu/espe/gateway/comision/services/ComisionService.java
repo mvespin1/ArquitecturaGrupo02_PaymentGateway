@@ -199,4 +199,68 @@ public class ComisionService {
     public void deleteById(Integer codigo) {
         throw new UnsupportedOperationException("No se permite eliminar comisiones.");
     }
+
+    public BigDecimal calcularComision(Comision comision, Integer totalTransacciones, BigDecimal montoTotal) {
+        if (comision == null) {
+            throw new IllegalArgumentException("La comisión no puede ser nula");
+        }
+        if (totalTransacciones == null || totalTransacciones < 0) {
+            throw new IllegalArgumentException("El número de transacciones debe ser positivo");
+        }
+        if (montoTotal == null || montoTotal.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("El monto total debe ser positivo");
+        }
+
+        if (Boolean.TRUE.equals(comision.getManejaSegmentos())) {
+            return calcularComisionPorSegmentos(comision, totalTransacciones, montoTotal);
+        } else {
+            return calcularComisionBase(comision, totalTransacciones, montoTotal);
+        }
+    }
+
+    private BigDecimal calcularComisionBase(Comision comision, Integer totalTransacciones, BigDecimal montoTotal) {
+        BigDecimal comisionTotal = BigDecimal.ZERO;
+        Integer bloques = (int) Math.ceil((double) totalTransacciones / comision.getTransaccionesBase());
+
+        if (TIPO_COMISION_POR.equals(comision.getTipo())) {
+            // Comisión porcentual sobre el monto total
+            comisionTotal = montoTotal.multiply(comision.getMontoBase());
+        } else if (TIPO_COMISION_FIJ.equals(comision.getTipo())) {
+            // Comisión fija por bloque de transacciones
+            comisionTotal = comision.getMontoBase().multiply(new BigDecimal(bloques));
+        }
+
+        return comisionTotal;
+    }
+
+    private BigDecimal calcularComisionPorSegmentos(Comision comision, Integer totalTransacciones, BigDecimal montoTotal) {
+        List<ComisionSegmento> segmentos = segmentoRepository.findByComisionOrderByPkTransaccionesDesdeAsc(comision);
+        BigDecimal comisionTotal = BigDecimal.ZERO;
+
+        for (ComisionSegmento segmento : segmentos) {
+            if (totalTransacciones > segmento.getPk().getTransaccionesDesde()) {
+                int transaccionesEnSegmento;
+                if (segmento.getTransaccionesHasta() == 0) {
+                    transaccionesEnSegmento = totalTransacciones - segmento.getPk().getTransaccionesDesde();
+                } else {
+                    transaccionesEnSegmento = Math.min(totalTransacciones, segmento.getTransaccionesHasta()) 
+                                            - segmento.getPk().getTransaccionesDesde();
+                }
+
+                if (transaccionesEnSegmento > 0) {
+                    if (TIPO_COMISION_POR.equals(comision.getTipo())) {
+                        BigDecimal montoSegmento = montoTotal.multiply(
+                            new BigDecimal(transaccionesEnSegmento)
+                            .divide(new BigDecimal(totalTransacciones)));
+                        comisionTotal = comisionTotal.add(montoSegmento.multiply(segmento.getMonto()));
+                    } else {
+                        comisionTotal = comisionTotal.add(
+                            segmento.getMonto().multiply(new BigDecimal(transaccionesEnSegmento)));
+                    }
+                }
+            }
+        }
+
+        return comisionTotal;
+    }
 }

@@ -111,33 +111,22 @@ public class FacturaService {
 
         Comision comision = comisionOpt.get();
         Integer totalTransacciones = transacciones.size();
-        Integer transaccionesBase = comision.getTransaccionesBase();
+        BigDecimal montoTotal = transacciones.stream()
+                .map(Transaccion::getMonto)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if (transaccionesBase <= 0) {
-            throw new IllegalStateException(
-                    "El valor de transacciones base debe ser mayor a cero para aplicar la comisión.");
-        }
+        // Actualizar estadísticas de transacciones
+        factura.setTransaccionesProcesadas(totalTransacciones);
+        factura.setTransaccionesAutorizadas((int) transacciones.stream()
+                .filter(t -> "AUT".equals(t.getEstado()))
+                .count());
+        factura.setTransaccionesRechazadas((int) transacciones.stream()
+                .filter(t -> "REC".equals(t.getEstado()))
+                .count());
+        factura.setTransaccionesReversadas((int) transacciones.stream()
+                .filter(t -> "REV".equals(t.getEstado()))
+                .count());
 
-        Integer bloques = (int) Math.ceil((double) totalTransacciones / transaccionesBase);
-
-        BigDecimal totalComisiones = BigDecimal.ZERO;
-
-        for (int i = 0; i < bloques; i++) {
-            if ("POR".equals(comision.getTipo())) {
-                // Comisión porcentual
-                BigDecimal montoBloque = transacciones.stream()
-                        .skip((long) i * transaccionesBase)
-                        .limit(transaccionesBase)
-                        .map(Transaccion::getMonto)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                totalComisiones = totalComisiones.add(montoBloque.multiply(comision.getMontoBase()));
-            } else if ("FIJ".equals(comision.getTipo())) {
-                // Comisión fija
-                totalComisiones = totalComisiones.add(comision.getMontoBase());
-            }
-        }
-
-        return totalComisiones;
+        return comisionService.calcularComision(comision, totalTransacciones, montoTotal);
     }
 }
