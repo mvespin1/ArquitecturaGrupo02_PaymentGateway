@@ -2,11 +2,14 @@ package ec.edu.espe.gateway.comercio.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Transient;
 
+@Data
+@NoArgsConstructor
 @Entity
 @Table(name = "GTW_POS_COMERCIO")
 public class PosComercio implements Serializable {
@@ -31,71 +34,11 @@ public class PosComercio implements Serializable {
     @Transient
     private String codigoComercio;
 
-    // Constructor, Getters and Setters
-    public PosComercio() {
-    }
-
-    public PosComercio(PosComercioPK pk) {
-        this.pk = pk;
-    }
-
-    public PosComercioPK getPk() {
-        return pk;
-    }
-
-    public void setPk(PosComercioPK pk) {
-        this.pk = pk;
-    }
-
-    public String getDireccionMac() {
-        return direccionMac;
-    }
-
-    public void setDireccionMac(String direccionMac) {
-        this.direccionMac = direccionMac;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
     public void setEstado(String estado) {
         if (!"ACT".equals(estado) && !"INA".equals(estado)) {
             throw new IllegalArgumentException("El estado debe ser 'ACT' o 'INA'.");
         }
         this.estado = estado;
-    }
-
-    public LocalDateTime getFechaActivacion() {
-        return fechaActivacion;
-    }
-
-    public void setFechaActivacion(LocalDateTime fechaActivacion) {
-        this.fechaActivacion = fechaActivacion;
-    }
-
-    public LocalDateTime getUltimoUso() {
-        return ultimoUso;
-    }
-
-    public void setUltimoUso(LocalDateTime ultimoUso) {
-        this.ultimoUso = ultimoUso;
-    }
-
-    public Comercio getComercio() {
-        return comercio;
-    }
-
-    public void setComercio(Comercio comercio) {
-        this.comercio = comercio;
-    }
-
-    public String getCodigoComercio() {
-        return codigoComercio;
-    }
-
-    public void setCodigoComercio(String codigoComercio) {
-        this.codigoComercio = codigoComercio;
     }
 
     // HashCode and Equals

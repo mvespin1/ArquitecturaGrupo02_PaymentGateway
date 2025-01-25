@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
 
-import ec.edu.espe.pos.controller.dto.GatewayTransaccionDTO;
+import ec.edu.espe.pos.controller.dto.TransaccionDTO;
 import ec.edu.espe.pos.model.Transaccion;
 
 @Mapper(
@@ -13,7 +13,7 @@ import ec.edu.espe.pos.model.Transaccion;
 )
 public interface TransaccionMapper {
     
-    GatewayTransaccionDTO toDTO(Transaccion model);
+    TransaccionDTO toDTO(Transaccion model);
     
-    Transaccion toModel(GatewayTransaccionDTO dto);
+    Transaccion toModel(TransaccionDTO dto);
 } 

@@ -13,7 +13,7 @@ import java.util.HashMap;
 
 import lombok.RequiredArgsConstructor;
 
-@CrossOrigin(origins = "https://frontend-blond-theta.vercel.app")
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/v1/pagos")
 @RequiredArgsConstructor

@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class ValidacionTransaccionDTO {
     @Valid
     @NotNull(message = "La información del banco es obligatoria")
-    private BancoDTO banco;
+    private Integer codigoBanco;
 
     @NotNull(message = "El monto es obligatorio")
     @Positive(message = "El monto debe ser mayor a cero")

@@ -49,7 +49,7 @@ const CrudTable = () => {
     console.log("Payload para actualización:", transactionPayload);
 
     try {
-      const response = await fetch("http://localhost:8082/api/pagos/procesar", {
+      const response = await fetch("http://localhost:8082/v1/pagos/procesar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,7 +92,7 @@ const CrudTable = () => {
     console.log("Payload para visualización:", transactionPayload);
 
     try {
-      const response = await fetch("http://localhost:8082/api/pagos/procesar", {
+      const response = await fetch("http://localhost:8082/v1/pagos/procesar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

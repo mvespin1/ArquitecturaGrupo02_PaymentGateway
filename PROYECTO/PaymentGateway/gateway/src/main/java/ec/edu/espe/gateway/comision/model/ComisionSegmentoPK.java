@@ -3,26 +3,25 @@ package ec.edu.espe.gateway.comision.model;
 import java.io.Serializable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Embeddable
 public class ComisionSegmentoPK implements Serializable {
 
     @NotNull
     @Column(name = "COD_COMISION", nullable = false)
     private Integer comision;
+
     @NotNull
     @Column(name = "TRANSACCIONES_DESDE", nullable = false)
     private Integer transaccionesDesde;
-
-    // Empty constructor
-    public ComisionSegmentoPK() {
-    }
-
-    // Constructor
-    public ComisionSegmentoPK(Integer comision, Integer transaccionesDesde) {
-        this.comision = comision;
-        this.transaccionesDesde = transaccionesDesde;
-    }
 
     // Getters and Setters
     public Integer getComision() {

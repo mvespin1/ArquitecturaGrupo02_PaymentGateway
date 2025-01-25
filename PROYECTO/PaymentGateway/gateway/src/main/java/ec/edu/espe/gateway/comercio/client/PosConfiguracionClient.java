@@ -5,8 +5,8 @@ import org.springframework.web.bind.annotation.*;
 
 import ec.edu.espe.gateway.comercio.controller.dto.Configuracion;
 
-@FeignClient(name = "pos-configuracion", url = "http://3.137.216.14")
+@FeignClient(name = "pos-configuracion", url = "http://localhost:8081")
 public interface PosConfiguracionClient {
-    @PostMapping("/api/pos-configuracion/sincronizar")
+    @PostMapping("/v1/pos-configuracion/sincronizar")
     void enviarConfiguracion(@RequestBody Configuracion configuracion);
 }

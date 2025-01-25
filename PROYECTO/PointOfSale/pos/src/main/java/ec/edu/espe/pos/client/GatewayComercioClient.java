@@ -10,12 +10,12 @@ import ec.edu.espe.pos.controller.dto.FacturacionComercioDTO;
 @FeignClient(name = "gateway-comercio", url = "http://localhost:8082")
 public interface GatewayComercioClient {
     
-    @GetMapping("/api/comercios/activo")
+    @GetMapping("/v1/comercios/activo")
     ComercioDTO obtenerComercioActivo();
     
-    @GetMapping("/api/comercios/facturacion-activa")
+    @GetMapping("/v1/comercios/facturacion-activa")
     FacturacionComercioDTO obtenerFacturacionActiva();
     
-    @GetMapping("/api/comercios/{codigoComercio}/facturacion")
+    @GetMapping("/v1/comercios/{codigoComercio}/facturacion")
     FacturacionComercioDTO obtenerFacturacionPorComercio(@PathVariable Integer codigoComercio);
 } 

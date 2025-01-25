@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import ec.edu.espe.pos.controller.dto.GatewayTransaccionDTO;
 
-@FeignClient(name = "gateway-transaccion", url = "http://18.190.153.55")
+@FeignClient(name = "gateway", url = "http://localhost:8082")
 public interface GatewayTransaccionClient {
 
-    @PostMapping("/api/transacciones/sincronizar")
-    ResponseEntity<String> sincronizarTransaccion(@RequestBody GatewayTransaccionDTO transaccion);
+    @PostMapping("/v1/transacciones/sincronizar")
+    ResponseEntity<GatewayTransaccionDTO> sincronizarTransaccion(@RequestBody GatewayTransaccionDTO transaccion);
 }

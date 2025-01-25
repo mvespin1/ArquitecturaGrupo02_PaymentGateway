@@ -4,63 +4,37 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "GTW_COMISION_SEGMENTO")
 public class ComisionSegmento implements Serializable {
 
     @EmbeddedId
     private ComisionSegmentoPK pk;
+
     @NotNull
     @Column(name = "TRANSACCIONES_HASTA", nullable = false)
     private Integer transaccionesHasta;
+
     @NotNull
     @Column(name = "MONTO", precision = 20, scale = 4, nullable = false)
     private BigDecimal monto;
+
     @NotNull
     @ManyToOne
     @JoinColumn(name = "COD_COMISION", referencedColumnName = "COD_COMISION", nullable = false, insertable = false, updatable = false)
     private Comision comision;
 
-    // Empty Constructor
-    public ComisionSegmento() {
-    }
-
-    // Constructor
     public ComisionSegmento(ComisionSegmentoPK pk) {
         this.pk = pk;
-    }
-
-    public ComisionSegmentoPK getPk() {
-        return pk;
-    }
-
-    public void setPk(ComisionSegmentoPK pk) {
-        this.pk = pk;
-    }
-
-    public Integer getTransaccionesHasta() {
-        return transaccionesHasta;
-    }
-
-    public void setTransaccionesHasta(Integer transaccionesHasta) {
-        this.transaccionesHasta = transaccionesHasta;
-    }
-
-    public BigDecimal getMonto() {
-        return monto;
-    }
-
-    public void setMonto(BigDecimal monto) {
-        this.monto = monto;
-    }
-
-    public Comision getComision() {
-        return comision;
-    }
-
-    public void setComision(Comision comision) {
-        this.comision = comision;
     }
 
     @Override

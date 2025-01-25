@@ -2,18 +2,24 @@ package ec.edu.espe.pos.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.Builder;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(of = "codigo")
+@ToString(exclude = {"detalle", "codigoUnicoTransaccion"})
 @Builder
 @Entity
 @Table(name = "POS_TRANSACCION")
@@ -24,31 +30,31 @@ public class Transaccion implements Serializable {
     @Column(name = "COD_TRANSACCION", nullable = false)
     private Integer codigo;
 
-    @NotNull(message = "El tipo de transacción no puede ser nulo")
+    @NotNull
     @Column(name = "TIPO", length = 3, nullable = false)
     private String tipo;
 
-    @NotNull(message = "La marca no puede ser nula")
+    @NotNull
     @Column(name = "MARCA", length = 4, nullable = false)
     private String marca;
 
-    @NotNull(message = "La modalidad no puede ser nula")
+    @NotNull
     @Column(name = "MODALIDAD", length = 3, nullable = false)
     private String modalidad;
 
-    @NotNull(message = "El detalle no puede ser nulo")
+    @NotNull
     @Column(name = "DETALLE", length = 255, nullable = false)
     private String detalle;
 
-    @NotNull(message = "El monto no puede ser nulo")
+    @NotNull
     @Column(name = "MONTO", precision = 20, scale = 2, nullable = false)
     private BigDecimal monto;
 
-    @NotNull(message = "El código único de transacción no puede ser nulo")
-    @Column(name = "CODIGO_UNICO_TRANSACCION", length = 64, nullable = false)
+    @NotNull
+    @Column(name = "CODIGO_UNICO_TRANSACCION", length = 64, nullable = false, unique = true)
     private String codigoUnicoTransaccion;
 
-    @NotNull(message = "La fecha no puede ser nula")
+    @NotNull
     @Column(name = "FECHA", nullable = false)
     private LocalDateTime fecha;
 
@@ -58,7 +64,7 @@ public class Transaccion implements Serializable {
     @Column(name = "ESTADO_RECIBO", length = 3)
     private String estadoRecibo;
 
-    @NotNull(message = "La moneda no puede ser nula")
+    @NotNull
     @Column(name = "MONEDA", length = 3, nullable = false)
     private String moneda;
 

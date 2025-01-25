@@ -3,9 +3,16 @@ package ec.edu.espe.gateway.comision.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import jakarta.validation.constraints.NotNull;
-
 import java.io.Serializable;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "GTW_COMISION")
 public class Comision implements Serializable {
@@ -13,39 +20,25 @@ public class Comision implements Serializable {
     @Id
     @Column(name = "COD_COMISION", nullable = false)
     private Integer codigo;
+
     @NotNull
     @Column(name = "TIPO", length = 3, nullable = false)
     private String tipo;
+
     @NotNull
     @Column(name = "MONTO_BASE", precision = 20, scale = 4, nullable = false)
     private BigDecimal montoBase;
+
     @NotNull
     @Column(name = "TRANSACCIONES_BASE", precision = 9, nullable = false)
     private Integer transaccionesBase;
+
     @NotNull
     @Column(name = "MANEJA_SEGMENTOS", nullable = false)
     private Boolean manejaSegmentos;
 
-    // Empty constructor
-    public Comision() {
-    }
-
-    // Constructor with COD_COMISION
     public Comision(Integer codigo) {
         this.codigo = codigo;
-    }
-
-    // Getters and Setters
-    public Integer getCodigo() {
-        return codigo;
-    }
-
-    public void setCodigo(Integer codigo) {
-        this.codigo = codigo;
-    }
-
-    public String getTipo() {
-        return tipo;
     }
 
     public void setTipo(String tipo) {
@@ -53,30 +46,6 @@ public class Comision implements Serializable {
             throw new IllegalArgumentException("El tipo de comisión debe ser 'POR' o 'FIJ'.");
         }
         this.tipo = tipo;
-    }
-
-    public BigDecimal getMontoBase() {
-        return montoBase;
-    }
-
-    public void setMontoBase(BigDecimal montoBase) {
-        this.montoBase = montoBase;
-    }
-
-    public Integer getTransaccionesBase() {
-        return transaccionesBase;
-    }
-
-    public void setTransaccionesBase(Integer transaccionesBase) {
-        this.transaccionesBase = transaccionesBase;
-    }
-
-    public Boolean getManejaSegmentos() {
-        return manejaSegmentos;
-    }
-
-    public void setManejaSegmentos(Boolean manejaSegmentos) {
-        this.manejaSegmentos = manejaSegmentos;
     }
 
     // ToString

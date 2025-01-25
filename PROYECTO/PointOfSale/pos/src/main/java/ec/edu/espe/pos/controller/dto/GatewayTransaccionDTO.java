@@ -76,4 +76,6 @@ public class GatewayTransaccionDTO {
     private Boolean interesDiferido;
 
     private Integer cuotas;
+
+    private String datosTarjeta;
 }

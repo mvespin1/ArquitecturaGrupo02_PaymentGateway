@@ -20,6 +20,8 @@ import org.springframework.http.ResponseEntity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
+import java.util.Random;
 
 import lombok.RequiredArgsConstructor;
 
@@ -73,21 +75,37 @@ public class TransaccionService {
     @Transactional
     public void actualizarEstadoTransaccion(ActualizacionEstadoDTO actualizacion) {
         log.info("Actualizando estado de transacción: {}", actualizacion.getCodigoUnicoTransaccion());
-        
-        Transaccion transaccion = obtenerPorCodigoUnico(actualizacion.getCodigoUnicoTransaccion());
-        transaccion.setEstado(actualizacion.getEstado());
-        transaccion.setDetalle(actualizacion.getMensaje());
-        
-        transaccionRepository.save(transaccion);
-        log.info("Estado de transacción actualizado a: {}", actualizacion.getEstado());
+        try {
+            Transaccion transaccion = obtenerPorCodigoUnico(actualizacion.getCodigoUnicoTransaccion());
+            
+            // Validar transición de estados
+            if (validarTransicionEstado(transaccion.getEstado(), actualizacion.getEstado())) {
+                transaccion.setEstado(actualizacion.getEstado());
+                transaccion.setDetalle(limitarLongitudMensaje(actualizacion.getMensaje()));
+                transaccionRepository.save(transaccion);
+                log.info("Estado de transacción actualizado a: {}", actualizacion.getEstado());
+            } else {
+                log.error("Transición de estado no válida: {} -> {}", 
+                    transaccion.getEstado(), actualizacion.getEstado());
+            }
+        } catch (Exception e) {
+            log.error("Error al actualizar estado: {}", e.getMessage());
+            throw e;
+        }
     }
 
     @Transactional
     public Transaccion guardarTransaccionInicial(Transaccion transaccion) {
-        validarMarca(transaccion.getMarca());
-        establecerValoresPredeterminados(transaccion);
-        validarCamposObligatorios(transaccion);
-        log.info("Validación de campos completada exitosamente");
+        // Establecer valores predeterminados obligatorios
+        transaccion.setEstado(ESTADO_ENVIADO);
+        transaccion.setFecha(LocalDateTime.now());
+        transaccion.setCodigoUnicoTransaccion(generarCodigoUnico());
+        transaccion.setTipo(TIPO_PAGO);
+        transaccion.setModalidad(MODALIDAD_SIMPLE);
+        transaccion.setMoneda("USD");
+        transaccion.setDetalle("Transacción POS - " + transaccion.getMarca());
+        transaccion.setEstadoRecibo(ESTADO_RECIBO_PENDIENTE);
+
         return transaccionRepository.save(transaccion);
     }
 
@@ -97,10 +115,14 @@ public class TransaccionService {
             GatewayTransaccionDTO gatewayDTO = convertirAGatewayDTO(transaccion, datosSensibles, interesDiferido, cuotas);
             log.info("Enviando al gateway DTO con datos de tarjeta incluidos");
 
-            ResponseEntity<String> respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
+            ResponseEntity<GatewayTransaccionDTO> respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
             log.info("Respuesta del gateway - Status: {}, Body: {}", respuesta.getStatusCode(), respuesta.getBody());
 
-            actualizarEstadoSegunRespuesta(transaccion, respuesta);
+            if (respuesta.getStatusCode().is2xxSuccessful()) {
+                transaccion.setEstado(ESTADO_AUTORIZADO);
+            } else {
+                transaccion.setEstado(ESTADO_RECHAZADO);
+            }
             return transaccionRepository.save(transaccion);
 
         } catch (Exception e) {
@@ -144,19 +166,6 @@ public class TransaccionService {
         }
     }
 
-    private void actualizarEstadoSegunRespuesta(Transaccion transaccion, ResponseEntity<String> respuesta) {
-        if (respuesta.getStatusCode().is2xxSuccessful() && 
-            respuesta.getBody() != null && 
-            respuesta.getBody().contains("aceptada")) {
-            transaccion.setEstado(ESTADO_AUTORIZADO);
-            log.info("Transacción autorizada");
-        } else if (respuesta.getStatusCode().value() == 400 || 
-                 (respuesta.getBody() != null && respuesta.getBody().contains("rechazada"))) {
-            transaccion.setEstado(ESTADO_RECHAZADO);
-            log.info("Transacción rechazada");
-        }
-    }
-
     private GatewayTransaccionDTO convertirAGatewayDTO(Transaccion transaccion, String datosSensibles, Boolean interesDiferido, Integer cuotas) {
         GatewayTransaccionDTO dto = new GatewayTransaccionDTO();
         
@@ -196,5 +205,44 @@ public class TransaccionService {
         }
 
         return dto;
+    }
+
+    private String generarCodigoUnico() {
+        LocalDateTime now = LocalDateTime.now();
+        return String.format("TRX%06d-%d-%02d-%02d-%02d-%02d-%02d-%012d",
+            new Random().nextInt(1000000), // simulando un ID secuencial
+            now.getYear(),
+            now.getMonthValue(),
+            now.getDayOfMonth(),
+            now.getHour(),
+            now.getMinute(),
+            now.getSecond(),
+            1L); // ID de facturación, ajustar según necesidad
+    }
+
+    private boolean validarTransicionEstado(String estadoActual, String nuevoEstado) {
+        if (estadoActual == null || nuevoEstado == null) {
+            return false;
+        }
+
+        switch (estadoActual) {
+            case ESTADO_ENVIADO:
+                return ESTADO_AUTORIZADO.equals(nuevoEstado) || 
+                       ESTADO_RECHAZADO.equals(nuevoEstado);
+            case ESTADO_AUTORIZADO:
+                return false; // No se permite cambio desde autorizado
+            case ESTADO_RECHAZADO:
+                return false; // No se permite cambio desde rechazado
+            default:
+                return false;
+        }
+    }
+
+    private String limitarLongitudMensaje(String mensaje) {
+        final int MAX_LENGTH = 200;
+        if (mensaje == null) {
+            return "";
+        }
+        return mensaje.length() > MAX_LENGTH ? mensaje.substring(0, MAX_LENGTH) : mensaje;
     }
 }
