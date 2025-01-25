@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -14,7 +13,6 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "POS_SEGURIDAD_GATEWAY")
 public class SeguridadGateway implements Serializable {

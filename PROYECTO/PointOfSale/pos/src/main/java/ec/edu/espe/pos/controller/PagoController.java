@@ -13,6 +13,12 @@ import java.util.HashMap;
 
 import lombok.RequiredArgsConstructor;
 
+// CAMBIAR NOMBRE DE LA CLASE A PROCESAMIENTO TRANSACCION CONTROLLER  
+// API TAMBIEN
+// VALIDACIONES
+// guardarTransaccionInicial A guardarTransaccionPos
+// Map<String, Object> no usar
+
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/v1/pagos")
@@ -50,7 +56,7 @@ public class PagoController {
             // Devolvemos respuesta inmediata
             Map<String, Object> responseInicial = crearRespuestaExitosa(transaccionInicial);
 
-            // Procesamos en segundo plano
+            // Procesamos en segundo plano (utilizar el anterior)
             procesarTransaccionEnSegundoPlano(transaccionInicial, datosSensibles, interesDiferido, cuotas);
 
             return ResponseEntity.status(201).body(responseInicial);

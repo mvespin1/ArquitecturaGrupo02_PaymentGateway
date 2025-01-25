@@ -24,6 +24,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+//Revisar ConsultarEstado y ActualizarEstado
+// Revisar ExceptionHandler
+
 @RestController
 @RequestMapping("/v1/transacciones")
 @CrossOrigin(origins = "http://localhost:3000")

@@ -25,6 +25,7 @@ public class ConfiguracionController {
     private static final Logger log = LoggerFactory.getLogger(ConfiguracionController.class);
     private final ConfiguracionService configuracionService;
 
+    // PODRIA SER NO
     @GetMapping
     public ResponseEntity<List<Configuracion>> listarTodos() {
         log.info("Obteniendo todas las configuraciones");
@@ -69,6 +70,7 @@ public class ConfiguracionController {
         }
     }
 
+    // PODRIA SER NO
     @PatchMapping("/{codigo}/{modelo}/fecha-activacion")
     public ResponseEntity<Object> actualizarFechaActivacion(
             @PathVariable String codigo,
@@ -96,7 +98,7 @@ public class ConfiguracionController {
 
     @PostMapping("/sincronizar")
     public ResponseEntity<Object> recibirConfiguracion(@RequestBody Configuracion configuracion) {
-        log.info("Recibiendo configuración para sincronización. PK: {}, MAC: {}", 
+        log.info("Recibiendo configuración para sincronización. PK: {}, MAC: {}",
                 configuracion.getPk(), configuracion.getDireccionMac());
         try {
             Configuracion configuracionCreada = configuracionService.crear(configuracion);
@@ -109,15 +111,17 @@ public class ConfiguracionController {
         }
     }
 
+    // PODRIA SER NO
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<Map<String, String>> handleNotFoundException(NotFoundException e) {
         return ResponseEntity.status(404).body(crearRespuestaError("No encontrado", e.getMessage()));
     }
 
+    // PODRIA SER NO
     private Map<String, String> crearRespuestaError(String tipo, String mensaje) {
         Map<String, String> response = new HashMap<>();
         response.put("error", tipo);
         response.put("mensaje", mensaje);
         return response;
     }
-} 
+}

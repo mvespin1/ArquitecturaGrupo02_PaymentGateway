@@ -1,0 +1,68 @@
+Escribe código legible y mantenible para un proyecto en Java con Spring Boot, que sigan las buenas prácticas de programación orientadas a objetos.
+Usa lombok, pero ten en cuenta los buenos principios para crear models en java spring boot, por ejemplo, que se use un hashcode solo para la primary key, y lo demás se usaría la notación @Getter y @Setter, etc.
+No uses map en los controllers, usa DTOs.
+No uses un throw en los controllers, usa excepciones.
+Usa mapstruct para mapear DTOs a models y viceversa, para que funcione de manera automática el mapeo de los datos.
+Usa feign para consumir servicios externos.
+Usa JPA para persistir datos en la base de datos.
+Usa JWT para la autenticación y autorización de los endpoints.
+Documenta la api con OpenAPI, y tambíen usalo para las validaciones de los datos en los DTOs.
+En los repositorios, jamás uses queries @Query ni @Modifying, usa los métodos de JPA para las consultas.
+También especifica los logs con slf4j.
+Usa siempre runtimeexception para las excepciones, y crea una excepción personalizada para cada error.
+Siempre sigue la buena práctica de programación de usar BigDecimal para los precios y cantidades o cosas similares que sean números.
+Sigue las directivas de OpenAPI para las anotaciones de los endpoints.
+
+Sigue estos ejemplos para construir el código:
+
+- DTOs, que tenga las validaciones de OpenAPI y que solo tenga lo necesario:
+package com.banquito.cards.comision.controller.dto;
+
+import jakarta.validation.constraints.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+
+@Data
+@NoArgsConstructor
+public class ComisionDTO {
+    private Integer codigo;
+
+    @NotBlank(message = "El tipo es requerido")
+    @Pattern(regexp = "POR|FIJ", message = "El tipo debe ser POR o FIJ")
+    private String tipo;
+
+    @NotNull(message = "El monto base es requerido")
+    @DecimalMin(value = "0.0", message = "El monto base no puede ser negativo")
+    @DecimalMax(value = "999999999.9999", message = "El monto base excede el límite permitido")
+    private BigDecimal montoBase;
+
+    @NotNull(message = "El número de transacciones base es requerido")
+    @Min(value = 0, message = "El número de transacciones base no puede ser negativo")
+    private Integer transaccionesBase;
+
+    @NotNull(message = "El campo maneja segmentos es requerido")
+    private Boolean manejaSegmentos;
+}
+
+- Mappers, ten en cuenta que el modelo y el dto deben tener el mismo nombre, para que el mapeo sea automático, y evitar el @Mapping:
+package com.banquito.core.cardaccount.controller.mapper;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.ReportingPolicy;
+
+import com.banquito.core.cardaccount.controller.dto.CardAccountDTO;
+import com.banquito.core.cardaccount.model.CardAccount;
+
+@Mapper(
+        componentModel = MappingConstants.ComponentModel.SPRING,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE
+)
+public interface CardAccountMapperNew {
+
+    CardAccountDTO toDTO(CardAccount model);
+    
+    CardAccount toModel(CardAccountDTO dto);
+}
+

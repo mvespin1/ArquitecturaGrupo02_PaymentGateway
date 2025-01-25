@@ -2,25 +2,18 @@ package ec.edu.espe.pos.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.Builder;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "codigo")
-@ToString(exclude = {"detalle", "codigoUnicoTransaccion"})
-@Builder
 @Entity
 @Table(name = "POS_TRANSACCION")
 public class Transaccion implements Serializable {
