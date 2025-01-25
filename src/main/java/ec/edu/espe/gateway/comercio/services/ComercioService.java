@@ -4,7 +4,6 @@ import ec.edu.espe.gateway.comercio.model.Comercio;
 import ec.edu.espe.gateway.comercio.model.PosComercio;
 import ec.edu.espe.gateway.comercio.repository.ComercioRepository;
 import ec.edu.espe.gateway.comercio.repository.PosComercioRepository;
-import ec.edu.espe.gateway.comision.model.Comision;
 import ec.edu.espe.gateway.comision.repository.ComisionRepository;
 import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
@@ -13,15 +12,17 @@ import ec.edu.espe.gateway.transaccion.repository.TransaccionRepository;
 import ec.edu.espe.gateway.facturacion.services.FacturaService;
 import ec.edu.espe.gateway.comision.services.ComisionService;
 import ec.edu.espe.gateway.comercio.exception.NotFoundException;
+import ec.edu.espe.gateway.comercio.exception.DuplicateException;
+import ec.edu.espe.gateway.comercio.exception.InvalidDataException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional.TxType;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -29,6 +30,8 @@ import java.time.format.DateTimeFormatter;
 @Service
 @Transactional
 public class ComercioService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ComercioService.class);
 
     public static final String ENTITY_NAME = "Comercio";
     public static final String ENTITY_FACTURACION = "Facturación";
@@ -41,7 +44,6 @@ public class ComercioService {
 
     private final ComercioRepository comercioRepository;
     private final PosComercioRepository posComercioRepository;
-    private final ComisionRepository comisionRepository;
     private final FacturacionComercioRepository facturacionComercioRepository;
     private final TransaccionRepository transaccionRepository;
 
@@ -54,63 +56,68 @@ public class ComercioService {
             ComisionService comisionService) {
         this.comercioRepository = comercioRepository;
         this.posComercioRepository = posComercioRepository;
-        this.comisionRepository = comisionRepository;
         this.facturacionComercioRepository = facturacionComercioRepository;
         this.transaccionRepository = transaccionRepository;
     }
 
+    public List<Comercio> obtenerTodos() {
+        logger.info("Iniciando obtención de todos los comercios");
+        List<Comercio> comercios = comercioRepository.findAll();
+        logger.info("Finalizada obtención de todos los comercios");
+        return comercios;
+    }
+
     @Transactional(value = TxType.NEVER)
     public Comercio obtenerPorCodigo(Integer codigo) {
-        Comercio comercio = comercioRepository.findById(codigo).orElse(null);
-        if (comercio == null) {
-            throw new NotFoundException(codigo.toString(), ENTITY_NAME);
-        }
+        logger.info("Obteniendo comercio por código: {}", codigo);
+        Comercio comercio = comercioRepository.findById(codigo).orElseThrow(() -> 
+            new NotFoundException(codigo.toString(), ENTITY_NAME));
+        logger.info("Finalizada obtención de comercio por código: {}", codigo);
         return comercio;
     }
 
     public void registrarComercio(Comercio comercio) {
         try {
+            logger.info("Registrando comercio: {}", comercio);
             validarNuevoComercio(comercio);
             comercio.setFechaCreacion(LocalDateTime.now());
             comercio.setEstado(ESTADO_PENDIENTE);
             comercioRepository.save(comercio);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al registrar comercio: " + e.getMessage());
+        } catch (DuplicateException | InvalidDataException e) {
+            logger.error("Error al registrar comercio: {}", e.getMessage());
+            throw e;
         }
     }
 
     private void validarNuevoComercio(Comercio comercio) {
-        // Validar código interno
         if (comercio.getCodigoInterno() == null || comercio.getCodigoInterno().length() != 10) {
-            throw new IllegalArgumentException("El código interno debe tener 10 caracteres");
+            throw new InvalidDataException("El código interno debe tener 10 caracteres");
         }
         if (comercioRepository.findByCodigoInterno(comercio.getCodigoInterno()).isPresent()) {
-            throw new IllegalArgumentException(
-                    "Ya existe un comercio con el código interno: " + comercio.getCodigoInterno());
+            throw new DuplicateException(comercio.getCodigoInterno(), "Comercio");
         }
 
-        // Validar RUC
         if (comercio.getRuc() == null || comercio.getRuc().length() != 13 || !comercio.getRuc().matches("\\d{13}")) {
-            throw new IllegalArgumentException("El RUC debe tener exactamente 13 dígitos numéricos");
+            throw new InvalidDataException("El RUC debe tener exactamente 13 dígitos numéricos");
         }
         if (comercioRepository.findByRuc(comercio.getRuc()).isPresent()) {
-            throw new IllegalArgumentException("Ya existe un comercio con el RUC: " + comercio.getRuc());
+            throw new DuplicateException(comercio.getRuc(), "Comercio");
         }
 
-        // Validar razón social y nombre comercial
         if (comercio.getRazonSocial() == null || comercio.getRazonSocial().trim().isEmpty()
                 || comercio.getRazonSocial().length() > 100) {
-            throw new IllegalArgumentException("La razón social no puede estar vacía ni exceder 100 caracteres");
+            throw new InvalidDataException("La razón social no puede estar vacía ni exceder 100 caracteres");
         }
 
         if (comercio.getNombreComercial() == null || comercio.getNombreComercial().trim().isEmpty()
                 || comercio.getNombreComercial().length() > 100) {
-            throw new IllegalArgumentException("El nombre comercial no puede estar vacío ni exceder 100 caracteres");
+            throw new InvalidDataException("El nombre comercial no puede estar vacío ni exceder 100 caracteres");
         }
     }
 
     @Transactional
     public void actualizarEstado(Integer codigo, String nuevoEstado) {
+        logger.info("Iniciando actualización de estado del comercio con código {}: nuevo estado {}", codigo, nuevoEstado);
         try {
             Comercio comercio = obtenerPorCodigo(codigo);
             validarCambioEstado(comercio, nuevoEstado);
@@ -128,7 +135,6 @@ public class ComercioService {
                     validarSuspension(comercio);
                     comercio.setFechaSuspension(LocalDateTime.now());
                     comercio.setEstado(nuevoEstado);
-                    // Primero cancelar transacciones
                     List<Transaccion> transaccionesActivas = transaccionRepository
                             .findByComercioAndEstado(comercio, "ENV");
                     for (Transaccion transaccion : transaccionesActivas) {
@@ -141,14 +147,12 @@ public class ComercioService {
                     comercio.setFechaActivacion(null);
                     comercio.setFechaSuspension(null);
                     comercio.setEstado(nuevoEstado);
-                    // Primero cancelar transacciones
                     transaccionesActivas = transaccionRepository
                             .findByComercioAndEstado(comercio, "ENV");
                     for (Transaccion transaccion : transaccionesActivas) {
                         transaccion.setEstado("REC");
                         transaccionRepository.saveAndFlush(transaccion);
                     }
-                    // Inactivar todos los POS asociados
                     List<PosComercio> dispositivosComercio = posComercioRepository
                             .findByComercio_Codigo(comercio.getCodigo());
                     for (PosComercio pos : dispositivosComercio) {
@@ -158,15 +162,16 @@ public class ComercioService {
                     }
                     break;
                 case ESTADO_PENDIENTE:
-                    validarRetornoAPendiente(comercio);
                     comercio.setEstado(nuevoEstado);
                     break;
             }
 
             comercioRepository.saveAndFlush(comercio);
-            actualizarEstadoDispositivos(comercio);
+            actualizarEstadoDispositivosPos(comercio);
+            logger.info("Finalizada actualización de estado del comercio con código {}: nuevo estado {}", codigo, nuevoEstado);
 
         } catch (Exception e) {
+            logger.error("Error al actualizar estado: {}", e.getMessage());
             throw new RuntimeException("Error al actualizar estado: " + e.getMessage());
         }
     }
@@ -208,89 +213,18 @@ public class ComercioService {
         }
     }
 
-    private void validarRetornoAPendiente(Comercio comercio) {
-        // Validar que no haya pagos pendientes
-        List<FacturacionComercio> facturacionesPendientes = facturacionComercioRepository
-                .findByComercioAndEstado(comercio, "FAC");
-        if (!facturacionesPendientes.isEmpty()) {
-            throw new IllegalStateException("El comercio tiene facturas pendientes de pago");
-        }
-    }
+    private void actualizarEstadoDispositivosPos(Comercio comercio) {
+        List<PosComercio> dispositivosPos = posComercioRepository.findByComercio(comercio);
 
-    private void cancelarTransaccionesActivas(Comercio comercio) {
-        List<Transaccion> transaccionesActivas = transaccionRepository
-                .findByComercioAndEstado(comercio, "ENV");
-        for (Transaccion transaccion : transaccionesActivas) {
-            transaccion.setEstado("REC");
-            transaccionRepository.saveAndFlush(transaccion);
-        }
-    }
-
-    private void actualizarEstadoDispositivos(Comercio comercio) {
-        List<PosComercio> dispositivos = posComercioRepository.findByComercio(comercio);
-        LocalDateTime fechaActivacionComercio = comercio.getFechaActivacion();
-
-        for (PosComercio dispositivo : dispositivos) {
+        for (PosComercio dispositivo : dispositivosPos) {
             if (ESTADO_INACTIVO.equals(comercio.getEstado()) || ESTADO_SUSPENDIDO.equals(comercio.getEstado())) {
                 dispositivo.setEstado("INA");
             } else if (ESTADO_ACTIVO.equals(comercio.getEstado())) {
-                // Validar que la fecha de activación del POS no sea anterior a la del comercio
-                if (fechaActivacionComercio != null &&
-                        dispositivo.getFechaActivacion().isBefore(fechaActivacionComercio)) {
-                    dispositivo.setFechaActivacion(fechaActivacionComercio);
-                }
+                dispositivo.setFechaActivacion(LocalDateTime.now());
                 dispositivo.setEstado("ACT");
             }
             posComercioRepository.save(dispositivo);
         }
-    }
-
-    public void actualizarPagosAceptados(Integer codigo, String pagosAceptados) {
-        try {
-            Comercio comercio = obtenerPorCodigo(codigo);
-            if (!ESTADO_ACTIVO.equals(comercio.getEstado())) {
-                throw new IllegalStateException("Solo se pueden actualizar los pagos aceptados de comercios activos");
-            }
-            validarPagosAceptados(pagosAceptados);
-            comercio.setPagosAceptados(pagosAceptados);
-            comercioRepository.save(comercio);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al actualizar pagos aceptados: " + e.getMessage());
-        }
-    }
-
-    private void validarPagosAceptados(String pagosAceptados) {
-        if (!"SIM".equals(pagosAceptados) && !"REC".equals(pagosAceptados) && !"DOS".equals(pagosAceptados)) {
-            throw new IllegalArgumentException("PAGOS_ACEPTADOS debe ser SIM, REC o DOS");
-        }
-    }
-
-    public void asignarComision(Integer codigoComercio, Integer codigoComision) {
-        try {
-            Comercio comercio = obtenerPorCodigo(codigoComercio);
-            Comision comision = comisionRepository.findById(codigoComision).orElse(null);
-            if (comision == null) {
-                throw new NotFoundException(codigoComision.toString(), ENTITY_COMISION);
-            }
-
-            comercio.setComision(comision);
-            comercioRepository.save(comercio);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Error al asignar comisión: " + e.getMessage());
-        }
-    }
-
-    @Transactional(value = TxType.NEVER)
-    public List<Comercio> listarComerciosPorEstado(String estado) {
-        return comercioRepository.findByEstado(estado);
-    }
-
-    @Transactional(value = TxType.NEVER)
-    public List<Comercio> buscarPorRazonSocialONombreComercial(String criterio) {
-        return comercioRepository.findByRazonSocialContainingIgnoreCaseOrNombreComercialContainingIgnoreCase(criterio,
-                criterio);
     }
 
     private void validarCambioEstado(Comercio comercio, String nuevoEstado) {
@@ -322,23 +256,6 @@ public class ComercioService {
         }
     }
 
-    public Optional<Comercio> findByCodigoInterno(String codigoInterno) {
-        return comercioRepository.findByCodigoInterno(codigoInterno);
-    }
-
-    @Transactional
-    public void activarComercio(Integer codigoComercio) {
-        Comercio comercio = comercioRepository.findById(codigoComercio)
-            .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
-        
-        comercio.setEstado("ACT");
-        comercio.setFechaActivacion(LocalDateTime.now());
-        comercioRepository.save(comercio);
-
-        // Crear facturación inicial
-        crearFacturacionInicial(comercio);
-    }
-
     private void crearFacturacionInicial(Comercio comercio) {
         if (!"ACT".equals(comercio.getEstado())) {
             throw new IllegalStateException("El comercio debe estar activo para iniciar la facturación");
@@ -368,43 +285,5 @@ public class ComercioService {
 
             facturacionComercioRepository.save(nuevaFactura);
         }
-    }
-
-    @Transactional(value = TxType.NEVER)
-    public Comercio obtenerComercioActivo() {
-        Comercio comercio = comercioRepository.findByEstado(ESTADO_ACTIVO)
-            .stream()
-            .findFirst()
-            .orElse(null);
-        if (comercio == null) {
-            throw new NotFoundException(ESTADO_ACTIVO, ENTITY_NAME);
-        }
-        return comercio;
-    }
-
-    @Transactional(value = TxType.NEVER)
-    public FacturacionComercio obtenerFacturacionActiva() {
-        Comercio comercio = obtenerComercioActivo();
-        FacturacionComercio facturacion = facturacionComercioRepository
-            .findFacturaActivaPorComercio(comercio.getCodigo())
-            .orElse(null);
-        if (facturacion == null) {
-            throw new NotFoundException(comercio.getCodigo().toString(), ENTITY_FACTURACION);
-        }
-        return facturacion;
-    }
-
-    @Transactional(value = TxType.NEVER)
-    public FacturacionComercio obtenerFacturacionPorComercio(Integer codigoComercio) {
-        Comercio comercio = comercioRepository.findById(codigoComercio)
-            .orElseThrow(() -> new EntityNotFoundException("No existe el comercio con código: " + codigoComercio));
-            
-        return facturacionComercioRepository.findFacturaActivaPorComercio(codigoComercio)
-            .orElseThrow(() -> new EntityNotFoundException(
-                "No se encontró facturación activa para el comercio: " + codigoComercio));
-    }
-
-    public List<Comercio> obtenerTodos() {
-        return comercioRepository.findAll();
     }
 }
