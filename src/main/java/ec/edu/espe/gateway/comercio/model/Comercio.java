@@ -59,22 +59,11 @@ public class Comercio implements Serializable {
     @Column(name = "FECHA_SUSPENSION")
     private LocalDateTime fechaSuspension;
 
+    @Column(name = "NUMERO_CUENTA")
+    private Integer numeroCuenta;
+
     public Comercio(Integer codigo) {
         this.codigo = codigo;
-    }
-
-    public void setPagosAceptados(String pagosAceptados) {
-        if (!"SIM".equals(pagosAceptados) && !"REC".equals(pagosAceptados) && !"DOS".equals(pagosAceptados)) {
-            throw new IllegalArgumentException("PAGOS_ACEPTADOS debe ser SIM, REC o DOS.");
-        }
-        this.pagosAceptados = pagosAceptados;
-    }
-
-    public void setEstado(String estado) {
-        if (!"PEN".equals(estado) && !"ACT".equals(estado) && !"INA".equals(estado) && !"SUS".equals(estado)) {
-            throw new IllegalArgumentException("ESTADO debe ser PEN, ACT, INA o SUS.");
-        }
-        this.estado = estado;
     }
 
     @Override
@@ -107,7 +96,8 @@ public class Comercio implements Serializable {
         return "GtwComercio [codigo=" + codigo + ", codigoInterno=" + codigoInterno + ", ruc=" + ruc + ", razonSocial="
                 + razonSocial + ", nombreComercial=" + nombreComercial + ", fechaCreacion=" + fechaCreacion
                 + ", comision=" + comision + ", pagosAceptados=" + pagosAceptados + ", estado=" + estado
-                + ", fechaActivacion=" + fechaActivacion + ", fechaSuspension=" + fechaSuspension + "]";
+                + ", fechaActivacion=" + fechaActivacion + ", fechaSuspension=" + fechaSuspension + ", numeroCuenta="
+                + numeroCuenta + "]";
     }
 
 }

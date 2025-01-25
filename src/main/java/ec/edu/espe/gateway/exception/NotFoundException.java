@@ -1,4 +1,4 @@
-package ec.edu.espe.gateway.comercio.exception;
+package ec.edu.espe.gateway.exception;
 
 public class NotFoundException extends RuntimeException {
 
@@ -13,6 +13,6 @@ public class NotFoundException extends RuntimeException {
 
     @Override
     public String getMessage() {
-        return "No se encontro ninguna coincidencia para: "+this.entity+", con el dato:"+data;
+        return "No se encontró ninguna coincidencia para: " + this.entity + ", con el dato: " + data;
     }
-}
+} 

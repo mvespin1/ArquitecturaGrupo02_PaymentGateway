@@ -16,12 +16,13 @@ import ec.edu.espe.gateway.comercio.controller.dto.ConfiguracionDTO;
 import ec.edu.espe.gateway.comercio.controller.mapper.ConfiguracionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ec.edu.espe.gateway.comercio.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.InvalidDataException;
 
 @Service
 public class PosComercioService {
 
-    private static final Logger log = LoggerFactory.getLogger(PosComercioService.class);
+    private static final Logger logger = LoggerFactory.getLogger(PosComercioService.class);
 
     // Constantes de entidad
     public static final String ENTITY_NAME = "POS";
@@ -52,47 +53,46 @@ public class PosComercioService {
     }
 
     public List<PosComercio> obtenerTodos() {
-        return posComercioRepository.findAll();
+        logger.info("Iniciando obtención de todos los POS de comercio");
+        List<PosComercio> posList = posComercioRepository.findAll();
+        logger.info("Finalizada obtención de todos los POS de comercio");
+        return posList;
     }
 
     public PosComercio obtenerPorId(PosComercioPK id) {
-        PosComercio pos = posComercioRepository.findById(id).orElse(null);
-        if (pos == null) {
-            throw new NotFoundException(id.toString(), ENTITY_NAME);
-        }
-        return pos;
+        logger.info("Obteniendo POS de comercio por ID: {}", id);
+        return posComercioRepository.findById(id).orElseThrow(() -> 
+            new NotFoundException(id.toString(), ENTITY_NAME));
     }
 
     @Transactional
     public PosComercio crear(PosComercio posComercio) {
+        logger.info("Iniciando creación de POS de comercio: {}", posComercio);
         try {
-            // 1. Validar y obtener comercio completo
             validarNuevoPOS(posComercio);
             Comercio comercioCompleto = comercioRepository.findById(posComercio.getComercio().getCodigo())
                     .orElseThrow(() -> new NotFoundException(
                             posComercio.getComercio().getCodigo().toString(),
                             ENTITY_COMERCIO));
 
-            // 2. Preparar y guardar POS
             posComercio.setComercio(comercioCompleto);
             posComercio.setEstado(ESTADO_ACTIVO);
             posComercio.setFechaActivacion(LocalDateTime.now());
             PosComercio posGuardado = posComercioRepository.save(posComercio);
 
             try {
-                // 3. Sincronizar con servicio de configuración
                 ConfiguracionDTO configuracionParaSincronizar = configuracionMapper.toDTO(posGuardado);
                 configuracionParaSincronizar.setCodigoComercio(comercioCompleto.getCodigo());
                 posConfiguracionClient.enviarConfiguracion(configuracionParaSincronizar);
             } catch (Exception e) {
-                log.error("Error en sincronización con POS: {}", e.getMessage());
+                logger.error("Error en sincronización con POS: {}", e.getMessage());
             }
 
+            logger.info("Finalizada creación de POS de comercio: {}", posComercio);
             return posGuardado;
-        } catch (NotFoundException e) {
+        } catch (InvalidDataException e) {
+            logger.warn("Error al crear POS: {}", e.getMessage());
             throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Error al crear POS: " + e.getMessage());
         }
     }
 
@@ -138,6 +138,7 @@ public class PosComercioService {
 
     public void activarPOS(PosComercioPK id) {
         try {
+            logger.info("Activando POS de comercio con ID: {}", id);
             PosComercio pos = obtenerPorId(id);
             Comercio comercio = pos.getComercio();
             LocalDateTime fechaActual = LocalDateTime.now();
@@ -160,17 +161,20 @@ public class PosComercioService {
             pos.setFechaActivacion(fechaActual);
             posComercioRepository.save(pos);
         } catch (Exception e) {
+            logger.error("Error al activar POS: {}", e.getMessage());
             throw new RuntimeException("Error al activar POS: " + e.getMessage());
         }
     }
 
     public void inactivarPOS(PosComercioPK id) {
         try {
+            logger.info("Inactivando POS de comercio con ID: {}", id);
             PosComercio pos = obtenerPorId(id);
             pos.setEstado(ESTADO_INACTIVO);
             pos.setFechaActivacion(null);
             posComercioRepository.save(pos);
         } catch (Exception e) {
+            logger.error("Error al inactivar POS: {}", e.getMessage());
             throw new RuntimeException("Error al inactivar POS: " + e.getMessage());
         }
     }
