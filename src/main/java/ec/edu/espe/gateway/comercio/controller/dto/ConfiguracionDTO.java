@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class Configuracion {
+public class ConfiguracionDTO {
 
     @Valid
     @NotNull(message = "La clave primaria es obligatoria")
