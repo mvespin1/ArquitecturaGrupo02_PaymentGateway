@@ -24,9 +24,9 @@ public class TransaccionController {
     public static final String ESTADO_AUTORIZADO = "AUT";
     public static final String ESTADO_RECHAZADO = "REC";
 
-    public TransaccionController(TransaccionService transaccionService, 
-                               TransaccionRepository transaccionRepository,
-                               RecurrenceService recurrenceService) {
+    public TransaccionController(TransaccionService transaccionService,
+            TransaccionRepository transaccionRepository,
+            RecurrenceService recurrenceService) {
         this.transaccionService = transaccionService;
         this.transaccionRepository = transaccionRepository;
         this.recurrenceService = recurrenceService;
@@ -74,7 +74,7 @@ public class TransaccionController {
             @RequestParam LocalDate fechaInicio,
             @RequestParam LocalDate fechaFin) {
         List<Transaccion> transacciones = transaccionService.obtenerPorComercioYFecha(
-            codigoComercio, fechaInicio, fechaFin);
+                codigoComercio, fechaInicio, fechaFin);
         return ResponseEntity.ok(transacciones);
     }
 
@@ -108,15 +108,15 @@ public class TransaccionController {
         log.info("Datos de transacción recibidos: {}", transaccion);
         log.info("Comercio ID: {}", transaccion.getComercio().getCodigo());
         log.info("Facturación ID: {}", transaccion.getFacturacionComercio().getCodigo());
-        
+
         try {
             transaccionService.procesarTransaccionPOS(transaccion);
             log.info("Sincronización completada exitosamente");
-            
+
             // Obtener la transacción actualizada para acceder a su estado
             Transaccion transaccionActualizada = transaccionRepository.findById(transaccion.getCodigo())
                     .orElseThrow(() -> new EntityNotFoundException("Transacción no encontrada"));
-            
+
             // Devolver el mensaje y código HTTP según el estado
             if (ESTADO_AUTORIZADO.equals(transaccionActualizada.getEstado())) {
                 return ResponseEntity.status(201)
@@ -128,15 +128,15 @@ public class TransaccionController {
                 return ResponseEntity.status(201)
                         .body("Transacción en proceso de validación");
             }
-            
+
         } catch (EntityNotFoundException e) {
             log.error("Entidad no encontrada: {}", e.getMessage());
             return ResponseEntity.notFound().build();
-            
+
         } catch (IllegalArgumentException e) {
             log.error("Error de validación: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
-            
+
         } catch (Exception e) {
             log.error("Error inesperado al sincronizar: {}", e.getMessage());
             return ResponseEntity.status(400)

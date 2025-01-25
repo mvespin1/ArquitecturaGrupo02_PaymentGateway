@@ -7,7 +7,12 @@ import ec.edu.espe.gateway.comision.repository.ComisionRepository;
 import ec.edu.espe.gateway.comision.repository.ComisionSegmentoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ec.edu.espe.gateway.comision.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.DuplicateException;
+import ec.edu.espe.gateway.exception.InvalidDataException;
+import ec.edu.espe.gateway.exception.NotFoundException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,6 +32,9 @@ public class ComisionService {
     public static final String ENTITY_NAME = "Comisión";
     public static final String ENTITY_SEGMENTO = "Segmento de Comisión";
 
+    // Crear una instancia del logger
+    private static final Logger logger = LoggerFactory.getLogger(ComisionService.class);
+
     public ComisionService(ComisionRepository comisionRepository, ComisionSegmentoRepository segmentoRepository) {
         this.comisionRepository = comisionRepository;
         this.segmentoRepository = segmentoRepository;
@@ -34,14 +42,17 @@ public class ComisionService {
 
     public List<Comision> findAll() {
         try {
+            logger.info("Obteniendo todas las comisiones");
             return comisionRepository.findAll();
         } catch (Exception ex) {
+            logger.error("Error al obtener la lista de comisiones", ex);
             throw new RuntimeException("No se pudo obtener la lista de comisiones. Motivo: " + ex.getMessage());
         }
     }
 
     public Optional<Comision> findById(Integer codigo) {
         try {
+            logger.info("Obteniendo comisión por ID: {}", codigo);
             Comision comision = comisionRepository.findById(codigo)
                 .orElseThrow(() -> new NotFoundException(
                     codigo.toString(), 
@@ -49,8 +60,10 @@ public class ComisionService {
                 ));
             return Optional.of(comision);
         } catch (NotFoundException e) {
+            logger.warn("Comisión no encontrada: {}", codigo);
             throw e;
         } catch (Exception ex) {
+            logger.error("Error al obtener la comisión", ex);
             throw new RuntimeException("Error al obtener la comisión: " + ex.getMessage());
         }
     }
@@ -58,7 +71,11 @@ public class ComisionService {
     @Transactional
     public Comision save(Comision comision) {
         try {
+            logger.info("Guardando comisión: {}", comision);
             validarComision(comision);
+            if (comisionRepository.existsById(comision.getCodigo())) {
+                throw new DuplicateException(comision.getCodigo().toString(), ENTITY_NAME);
+            }
             Comision nuevaComision = comisionRepository.save(comision);
 
             if (Boolean.TRUE.equals(comision.getManejaSegmentos())) {
@@ -66,7 +83,11 @@ public class ComisionService {
             }
 
             return nuevaComision;
+        } catch (DuplicateException | InvalidDataException e) {
+            logger.warn("Error al guardar la comisión: {}", e.getMessage());
+            throw e;
         } catch (Exception ex) {
+            logger.error("Error al guardar la comisión", ex);
             throw new RuntimeException("No se pudo guardar la comisión. Motivo: " + ex.getMessage());
         }
     }
@@ -74,6 +95,7 @@ public class ComisionService {
     @Transactional
     public Comision update(Integer codigo, Comision comision) {
         try {
+            logger.info("Actualizando comisión: {}", comision);
             if (codigo == null) {
                 throw new IllegalArgumentException("El código de comisión no puede ser nulo");
             }
@@ -84,23 +106,18 @@ public class ComisionService {
             return comisionRepository.findById(codigo)
                     .map(comisionExistente -> {
                         try {
-                            // Validar que los campos requeridos no sean nulos
                             if (comision.getMontoBase() == null) {
                                 throw new IllegalArgumentException("El monto base no puede ser nulo");
                             }
                             if (comision.getTransaccionesBase() == null) {
                                 throw new IllegalArgumentException("Las transacciones base no pueden ser nulas");
                             }
-
-                            // Mantener valores que no deben cambiar
                             comision.setCodigo(codigo);
                             comision.setTipo(comisionExistente.getTipo());
                             comision.setManejaSegmentos(comisionExistente.getManejaSegmentos());
-                            
-                            // Validar nuevos valores
+
                             validarComision(comision);
                             
-                            // Actualizar valores permitidos
                             comisionExistente.setMontoBase(comision.getMontoBase());
                             comisionExistente.setTransaccionesBase(comision.getTransaccionesBase());
 
@@ -126,10 +143,13 @@ public class ComisionService {
                         ENTITY_NAME
                     ));
         } catch (NotFoundException e) {
+            logger.warn("Comisión no encontrada para actualizar: {}", codigo);
             throw e;
         } catch (IllegalArgumentException e) {
+            logger.warn("Error en los datos al actualizar comisión: {}", e.getMessage());
             throw e;
         } catch (Exception ex) {
+            logger.error("Error al actualizar la comisión", ex);
             throw new RuntimeException("Error al actualizar la comisión: " + ex.getMessage());
         }
     }
@@ -168,7 +188,6 @@ public class ComisionService {
             ComisionSegmento segmento = new ComisionSegmento(pk);
             segmento.setTransaccionesHasta(0);
             segmento.setMonto(BigDecimal.ZERO);
-            segmento.setComision(comision);
 
             segmentoRepository.save(segmento);
         } catch (Exception ex) {
@@ -180,14 +199,14 @@ public class ComisionService {
     private void actualizarSegmento(Comision comision) {
         try {
             ComisionSegmentoPK pk = new ComisionSegmentoPK(comision.getCodigo(), comision.getTransaccionesBase());
-            
-            // Si existe, actualizar
+
             ComisionSegmento segmento = segmentoRepository.findById(pk)
                     .orElseThrow(() -> new NotFoundException(
                         pk.toString(), 
                         ENTITY_SEGMENTO
                     ));
             segmento.setTransaccionesHasta(comision.getTransaccionesBase());
+            segmento.setMonto(comision.getMontoBase());
             segmentoRepository.save(segmento);
         } catch (NotFoundException e) {
             throw e;
@@ -198,69 +217,5 @@ public class ComisionService {
 
     public void deleteById(Integer codigo) {
         throw new UnsupportedOperationException("No se permite eliminar comisiones.");
-    }
-
-    public BigDecimal calcularComision(Comision comision, Integer totalTransacciones, BigDecimal montoTotal) {
-        if (comision == null) {
-            throw new IllegalArgumentException("La comisión no puede ser nula");
-        }
-        if (totalTransacciones == null || totalTransacciones < 0) {
-            throw new IllegalArgumentException("El número de transacciones debe ser positivo");
-        }
-        if (montoTotal == null || montoTotal.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("El monto total debe ser positivo");
-        }
-
-        if (Boolean.TRUE.equals(comision.getManejaSegmentos())) {
-            return calcularComisionPorSegmentos(comision, totalTransacciones, montoTotal);
-        } else {
-            return calcularComisionBase(comision, totalTransacciones, montoTotal);
-        }
-    }
-
-    private BigDecimal calcularComisionBase(Comision comision, Integer totalTransacciones, BigDecimal montoTotal) {
-        BigDecimal comisionTotal = BigDecimal.ZERO;
-        Integer bloques = (int) Math.ceil((double) totalTransacciones / comision.getTransaccionesBase());
-
-        if (TIPO_COMISION_POR.equals(comision.getTipo())) {
-            // Comisión porcentual sobre el monto total
-            comisionTotal = montoTotal.multiply(comision.getMontoBase());
-        } else if (TIPO_COMISION_FIJ.equals(comision.getTipo())) {
-            // Comisión fija por bloque de transacciones
-            comisionTotal = comision.getMontoBase().multiply(new BigDecimal(bloques));
-        }
-
-        return comisionTotal;
-    }
-
-    private BigDecimal calcularComisionPorSegmentos(Comision comision, Integer totalTransacciones, BigDecimal montoTotal) {
-        List<ComisionSegmento> segmentos = segmentoRepository.findByComisionOrderByPkTransaccionesDesdeAsc(comision);
-        BigDecimal comisionTotal = BigDecimal.ZERO;
-
-        for (ComisionSegmento segmento : segmentos) {
-            if (totalTransacciones > segmento.getPk().getTransaccionesDesde()) {
-                int transaccionesEnSegmento;
-                if (segmento.getTransaccionesHasta() == 0) {
-                    transaccionesEnSegmento = totalTransacciones - segmento.getPk().getTransaccionesDesde();
-                } else {
-                    transaccionesEnSegmento = Math.min(totalTransacciones, segmento.getTransaccionesHasta()) 
-                                            - segmento.getPk().getTransaccionesDesde();
-                }
-
-                if (transaccionesEnSegmento > 0) {
-                    if (TIPO_COMISION_POR.equals(comision.getTipo())) {
-                        BigDecimal montoSegmento = montoTotal.multiply(
-                            new BigDecimal(transaccionesEnSegmento)
-                            .divide(new BigDecimal(totalTransacciones)));
-                        comisionTotal = comisionTotal.add(montoSegmento.multiply(segmento.getMonto()));
-                    } else {
-                        comisionTotal = comisionTotal.add(
-                            segmento.getMonto().multiply(new BigDecimal(transaccionesEnSegmento)));
-                    }
-                }
-            }
-        }
-
-        return comisionTotal;
     }
 }

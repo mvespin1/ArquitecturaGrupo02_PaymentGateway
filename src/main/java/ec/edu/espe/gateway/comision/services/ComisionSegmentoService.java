@@ -3,13 +3,18 @@ package ec.edu.espe.gateway.comision.services;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import ec.edu.espe.gateway.comision.model.ComisionSegmento;
 import ec.edu.espe.gateway.comision.model.ComisionSegmentoPK;
 import ec.edu.espe.gateway.comision.repository.ComisionSegmentoRepository;
-import ec.edu.espe.gateway.comision.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.DuplicateException;
+import ec.edu.espe.gateway.exception.InvalidDataException;
+import ec.edu.espe.gateway.exception.NotFoundException;
 
 @Service
 public class ComisionSegmentoService {
@@ -22,14 +27,18 @@ public class ComisionSegmentoService {
     private static final int MAX_DIGITOS_ENTERO_MONTO = 16;
     private static final int MAX_DIGITOS_DECIMAL_MONTO = 4;
 
+    private static final Logger logger = LoggerFactory.getLogger(ComisionSegmentoService.class);
+
     public ComisionSegmentoService(ComisionSegmentoRepository segmentoRepository) {
         this.segmentoRepository = segmentoRepository;
     }
 
     public List<ComisionSegmento> findAll() {
         try {
+            logger.info("Obteniendo todos los segmentos de comisión");
             return segmentoRepository.findAll();
         } catch (Exception ex) {
+            logger.error("Error al obtener la lista de segmentos de comisión", ex);
             throw new RuntimeException(
                     "No se pudo obtener la lista de segmentos de comisión. Motivo: " + ex.getMessage());
         }
@@ -37,6 +46,7 @@ public class ComisionSegmentoService {
 
     public Optional<ComisionSegmento> findById(Integer comision, Integer transaccionesDesde) {
         try {
+            logger.info("Obteniendo segmento de comisión por ID: comision={}, transaccionesDesde={}", comision, transaccionesDesde);
             ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
             ComisionSegmento segmento = segmentoRepository.findById(pk)
                 .orElseThrow(() -> new NotFoundException(
@@ -45,8 +55,10 @@ public class ComisionSegmentoService {
                 ));
             return Optional.of(segmento);
         } catch (NotFoundException e) {
+            logger.warn("Segmento de comisión no encontrado: comision={}, transaccionesDesde={}", comision, transaccionesDesde);
             throw e;
         } catch (Exception ex) {
+            logger.error("Error al obtener el segmento de comisión", ex);
             throw new RuntimeException("Error al obtener el segmento: " + ex.getMessage());
         }
     }
@@ -54,9 +66,17 @@ public class ComisionSegmentoService {
     @Transactional
     public ComisionSegmento save(ComisionSegmento segmento) {
         try {
+            logger.info("Guardando segmento de comisión: {}", segmento);
             validarSegmento(segmento);
+            if (segmentoRepository.existsById(segmento.getPk())) {
+                throw new DuplicateException(segmento.getPk().toString(), ENTITY_NAME);
+            }
             return segmentoRepository.save(segmento);
+        } catch (DuplicateException | InvalidDataException e) {
+            logger.warn("Error al guardar el segmento de comisión: {}", e.getMessage());
+            throw e;
         } catch (Exception ex) {
+            logger.error("Error al guardar el segmento de comisión", ex);
             throw new RuntimeException("No se pudo guardar el segmento de comisión. Motivo: " + ex.getMessage());
         }
     }
@@ -65,6 +85,7 @@ public class ComisionSegmentoService {
     public ComisionSegmento update(Integer comision, Integer transaccionesDesde,
             Integer transaccionesHasta, BigDecimal monto) {
         try {
+            logger.info("Actualizando segmento de comisión: comision={}, transaccionesDesde={}, transaccionesHasta={}, monto={}", comision, transaccionesDesde, transaccionesHasta, monto);
             ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
             return segmentoRepository.findById(pk)
                     .map(segmentoExistente -> {
@@ -79,8 +100,10 @@ public class ComisionSegmentoService {
                         ENTITY_NAME
                     ));
         } catch (NotFoundException e) {
+            logger.warn("Segmento de comisión no encontrado para actualizar: comision={}, transaccionesDesde={}", comision, transaccionesDesde);
             throw e;
         } catch (Exception ex) {
+            logger.error("Error al actualizar el segmento de comisión", ex);
             throw new RuntimeException("Error al actualizar el segmento: " + ex.getMessage());
         }
     }
@@ -88,6 +111,7 @@ public class ComisionSegmentoService {
     @Transactional
     public void deleteById(Integer comision, Integer transaccionesDesde) {
         try {
+            logger.info("Eliminando segmento de comisión: comision={}, transaccionesDesde={}", comision, transaccionesDesde);
             ComisionSegmentoPK pk = new ComisionSegmentoPK(comision, transaccionesDesde);
             ComisionSegmento segmento = segmentoRepository.findById(pk)
                     .orElseThrow(() -> new NotFoundException(
@@ -101,8 +125,10 @@ public class ComisionSegmentoService {
                 throw new IllegalStateException("No se puede eliminar un segmento con monto diferente a 0.");
             }
         } catch (NotFoundException e) {
+            logger.warn("Segmento de comisión no encontrado para eliminar: comision={}, transaccionesDesde={}", comision, transaccionesDesde);
             throw e;
         } catch (Exception ex) {
+            logger.error("Error al eliminar el segmento de comisión", ex);
             throw new RuntimeException("Error al eliminar el segmento: " + ex.getMessage());
         }
     }

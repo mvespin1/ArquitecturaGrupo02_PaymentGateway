@@ -11,9 +11,9 @@ import ec.edu.espe.gateway.transaccion.model.Transaccion;
 import ec.edu.espe.gateway.transaccion.repository.TransaccionRepository;
 import ec.edu.espe.gateway.facturacion.services.FacturaService;
 import ec.edu.espe.gateway.comision.services.ComisionService;
-import ec.edu.espe.gateway.comercio.exception.NotFoundException;
-import ec.edu.espe.gateway.comercio.exception.DuplicateException;
-import ec.edu.espe.gateway.comercio.exception.InvalidDataException;
+import ec.edu.espe.gateway.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.DuplicateException;
+import ec.edu.espe.gateway.exception.InvalidDataException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

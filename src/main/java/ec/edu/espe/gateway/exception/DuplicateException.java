@@ -1,4 +1,4 @@
-package ec.edu.espe.gateway.comercio.exception;
+package ec.edu.espe.gateway.exception;
 
 public class DuplicateException extends RuntimeException {
 

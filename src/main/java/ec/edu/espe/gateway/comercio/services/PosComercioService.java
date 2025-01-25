@@ -16,8 +16,8 @@ import ec.edu.espe.gateway.comercio.controller.dto.ConfiguracionDTO;
 import ec.edu.espe.gateway.comercio.controller.mapper.ConfiguracionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ec.edu.espe.gateway.comercio.exception.NotFoundException;
-import ec.edu.espe.gateway.comercio.exception.InvalidDataException;
+import ec.edu.espe.gateway.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.InvalidDataException;
 
 @Service
 public class PosComercioService {
