@@ -218,4 +218,15 @@ public class ComisionService {
     public void deleteById(Integer codigo) {
         throw new UnsupportedOperationException("No se permite eliminar comisiones.");
     }
+
+    public List<ComisionSegmento> obtenerSegmentosPorComision(Integer codigoComision) {
+        try {
+            return segmentoRepository.findByComisionOrderByPkTransaccionesDesdeAsc(
+                    comisionRepository.findById(codigoComision)
+                            .orElseThrow(() -> new NotFoundException(codigoComision.toString(), ENTITY_NAME))
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Error al obtener segmentos de comisión: " + e.getMessage());
+        }
+    }
 }
