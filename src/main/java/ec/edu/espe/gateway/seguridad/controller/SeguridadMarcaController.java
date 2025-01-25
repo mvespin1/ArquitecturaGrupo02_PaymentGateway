@@ -2,17 +2,18 @@ package ec.edu.espe.gateway.seguridad.controller;
 
 import ec.edu.espe.gateway.seguridad.model.SeguridadMarca;
 import ec.edu.espe.gateway.seguridad.services.SeguridadMarcaService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
-import ec.edu.espe.gateway.seguridad.exception.NotFoundException;
-
-import jakarta.persistence.EntityNotFoundException;
-import java.util.List;
+import ec.edu.espe.gateway.exception.InvalidDataException;
 
 @RestController
-@RequestMapping("/v1/seguridad-marcas")
+@RequestMapping("/v1/seguridad-marca")
 public class SeguridadMarcaController {
+
+    private static final Logger logger = LoggerFactory.getLogger(SeguridadMarcaController.class);
 
     private final SeguridadMarcaService marcaService;
 
@@ -20,68 +21,18 @@ public class SeguridadMarcaController {
         this.marcaService = marcaService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<SeguridadMarca>> getAll() {
+    @PostMapping("/recibir-clave")
+    public ResponseEntity<String> recibirClave(@RequestBody SeguridadMarca nuevaClave) {
         try {
-            List<SeguridadMarca> marcas = marcaService.getAllMarcas();
-            return ResponseEntity.ok(marcas);
+            logger.info("Recibiendo nueva clave para marca: {}", nuevaClave.getMarca());
+            marcaService.guardarClave(nuevaClave);
+            return ResponseEntity.ok("Clave de marca recibida y guardada exitosamente");
+        } catch (InvalidDataException e) {
+            logger.error("Datos inválidos al recibir clave de marca: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            logger.error("Error al recibir clave de marca: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al recibir clave de marca");
         }
     }
-
-    @GetMapping("/{marca}")
-    public ResponseEntity<SeguridadMarca> getById(@PathVariable String marca) {
-        try {
-            return marcaService.getMarcaById(marca)
-                    .map(ResponseEntity::ok)
-                    .orElseThrow(() -> new NotFoundException(marca, "Marca"));
-        } catch (NotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PostMapping
-    public ResponseEntity<SeguridadMarca> create(@RequestBody SeguridadMarca marca) {
-        try {
-            SeguridadMarca savedMarca = marcaService.createMarca(marca);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedMarca);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PutMapping("/{marca}")
-    public ResponseEntity<SeguridadMarca> update(
-            @PathVariable String marca,
-            @RequestBody SeguridadMarca updatedMarcaDetails) {
-        try {
-            SeguridadMarca updatedMarca = marcaService.updateMarca(marca, updatedMarcaDetails);
-            return ResponseEntity.ok(updatedMarca);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception ex) {
-            return ResponseEntity.status(500).body(null);
-        }
-    }
-
-    @DeleteMapping("/{marca}")
-    public ResponseEntity<Void> delete(@PathVariable String marca) {
-        try {
-            marcaService.deleteById(marca);
-            return ResponseEntity.noContent().build();
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception ex) {
-            return ResponseEntity.status(500).build();
-        }
-    }
-}
+} 

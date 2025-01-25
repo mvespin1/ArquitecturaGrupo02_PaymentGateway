@@ -6,9 +6,9 @@ import ec.edu.espe.gateway.comercio.model.Comercio;
 import ec.edu.espe.gateway.comercio.repository.ComercioRepository;
 import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
-import ec.edu.espe.gateway.transaccion.exception.RecurrenciaNotFoundException;
-import ec.edu.espe.gateway.transaccion.exception.RecurrenciaStateException;
-import ec.edu.espe.gateway.transaccion.exception.RecurrenciaValidationException;
+import ec.edu.espe.gateway.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.StateException;
+import ec.edu.espe.gateway.exception.ValidationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public class RecurrenceService {
             for (Transaccion transaccionRecurrente : transaccionesRecurrentes) {
                 try {
                     procesarTransaccionRecurrente(transaccionRecurrente, fechaActual);
-                } catch (RecurrenciaStateException | RecurrenciaValidationException e) {
+                } catch (StateException | ValidationException e) {
                     log.error("Error controlado al procesar recurrencia {}: {}", 
                         transaccionRecurrente.getCodigo(), e.getMessage());
                     detenerRecurrencia(transaccionRecurrente, e.getMessage());
@@ -58,7 +58,7 @@ public class RecurrenceService {
             }
         } catch (Exception e) {
             log.error("Error al procesar transacciones recurrentes: {}", e.getMessage());
-            throw new RecurrenciaValidationException("procesamiento", 
+            throw new ValidationException("procesamiento", 
                 "Error al procesar transacciones recurrentes: " + e.getMessage());
         }
     }
@@ -67,7 +67,7 @@ public class RecurrenceService {
         // Validar estado del comercio
         Comercio comercio = transaccionRecurrente.getComercio();
         if (!"ACT".equals(comercio.getEstado())) {
-            throw new RecurrenciaStateException(comercio.getEstado(), 
+            throw new StateException(comercio.getEstado(), 
                 "procesar recurrencia con comercio inactivo o suspendido");
         }
 
@@ -76,7 +76,7 @@ public class RecurrenceService {
                 .findByComercioAndEstado(comercio, "ACT")
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new RecurrenciaValidationException("comercio", 
+                .orElseThrow(() -> new ValidationException("comercio", 
                     "No existe facturación activa para el comercio"));
 
         try {
@@ -101,7 +101,7 @@ public class RecurrenceService {
             
         } catch (Exception e) {
             log.error("Error al crear nueva transacción recurrente: {}", e.getMessage());
-            throw new RecurrenciaValidationException("creacion", 
+            throw new ValidationException("creacion", 
                 "Error al crear nueva transacción recurrente: " + e.getMessage());
         }
     }
@@ -115,7 +115,7 @@ public class RecurrenceService {
             log.info("Recurrencia {} detenida. Motivo: {}", transaccion.getCodigo(), motivo);
         } catch (Exception e) {
             log.error("Error al detener recurrencia {}: {}", transaccion.getCodigo(), e.getMessage());
-            throw new RecurrenciaStateException("ACTIVO", 
+            throw new StateException("ACTIVO", 
                 "No se pudo detener la recurrencia: " + e.getMessage());
         }
     }
@@ -130,7 +130,7 @@ public class RecurrenceService {
             destino.setPais(origen.getPais());
             destino.setTarjeta(origen.getTarjeta());
         } catch (Exception e) {
-            throw new RecurrenciaValidationException("copia_datos", 
+            throw new ValidationException("copia_datos", 
                 "Error al copiar datos de transacción: " + e.getMessage());
         }
     }
@@ -154,7 +154,7 @@ public class RecurrenceService {
                 transaccionRepository.save(transaccionRecurrente);
             }
         } catch (Exception e) {
-            throw new RecurrenciaValidationException("actualizacion_fecha", 
+            throw new ValidationException("actualizacion_fecha", 
                 "Error al actualizar fecha de ejecución: " + e.getMessage());
         }
     }
@@ -167,10 +167,10 @@ public class RecurrenceService {
     public void detenerRecurrenciasPorComercio(Integer codigoComercio) {
         try {
             Comercio comercio = comercioRepository.findById(codigoComercio)
-                    .orElseThrow(() -> new RecurrenciaNotFoundException("Comercio " + codigoComercio));
+                    .orElseThrow(() -> new NotFoundException(codigoComercio.toString(), "Comercio"));
 
             if (!"INA".equals(comercio.getEstado()) && !"SUS".equals(comercio.getEstado())) {
-                throw new RecurrenciaStateException(comercio.getEstado(),
+                throw new StateException(comercio.getEstado(),
                     "detener recurrencias (solo permitido para comercios inactivos o suspendidos)");
             }
 
@@ -181,11 +181,11 @@ public class RecurrenceService {
                 detenerRecurrencia(transaccion, 
                     String.format("Comercio en estado %s", comercio.getEstado()));
             }
-        } catch (RecurrenciaNotFoundException | RecurrenciaStateException e) {
+        } catch (NotFoundException | StateException e) {
             throw e;
         } catch (Exception e) {
             log.error("Error al detener recurrencias por comercio {}: {}", codigoComercio, e.getMessage());
-            throw new RecurrenciaValidationException("detencion_masiva", 
+            throw new ValidationException("detencion_masiva", 
                 "Error al detener recurrencias: " + e.getMessage());
         }
     }
