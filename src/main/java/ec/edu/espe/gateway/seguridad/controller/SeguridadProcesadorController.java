@@ -9,9 +9,17 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import ec.edu.espe.gateway.exception.NotFoundException;
 import ec.edu.espe.gateway.exception.InvalidDataException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
 
 @RestController
 @RequestMapping("/v1/seguridad-procesador")
+@Tag(name = "Seguridad Procesador", description = "API para gestionar las claves de seguridad de procesadores")
 public class SeguridadProcesadorController {
 
     private static final Logger logger = LoggerFactory.getLogger(SeguridadProcesadorController.class);
@@ -22,8 +30,21 @@ public class SeguridadProcesadorController {
         this.procesadorService = procesadorService;
     }
 
+    @Operation(summary = "Recibir nueva clave de procesador", 
+               description = "Guarda una nueva clave de seguridad para un procesador específico")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Clave guardada exitosamente",
+                    content = @Content(mediaType = "application/json",
+                    schema = @Schema(type = "string"))),
+        @ApiResponse(responseCode = "400", description = "Datos de clave inválidos",
+                    content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+                    content = @Content)
+    })
     @PostMapping("/recibir-clave")
-    public ResponseEntity<String> recibirClave(@RequestBody SeguridadProcesador nuevaClave) {
+    public ResponseEntity<String> recibirClave(
+            @Parameter(description = "Datos de la nueva clave de procesador", required = true)
+            @RequestBody SeguridadProcesador nuevaClave) {
         try {
             logger.info("Recibiendo nueva clave para procesador con código: {}", nuevaClave.getCodigo());
             procesadorService.guardarClave(nuevaClave);
@@ -37,8 +58,25 @@ public class SeguridadProcesadorController {
         }
     }
 
+    @Operation(summary = "Actualizar estado de clave de procesador", 
+               description = "Actualiza el estado de una clave de procesador existente")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Estado de clave actualizado exitosamente",
+                    content = @Content(mediaType = "application/json",
+                    schema = @Schema(type = "string"))),
+        @ApiResponse(responseCode = "400", description = "Datos de estado inválidos",
+                    content = @Content),
+        @ApiResponse(responseCode = "404", description = "Clave de procesador no encontrada",
+                    content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+                    content = @Content)
+    })
     @PutMapping("/actualizar-estado/{codigo}")
-    public ResponseEntity<String> actualizarEstadoClave(@PathVariable Integer codigo, @RequestParam String nuevoEstado) {
+    public ResponseEntity<String> actualizarEstadoClave(
+            @Parameter(description = "Código del procesador", required = true)
+            @PathVariable Integer codigo,
+            @Parameter(description = "Nuevo estado de la clave", required = true)
+            @RequestParam String nuevoEstado) {
         try {
             logger.info("Actualizando estado de la clave para procesador con código {}: nuevo estado {}", codigo, nuevoEstado);
             procesadorService.actualizarEstadoClave(codigo, nuevoEstado);
