@@ -11,6 +11,9 @@ import ec.edu.espe.gateway.exception.DuplicateException;
 import ec.edu.espe.gateway.exception.InvalidDataException;
 import ec.edu.espe.gateway.exception.StateException;
 import ec.edu.espe.gateway.exception.ValidationException;
+import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
+import jakarta.persistence.EntityNotFoundException;
+
 import org.springframework.http.HttpStatus;
 
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {
@@ -63,6 +66,17 @@ public class ComercioController {
         } catch (Exception e) {
             logger.error("Error inesperado al actualizar estado del comercio: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error inesperado");
+        }
+    }
+
+    @GetMapping("/{codigoComercio}/facturacion")
+    public ResponseEntity<FacturacionComercio> obtenerFacturacionPorComercio(
+            @PathVariable Integer codigoComercio) {
+        try {
+            FacturacionComercio facturacion = comercioService.obtenerFacturacionPorComercio(codigoComercio);
+            return ResponseEntity.ok(facturacion);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 }

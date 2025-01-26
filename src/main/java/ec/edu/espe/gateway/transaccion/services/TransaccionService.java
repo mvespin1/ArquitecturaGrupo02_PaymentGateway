@@ -125,6 +125,7 @@ public class TransaccionService {
             DatosTarjetaDTO datosTarjeta = extraerDatosTarjeta(transaccion.getTarjeta());
 
             dto.setCodigoBanco(1);
+            dto.setModalidad(transaccion.getTipo());
             dto.setCodigoMoneda("USD");
             dto.setFechaExpiracionTarjeta(datosTarjeta.getExpiryDate());
             dto.setNombreTarjeta(datosTarjeta.getNombreTarjeta());

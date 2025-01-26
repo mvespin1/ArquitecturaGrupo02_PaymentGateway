@@ -20,6 +20,8 @@ import ec.edu.espe.gateway.exception.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 
@@ -198,6 +200,16 @@ public class ComercioService {
             }
             posComercioRepository.save(dispositivo);
         }
+    }
+
+    @Transactional(value = TxType.NEVER)
+    public FacturacionComercio obtenerFacturacionPorComercio(Integer codigoComercio) {
+        Comercio comercio = comercioRepository.findById(codigoComercio)
+            .orElseThrow(() -> new EntityNotFoundException("No existe el comercio con código: " + codigoComercio));
+            
+        return facturacionComercioRepository.findFacturaActivaPorComercio(codigoComercio)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "No se encontró facturación activa para el comercio: " + codigoComercio));
     }
 
     private void validarSuspension(Comercio comercio) {
