@@ -14,6 +14,8 @@ import ec.edu.espe.gateway.comision.services.ComisionService;
 import ec.edu.espe.gateway.exception.NotFoundException;
 import ec.edu.espe.gateway.exception.DuplicateException;
 import ec.edu.espe.gateway.exception.InvalidDataException;
+import ec.edu.espe.gateway.exception.StateException;
+import ec.edu.espe.gateway.exception.ValidationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,32 +91,6 @@ public class ComercioService {
         }
     }
 
-    private void validarNuevoComercio(Comercio comercio) {
-        if (comercio.getCodigoInterno() == null || comercio.getCodigoInterno().length() != 10) {
-            throw new InvalidDataException("El código interno debe tener 10 caracteres");
-        }
-        if (comercioRepository.findByCodigoInterno(comercio.getCodigoInterno()).isPresent()) {
-            throw new DuplicateException(comercio.getCodigoInterno(), "Comercio");
-        }
-
-        if (comercio.getRuc() == null || comercio.getRuc().length() != 13 || !comercio.getRuc().matches("\\d{13}")) {
-            throw new InvalidDataException("El RUC debe tener exactamente 13 dígitos numéricos");
-        }
-        if (comercioRepository.findByRuc(comercio.getRuc()).isPresent()) {
-            throw new DuplicateException(comercio.getRuc(), "Comercio");
-        }
-
-        if (comercio.getRazonSocial() == null || comercio.getRazonSocial().trim().isEmpty()
-                || comercio.getRazonSocial().length() > 100) {
-            throw new InvalidDataException("La razón social no puede estar vacía ni exceder 100 caracteres");
-        }
-
-        if (comercio.getNombreComercial() == null || comercio.getNombreComercial().trim().isEmpty()
-                || comercio.getNombreComercial().length() > 100) {
-            throw new InvalidDataException("El nombre comercial no puede estar vacío ni exceder 100 caracteres");
-        }
-    }
-
     @Transactional
     public void actualizarEstado(Integer codigo, String nuevoEstado) {
         logger.info("Iniciando actualización de estado del comercio con código {}: nuevo estado {}", codigo, nuevoEstado);
@@ -170,30 +146,57 @@ public class ComercioService {
             actualizarEstadoDispositivosPos(comercio);
             logger.info("Finalizada actualización de estado del comercio con código {}: nuevo estado {}", codigo, nuevoEstado);
 
-        } catch (Exception e) {
+        } catch (StateException | ValidationException e) {
             logger.error("Error al actualizar estado: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error inesperado al actualizar estado: {}", e.getMessage());
             throw new RuntimeException("Error al actualizar estado: " + e.getMessage());
         }
     }
 
-    private void validarFechasEstado(Comercio comercio, String nuevoEstado) {
-        LocalDateTime fechaActual = LocalDateTime.now();
-
-        if (ESTADO_ACTIVO.equals(nuevoEstado) && comercio.getFechaActivacion() != null
-                && comercio.getFechaActivacion().isAfter(fechaActual)) {
-            throw new IllegalStateException("La fecha de activación no puede ser posterior a la fecha actual");
+    private void crearFacturacionInicial(Comercio comercio) {
+        if (!"ACT".equals(comercio.getEstado())) {
+            throw new IllegalStateException("El comercio debe estar activo para iniciar la facturación");
         }
 
-        if (ESTADO_SUSPENDIDO.equals(nuevoEstado)) {
-            if (comercio.getFechaActivacion() == null) {
-                throw new IllegalStateException("No se puede suspender un comercio que no ha sido activado");
+        boolean existeFacturaActiva = facturacionComercioRepository
+                .findFacturaActivaPorComercio(comercio.getCodigo())
+                .isPresent();
+
+        if (!existeFacturaActiva) {
+            LocalDate fechaInicio = comercio.getFechaActivacion().toLocalDate();
+            LocalDate fechaFin = fechaInicio.plusMonths(1);
+
+            FacturacionComercio nuevaFactura = new FacturacionComercio();
+            nuevaFactura.setFechaInicio(fechaInicio);
+            nuevaFactura.setFechaFin(fechaFin);
+            nuevaFactura.setEstado("ACT");
+            nuevaFactura.setCodigoFacturacion(
+                    "FACT-" + comercio.getCodigo() + "-" + fechaFin.format(DateTimeFormatter.ofPattern("yyyyMM")));
+            nuevaFactura.setComercio(comercio);
+            nuevaFactura.setComision(comercio.getComision());
+            nuevaFactura.setTransaccionesAutorizadas(0);
+            nuevaFactura.setTransaccionesProcesadas(0);
+            nuevaFactura.setTransaccionesRechazadas(0);
+            nuevaFactura.setTransaccionesReversadas(0);
+            nuevaFactura.setValor(BigDecimal.ZERO);
+
+            facturacionComercioRepository.save(nuevaFactura);
+        }
+    }
+
+    private void actualizarEstadoDispositivosPos(Comercio comercio) {
+        List<PosComercio> dispositivosPos = posComercioRepository.findByComercio(comercio);
+
+        for (PosComercio dispositivo : dispositivosPos) {
+            if (ESTADO_INACTIVO.equals(comercio.getEstado()) || ESTADO_SUSPENDIDO.equals(comercio.getEstado())) {
+                dispositivo.setEstado("INA");
+            } else if (ESTADO_ACTIVO.equals(comercio.getEstado())) {
+                dispositivo.setFechaActivacion(LocalDateTime.now());
+                dispositivo.setEstado("ACT");
             }
-            if (comercio.getFechaSuspension() != null &&
-                    (comercio.getFechaSuspension().isBefore(comercio.getFechaActivacion()) ||
-                            comercio.getFechaSuspension().isAfter(fechaActual))) {
-                throw new IllegalStateException(
-                        "La fecha de suspensión debe ser posterior a la activación y no futura");
-            }
+            posComercioRepository.save(dispositivo);
         }
     }
 
@@ -210,20 +213,6 @@ public class ComercioService {
                 .findByComercioAndEstado(comercio, "ACT");
         if (!facturacionesPendientes.isEmpty()) {
             throw new IllegalStateException("No se puede inactivar un comercio con facturaciones activas pendientes");
-        }
-    }
-
-    private void actualizarEstadoDispositivosPos(Comercio comercio) {
-        List<PosComercio> dispositivosPos = posComercioRepository.findByComercio(comercio);
-
-        for (PosComercio dispositivo : dispositivosPos) {
-            if (ESTADO_INACTIVO.equals(comercio.getEstado()) || ESTADO_SUSPENDIDO.equals(comercio.getEstado())) {
-                dispositivo.setEstado("INA");
-            } else if (ESTADO_ACTIVO.equals(comercio.getEstado())) {
-                dispositivo.setFechaActivacion(LocalDateTime.now());
-                dispositivo.setEstado("ACT");
-            }
-            posComercioRepository.save(dispositivo);
         }
     }
 
@@ -256,34 +245,50 @@ public class ComercioService {
         }
     }
 
-    private void crearFacturacionInicial(Comercio comercio) {
-        if (!"ACT".equals(comercio.getEstado())) {
-            throw new IllegalStateException("El comercio debe estar activo para iniciar la facturación");
+    private void validarNuevoComercio(Comercio comercio) {
+        if (comercio.getCodigoInterno() == null || comercio.getCodigoInterno().length() != 10) {
+            throw new InvalidDataException("El código interno debe tener 10 caracteres");
+        }
+        if (comercioRepository.findByCodigoInterno(comercio.getCodigoInterno()).isPresent()) {
+            throw new DuplicateException(comercio.getCodigoInterno(), "Comercio");
         }
 
-        boolean existeFacturaActiva = facturacionComercioRepository
-                .findFacturaActivaPorComercio(comercio.getCodigo())
-                .isPresent();
+        if (comercio.getRuc() == null || comercio.getRuc().length() != 13 || !comercio.getRuc().matches("\\d{13}")) {
+            throw new InvalidDataException("El RUC debe tener exactamente 13 dígitos numéricos");
+        }
+        if (comercioRepository.findByRuc(comercio.getRuc()).isPresent()) {
+            throw new DuplicateException(comercio.getRuc(), "Comercio");
+        }
 
-        if (!existeFacturaActiva) {
-            LocalDate fechaInicio = comercio.getFechaActivacion().toLocalDate();
-            LocalDate fechaFin = fechaInicio.plusMonths(1);
+        if (comercio.getRazonSocial() == null || comercio.getRazonSocial().trim().isEmpty()
+                || comercio.getRazonSocial().length() > 100) {
+            throw new InvalidDataException("La razón social no puede estar vacía ni exceder 100 caracteres");
+        }
 
-            FacturacionComercio nuevaFactura = new FacturacionComercio();
-            nuevaFactura.setFechaInicio(fechaInicio);
-            nuevaFactura.setFechaFin(fechaFin);
-            nuevaFactura.setEstado("ACT");
-            nuevaFactura.setCodigoFacturacion(
-                    "FACT-" + comercio.getCodigo() + "-" + fechaFin.format(DateTimeFormatter.ofPattern("yyyyMM")));
-            nuevaFactura.setComercio(comercio);
-            nuevaFactura.setComision(comercio.getComision());
-            nuevaFactura.setTransaccionesAutorizadas(0);
-            nuevaFactura.setTransaccionesProcesadas(0);
-            nuevaFactura.setTransaccionesRechazadas(0);
-            nuevaFactura.setTransaccionesReversadas(0);
-            nuevaFactura.setValor(BigDecimal.ZERO);
+        if (comercio.getNombreComercial() == null || comercio.getNombreComercial().trim().isEmpty()
+                || comercio.getNombreComercial().length() > 100) {
+            throw new InvalidDataException("El nombre comercial no puede estar vacío ni exceder 100 caracteres");
+        }
+    }
 
-            facturacionComercioRepository.save(nuevaFactura);
+    private void validarFechasEstado(Comercio comercio, String nuevoEstado) {
+        LocalDateTime fechaActual = LocalDateTime.now();
+
+        if (ESTADO_ACTIVO.equals(nuevoEstado) && comercio.getFechaActivacion() != null
+                && comercio.getFechaActivacion().isAfter(fechaActual)) {
+            throw new IllegalStateException("La fecha de activación no puede ser posterior a la fecha actual");
+        }
+
+        if (ESTADO_SUSPENDIDO.equals(nuevoEstado)) {
+            if (comercio.getFechaActivacion() == null) {
+                throw new IllegalStateException("No se puede suspender un comercio que no ha sido activado");
+            }
+            if (comercio.getFechaSuspension() != null &&
+                    (comercio.getFechaSuspension().isBefore(comercio.getFechaActivacion()) ||
+                            comercio.getFechaSuspension().isAfter(fechaActual))) {
+                throw new IllegalStateException(
+                        "La fecha de suspensión debe ser posterior a la activación y no futura");
+            }
         }
     }
 }
