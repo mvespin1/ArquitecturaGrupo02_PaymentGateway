@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ec.edu.espe.gateway.exception.DuplicateException;
 import ec.edu.espe.gateway.exception.InvalidDataException;
-import ec.edu.espe.gateway.exception.NotFoundException;
 import ec.edu.espe.gateway.exception.StateException;
 import ec.edu.espe.gateway.exception.ValidationException;
 import org.springframework.http.HttpStatus;
