@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import ec.edu.espe.gateway.exception.DuplicateException;
 import ec.edu.espe.gateway.exception.InvalidDataException;
 import ec.edu.espe.gateway.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.StateException;
+import ec.edu.espe.gateway.exception.ValidationException;
+import org.springframework.http.HttpStatus;
 
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {
         RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS
@@ -55,9 +58,12 @@ public class ComercioController {
             logger.info("Actualizando estado del comercio con código {}: nuevo estado {}", codigo, nuevoEstado);
             comercioService.actualizarEstado(codigo, nuevoEstado);
             return ResponseEntity.ok().build();
-        } catch (NotFoundException | IllegalStateException e) {
+        } catch (StateException | ValidationException e) {
             logger.warn("Error al actualizar estado del comercio: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error inesperado al actualizar estado del comercio: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error inesperado");
         }
     }
 }
