@@ -3,10 +3,10 @@ package ec.edu.espe.gateway.seguridad.services;
 import ec.edu.espe.gateway.seguridad.model.SeguridadMarca;
 import ec.edu.espe.gateway.seguridad.repository.SeguridadMarcaRepository;
 import org.springframework.stereotype.Service;
-import ec.edu.espe.gateway.seguridad.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.InvalidDataException;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -57,14 +57,6 @@ public class SeguridadMarcaService {
         }
     }
 
-    public List<SeguridadMarca> getAllMarcas() {
-        try {
-            return repository.findAll();
-        } catch (Exception ex) {
-            throw new RuntimeException("Error al obtener la lista de marcas. Motivo: " + ex.getMessage());
-        }
-    }
-
     public SeguridadMarca updateMarca(String marcaId, SeguridadMarca updatedMarcaDetails) {
         if (updatedMarcaDetails.getMarca() == null || !updatedMarcaDetails.getMarca().matches(REGEX_MARCA)) {
             throw new IllegalArgumentException(ERROR_MARCA_INVALIDA);
@@ -94,18 +86,29 @@ public class SeguridadMarcaService {
         }
     }
 
-    public void deleteById(String marcaId) {
-        try {
-            repository.findById(marcaId)
-                    .orElseThrow(() -> new NotFoundException(
-                        marcaId, 
-                        ENTITY_NAME
-                    ));
-            repository.deleteById(marcaId);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (Exception ex) {
-            throw new RuntimeException("Error al eliminar la marca. Motivo: " + ex.getMessage());
+    public void guardarClave(SeguridadMarca nuevaClave) {
+        validarMarca(nuevaClave);
+        SeguridadMarca marcaExistente = repository.findById(nuevaClave.getMarca()).orElse(null);
+
+        if (marcaExistente != null) {
+            if (!marcaExistente.getClave().equals(nuevaClave.getClave())) {
+                marcaExistente.setClave(nuevaClave.getClave());
+                marcaExistente.setFechaActualizacion(LocalDateTime.now());
+                repository.save(marcaExistente);
+            }
+        } else {
+            nuevaClave.setFechaActualizacion(LocalDateTime.now());
+            repository.save(nuevaClave);
+        }
+    }
+
+    private void validarMarca(SeguridadMarca marca) {
+        if (marca.getMarca() == null || !marca.getMarca().matches(REGEX_MARCA)) {
+            throw new InvalidDataException(ERROR_MARCA_INVALIDA);
+        }
+
+        if (marca.getClave() == null || !marca.getClave().matches(REGEX_CLAVE)) {
+            throw new InvalidDataException(ERROR_CLAVE_INVALIDA);
         }
     }
 }

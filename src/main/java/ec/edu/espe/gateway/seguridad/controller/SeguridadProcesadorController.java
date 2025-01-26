@@ -2,16 +2,19 @@ package ec.edu.espe.gateway.seguridad.controller;
 
 import ec.edu.espe.gateway.seguridad.model.SeguridadProcesador;
 import ec.edu.espe.gateway.seguridad.services.SeguridadProcesadorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
-import ec.edu.espe.gateway.seguridad.exception.NotFoundException;
-
-import java.util.List;
+import ec.edu.espe.gateway.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.InvalidDataException;
 
 @RestController
-@RequestMapping("/v1/seguridad-procesadores")
+@RequestMapping("/v1/seguridad-procesador")
 public class SeguridadProcesadorController {
+
+    private static final Logger logger = LoggerFactory.getLogger(SeguridadProcesadorController.class);
 
     private final SeguridadProcesadorService procesadorService;
 
@@ -19,76 +22,36 @@ public class SeguridadProcesadorController {
         this.procesadorService = procesadorService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<SeguridadProcesador>> getAll() {
+    @PostMapping("/recibir-clave")
+    public ResponseEntity<String> recibirClave(@RequestBody SeguridadProcesador nuevaClave) {
         try {
-            List<SeguridadProcesador> procesadores = procesadorService.getAllProcesadores();
-            return ResponseEntity.ok(procesadores);
+            logger.info("Recibiendo nueva clave para procesador con código: {}", nuevaClave.getCodigo());
+            procesadorService.guardarClave(nuevaClave);
+            return ResponseEntity.ok("Clave de procesador recibida y guardada exitosamente");
+        } catch (InvalidDataException e) {
+            logger.error("Datos inválidos al recibir clave de procesador: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            logger.error("Error al recibir clave de procesador: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al recibir clave de procesador");
         }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<SeguridadProcesador> getById(@PathVariable Integer id) {
+    @PutMapping("/actualizar-estado/{codigo}")
+    public ResponseEntity<String> actualizarEstadoClave(@PathVariable Integer codigo, @RequestParam String nuevoEstado) {
         try {
-            return procesadorService.getProcesadorById(id)
-                    .map(ResponseEntity::ok)
-                    .orElseThrow(() -> new NotFoundException(id.toString(), "Procesador"));
+            logger.info("Actualizando estado de la clave para procesador con código {}: nuevo estado {}", codigo, nuevoEstado);
+            procesadorService.actualizarEstadoClave(codigo, nuevoEstado);
+            return ResponseEntity.ok("Estado de la clave de procesador actualizado exitosamente");
         } catch (NotFoundException e) {
-            return ResponseEntity.notFound().build();
+            logger.error("Clave de procesador no encontrada para actualizar estado: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (InvalidDataException e) {
+            logger.error("Datos inválidos al actualizar estado de clave de procesador: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PostMapping
-    public ResponseEntity<SeguridadProcesador> create(@RequestBody SeguridadProcesador procesador) {
-        try {
-            SeguridadProcesador savedProcesador = procesadorService.createProcesador(procesador);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedProcesador);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<SeguridadProcesador> update(
-            @PathVariable Integer id,
-            @RequestBody SeguridadProcesador updatedProcesadorDetails) {
-        try {
-            SeguridadProcesador updatedProcesador = procesadorService.updateProcesador(id, updatedProcesadorDetails);
-            return ResponseEntity.ok(updatedProcesador);
-        } catch (NotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<SeguridadProcesador> deactivate(@PathVariable Integer id) {
-        try {
-            SeguridadProcesador deactivatedProcesador = procesadorService.deactivateProcesador(id);
-            return ResponseEntity.ok(deactivatedProcesador);
-        } catch (NotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        try {
-            procesadorService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } catch (NotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            logger.error("Error al actualizar estado de clave de procesador: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar estado de clave de procesador");
         }
     }
 }

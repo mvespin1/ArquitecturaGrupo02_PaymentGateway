@@ -3,7 +3,8 @@ package ec.edu.espe.gateway.seguridad.services;
 import org.springframework.stereotype.Service;
 import ec.edu.espe.gateway.seguridad.model.SeguridadProcesador;
 import ec.edu.espe.gateway.seguridad.repository.SeguridadProcesadorRepository;
-import ec.edu.espe.gateway.seguridad.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.NotFoundException;
+import ec.edu.espe.gateway.exception.InvalidDataException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ public class SeguridadProcesadorService {
     private static final String ESTADO_ACTIVO = "ACT";
     private static final String ESTADO_INACTIVO = "INA";
     private static final String REGEX_CLAVE = "^[a-zA-Z0-9]{1,128}$";
+    private static final String ERROR_CLAVE_INVALIDA = "La clave debe ser alfanumérica y tener máximo 128 caracteres.";
 
     public SeguridadProcesadorService(SeguridadProcesadorRepository repository) {
         this.repository = repository;
@@ -27,7 +29,7 @@ public class SeguridadProcesadorService {
 
     public SeguridadProcesador createProcesador(SeguridadProcesador procesador) {
         try {
-            validarClave(procesador.getClave());
+            validarClave(procesador);
             procesador.setEstado(ESTADO_PENDIENTE);
             procesador.setFechaActualizacion(LocalDateTime.now());
             return repository.save(procesador);
@@ -61,7 +63,7 @@ public class SeguridadProcesadorService {
 
     public SeguridadProcesador updateProcesador(Integer id, SeguridadProcesador updatedProcesadorDetails) {
         try {
-            validarClave(updatedProcesadorDetails.getClave());
+            validarClave(updatedProcesadorDetails);
             return repository.findById(id)
                     .map(procesadorExistente -> {
                         procesadorExistente.setClave(updatedProcesadorDetails.getClave());
@@ -124,9 +126,25 @@ public class SeguridadProcesadorService {
         }
     }
 
-    private void validarClave(String clave) {
-        if (clave == null || !clave.matches(REGEX_CLAVE)) {
-            throw new IllegalArgumentException("La clave debe ser alfanumérica y no exceder los 128 caracteres.");
+    public void guardarClave(SeguridadProcesador nuevaClave) {
+        validarClave(nuevaClave);
+        nuevaClave.setEstado(ESTADO_PENDIENTE);
+        nuevaClave.setFechaActualizacion(LocalDateTime.now());
+        nuevaClave.setFechaActivacion(LocalDate.now());
+        repository.save(nuevaClave);
+    }
+
+    public void actualizarEstadoClave(Integer codigo, String nuevoEstado) {
+        SeguridadProcesador procesador = repository.findById(codigo)
+                .orElseThrow(() -> new NotFoundException(codigo.toString(), ENTITY_NAME));
+        procesador.setEstado(nuevoEstado);
+        procesador.setFechaActualizacion(LocalDateTime.now());
+        repository.save(procesador);
+    }
+
+    private void validarClave(SeguridadProcesador procesador) {
+        if (procesador.getClave() == null || !procesador.getClave().matches(REGEX_CLAVE)) {
+            throw new InvalidDataException(ERROR_CLAVE_INVALIDA);
         }
     }
 }

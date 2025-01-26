@@ -7,9 +7,9 @@ import ec.edu.espe.gateway.comercio.repository.PosComercioRepository;
 import ec.edu.espe.gateway.comision.repository.ComisionRepository;
 import ec.edu.espe.gateway.facturacion.model.FacturacionComercio;
 import ec.edu.espe.gateway.facturacion.repository.FacturacionComercioRepository;
+import ec.edu.espe.gateway.facturacion.services.FacturacionService;
 import ec.edu.espe.gateway.transaccion.model.Transaccion;
 import ec.edu.espe.gateway.transaccion.repository.TransaccionRepository;
-import ec.edu.espe.gateway.facturacion.services.FacturaService;
 import ec.edu.espe.gateway.comision.services.ComisionService;
 import ec.edu.espe.gateway.exception.NotFoundException;
 import ec.edu.espe.gateway.exception.DuplicateException;
@@ -52,7 +52,7 @@ public class ComercioService {
             ComisionRepository comisionRepository,
             FacturacionComercioRepository facturacionComercioRepository,
             TransaccionRepository transaccionRepository,
-            FacturaService facturaService,
+            FacturacionService facturaService,
             ComisionService comisionService) {
         this.comercioRepository = comercioRepository;
         this.posComercioRepository = posComercioRepository;
