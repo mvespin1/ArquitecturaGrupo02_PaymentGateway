@@ -9,10 +9,10 @@ import ec.edu.espe.gateway.transaccion.controller.dto.ValidacionTransaccionDTO;
 
 import org.springframework.http.ResponseEntity;
 
-@FeignClient(name = "validacionTransaccion", url = "https://681c-2800-370-d3-b1b0-cc63-28bd-d680-d142.ngrok-free.app")
+@FeignClient(name = "validacionTransaccion", url = "https://f580-2800-370-d3-b1b0-d8dc-9894-4f9c-9dc5.ngrok-free.app")
 public interface ValidacionTransaccionClient {
 
-    @PostMapping("/api/v1/transacciones")
+    @PostMapping("/v1/transacciones")
     ResponseEntity<RespuestaValidacionDTO> validarTransaccion(
             @RequestBody ValidacionTransaccionDTO validacionDTO);
 }
