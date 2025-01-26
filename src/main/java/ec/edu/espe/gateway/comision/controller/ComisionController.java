@@ -11,12 +11,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ec.edu.espe.gateway.exception.DuplicateException;
 import ec.edu.espe.gateway.exception.InvalidDataException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {
     RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS
 })
 @RestController
 @RequestMapping("/v1/comisiones")
+@Tag(name = "Comisiones", description = "API para la gestión de comisiones")
 public class ComisionController {
 
     private final ComisionService comisionService;
@@ -26,6 +34,15 @@ public class ComisionController {
         this.comisionService = comisionService;
     }
 
+    @Operation(summary = "Obtener todas las comisiones",
+               description = "Retorna una lista de todas las comisiones registradas en el sistema")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de comisiones encontrada exitosamente",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = Comision.class))),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+            content = @Content)
+    })
     @GetMapping
     public ResponseEntity<List<Comision>> getAll() {
         try {
@@ -38,8 +55,21 @@ public class ComisionController {
         }
     }
 
+    @Operation(summary = "Obtener comisión por código",
+               description = "Retorna una comisión específica basada en su código")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Comisión encontrada exitosamente",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = Comision.class))),
+        @ApiResponse(responseCode = "404", description = "Comisión no encontrada",
+            content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+            content = @Content)
+    })
     @GetMapping("/{codigo}")
-    public ResponseEntity<Comision> getById(@PathVariable Integer codigo) {
+    public ResponseEntity<Comision> getById(
+            @Parameter(description = "Código de la comisión a buscar", required = true)
+            @PathVariable Integer codigo) {
         try {
             logger.info("Obteniendo comisión por código: {}", codigo);
             return comisionService.findById(codigo)
@@ -54,8 +84,22 @@ public class ComisionController {
         }
     }
 
+    @Operation(summary = "Crear una nueva comisión",
+               description = "Crea un nuevo registro de comisión en el sistema")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Comisión creada exitosamente",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = Comision.class))),
+        @ApiResponse(responseCode = "400", description = "Datos inválidos o comisión duplicada",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = String.class))),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+            content = @Content)
+    })
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody Comision comision) {
+    public ResponseEntity<?> create(
+            @Parameter(description = "Datos de la comisión a crear", required = true)
+            @RequestBody Comision comision) {
         try {
             logger.info("Creando nueva comisión: {}", comision);
             Comision savedComision = comisionService.save(comision);
@@ -70,8 +114,26 @@ public class ComisionController {
         }
     }
 
+    @Operation(summary = "Actualizar una comisión existente",
+               description = "Actualiza los datos de una comisión específica basada en su código")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Comisión actualizada exitosamente",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = Comision.class))),
+        @ApiResponse(responseCode = "400", description = "Datos inválidos en la solicitud",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = String.class))),
+        @ApiResponse(responseCode = "404", description = "Comisión no encontrada",
+            content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+            content = @Content)
+    })
     @PutMapping("/{codigo}")
-    public ResponseEntity<?> update(@PathVariable Integer codigo, @RequestBody Comision comision) {
+    public ResponseEntity<?> update(
+            @Parameter(description = "Código de la comisión a actualizar", required = true)
+            @PathVariable Integer codigo,
+            @Parameter(description = "Nuevos datos de la comisión", required = true)
+            @RequestBody Comision comision) {
         try {
             logger.info("Actualizando comisión con código: {}", codigo);
             Comision updatedComision = comisionService.update(codigo, comision);
@@ -91,8 +153,20 @@ public class ComisionController {
         }
     }
 
+    @Operation(summary = "Eliminar una comisión",
+               description = "Elimina una comisión específica basada en su código")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Comisión eliminada exitosamente"),
+        @ApiResponse(responseCode = "405", description = "Operación no permitida",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = String.class))),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+            content = @Content)
+    })
     @DeleteMapping("/{codigo}")
-    public ResponseEntity<?> delete(@PathVariable Integer codigo) {
+    public ResponseEntity<?> delete(
+            @Parameter(description = "Código de la comisión a eliminar", required = true)
+            @PathVariable Integer codigo) {
         try {
             logger.info("Eliminando comisión con código: {}", codigo);
             comisionService.deleteById(codigo);
