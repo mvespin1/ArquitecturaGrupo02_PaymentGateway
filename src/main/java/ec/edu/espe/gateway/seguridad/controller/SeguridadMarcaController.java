@@ -8,9 +8,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import ec.edu.espe.gateway.exception.InvalidDataException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
 
 @RestController
 @RequestMapping("/v1/seguridad-marca")
+@Tag(name = "Seguridad Marca", description = "API para gestionar las claves de seguridad por marca")
 public class SeguridadMarcaController {
 
     private static final Logger logger = LoggerFactory.getLogger(SeguridadMarcaController.class);
@@ -21,8 +29,21 @@ public class SeguridadMarcaController {
         this.marcaService = marcaService;
     }
 
+    @Operation(summary = "Recibir nueva clave de marca", 
+               description = "Guarda una nueva clave de seguridad para una marca específica")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Clave guardada exitosamente",
+                    content = @Content(mediaType = "application/json",
+                    schema = @Schema(type = "string"))),
+        @ApiResponse(responseCode = "400", description = "Datos de clave inválidos",
+                    content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+                    content = @Content)
+    })
     @PostMapping("/recibir-clave")
-    public ResponseEntity<String> recibirClave(@RequestBody SeguridadMarca nuevaClave) {
+    public ResponseEntity<String> recibirClave(
+            @Parameter(description = "Datos de la nueva clave de marca", required = true)
+            @RequestBody SeguridadMarca nuevaClave) {
         try {
             logger.info("Recibiendo nueva clave para marca: {}", nuevaClave.getMarca());
             marcaService.guardarClave(nuevaClave);
