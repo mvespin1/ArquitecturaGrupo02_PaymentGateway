@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 
 import ec.edu.espe.gateway.transaccion.controller.dto.ActualizacionEstadoDTO;
 
-@FeignClient(name = "pos", url = "http://localhost:8081")
+@FeignClient(name = "pos", url = "http://3.142.98.0")
 public interface PosClient {
     
     @PutMapping("/v1/transacciones/actualizar-estado")

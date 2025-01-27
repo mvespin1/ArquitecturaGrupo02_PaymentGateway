@@ -7,7 +7,7 @@ import ec.edu.espe.gateway.transaccion.controller.dto.ValidacionTransaccionDTO;
 import ec.edu.espe.gateway.transaccion.controller.dto.RespuestaValidacionDTO;
 import org.springframework.http.ResponseEntity;
 
-@FeignClient(name = "validacionTransaccion", url = "http://localhost:3001")
+@FeignClient(name = "validacionTransaccion", url = "http://3.144.95.97")
 public interface ValidacionTransaccionClient {
     
     @PostMapping("/v1/transacciones")
