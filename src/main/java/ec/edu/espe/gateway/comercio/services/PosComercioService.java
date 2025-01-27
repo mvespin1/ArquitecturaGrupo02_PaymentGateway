@@ -24,16 +24,16 @@ public class PosComercioService {
 
     private static final Logger logger = LoggerFactory.getLogger(PosComercioService.class);
 
-    // Constantes de entidad
+    
     public static final String ENTITY_NAME = "POS";
     public static final String ENTITY_COMERCIO = "Comercio";
     public static final String ENTITY_CONFIGURACION = "Configuración POS";
 
-    // Constantes de estado
+  
     public static final String ESTADO_ACTIVO = "ACT";
     public static final String ESTADO_INACTIVO = "INA";
 
-    // Constantes de validación
+    
     private static final Pattern MAC_ADDRESS_PATTERN = Pattern.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$");
     private static final Integer CODIGO_POS_LENGTH = 10;
 
@@ -96,7 +96,7 @@ public class PosComercioService {
         }
     }
 
-    // este metodo se utilizara cuando llegue una trasaccion al gateway
+    
     public void actualizarUltimoUso(String codigoPos, String modeloPos, LocalDateTime fechaUltimoUso) {
         try {
             PosComercioPK pk = new PosComercioPK(codigoPos, modeloPos);
