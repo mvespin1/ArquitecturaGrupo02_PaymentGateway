@@ -63,11 +63,11 @@ public class TransaccionController {
             transaccionService.procesarTransaccionPOS(transaccion);
             log.info("Sincronización completada exitosamente");
             
-            // Obtener la transacción actualizada para acceder a su estado
+            
             Transaccion transaccionActualizada = transaccionRepository.findById(transaccion.getCodigo())
                     .orElseThrow(() -> new EntityNotFoundException("Transacción no encontrada"));
             
-            // Devolver el mensaje y código HTTP según el estado
+            
             if (ESTADO_AUTORIZADO.equals(transaccionActualizada.getEstado())) {
                 return ResponseEntity.status(201)
                         .body("Transacción aceptada");

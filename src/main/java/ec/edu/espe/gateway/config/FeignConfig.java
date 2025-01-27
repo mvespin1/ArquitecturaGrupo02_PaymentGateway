@@ -8,6 +8,6 @@ import org.springframework.context.annotation.Configuration;
 public class FeignConfig {
     @Bean
     public Request.Options requestOptions() {
-        return new Request.Options(5000, 30000); // 5 segundos de conexión, 30 segundos de lectura
+        return new Request.Options(5000, 30000); 
     }
 } 

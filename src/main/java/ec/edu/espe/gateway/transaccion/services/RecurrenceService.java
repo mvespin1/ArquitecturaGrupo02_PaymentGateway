@@ -64,14 +64,13 @@ public class RecurrenceService {
     }
 
     private void procesarTransaccionRecurrente(Transaccion transaccionRecurrente, LocalDateTime fechaActual) {
-        // Validar estado del comercio
+        
         Comercio comercio = transaccionRecurrente.getComercio();
         if (!"ACT".equals(comercio.getEstado())) {
             throw new StateException(comercio.getEstado(), 
                 "procesar recurrencia con comercio inactivo o suspendido");
         }
 
-        // Obtener facturación activa
         FacturacionComercio facturacionActiva = facturacionComercioRepository
                 .findByComercioAndEstado(comercio, "ACT")
                 .stream()
@@ -80,7 +79,7 @@ public class RecurrenceService {
                     "No existe facturación activa para el comercio"));
 
         try {
-            // Crear nueva transacción
+          
             Transaccion nuevaTransaccion = new Transaccion();
             copiarDatosTransaccion(transaccionRecurrente, nuevaTransaccion);
             nuevaTransaccion.setFacturacionComercio(facturacionActiva);
@@ -89,14 +88,14 @@ public class RecurrenceService {
             nuevaTransaccion.setTipo("SIM");
             nuevaTransaccion.setEstado("ENV");
 
-            // Registrar referencia a la transacción recurrente original
+            
             nuevaTransaccion.setDetalle(String.format("Pago recurrente - %s (Origen: %s)", 
                 transaccionRecurrente.getDetalle(), 
                 transaccionRecurrente.getCodigoUnicoTransaccion()));
 
             transaccionRepository.save(nuevaTransaccion);
 
-            // Actualizar próxima fecha de ejecución y registro histórico
+           
             actualizarFechaEjecucion(transaccionRecurrente, nuevaTransaccion);
             
         } catch (Exception e) {

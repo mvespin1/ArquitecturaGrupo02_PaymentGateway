@@ -73,27 +73,23 @@ public class TransaccionService {
                 throw new IllegalArgumentException("La fecha de la transacción no puede ser futura");
             }
 
-            // Validar POS
             PosComercio pos = posComercioRepository.findById(new PosComercioPK(codigoPos, "POS"))
                     .orElseThrow(() -> new EntityNotFoundException("POS no encontrado"));
             if (!"ACT".equals(pos.getEstado())) {
                 throw new IllegalStateException("El POS debe estar activo para crear transacciones");
             }
 
-            // Validar comercio
             Comercio comercio = pos.getComercio();
             if (!"ACT".equals(comercio.getEstado())) {
                 throw new IllegalStateException("El comercio debe estar activo para crear transacciones");
             }
 
-            // Obtener facturación activa
             FacturacionComercio facturacionActiva = facturacionComercioRepository
                     .findByComercioAndEstado(comercio, "ACT")
                     .stream()
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("No existe facturación activa para el comercio"));
 
-            // Configurar campos inmutables
             transaccion.setComercio(comercio);
             transaccion.setFacturacionComercio(facturacionActiva);
             transaccion.setFecha(fechaActual);
@@ -108,28 +104,24 @@ public class TransaccionService {
     }
 
     private void validarTransaccion(Transaccion transaccion) {
-        // Validar tipo
+      
         if (!"SIM".equals(transaccion.getTipo()) && !"REC".equals(transaccion.getTipo())) {
             throw new IllegalArgumentException("Tipo de transacción inválido");
         }
 
-        // Validar marca
         if (transaccion.getMarca() == null || transaccion.getMarca().trim().isEmpty()) {
             throw new IllegalArgumentException("La marca es requerida");
         }
 
-        // Validar monto
         if (transaccion.getMonto() == null || transaccion.getMonto().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("El monto debe ser mayor a 0");
         }
 
-        // Validar fecha
         LocalDateTime fechaActual = LocalDateTime.now();
         if (transaccion.getFecha() != null && transaccion.getFecha().isAfter(fechaActual)) {
             throw new IllegalArgumentException("La fecha de la transacción no puede ser futura");
         }
 
-        // Validar fechas para transacciones recurrentes
         if ("REC".equals(transaccion.getTipo())) {
             validarFechasRecurrencia(transaccion);
         }
@@ -184,7 +176,7 @@ public class TransaccionService {
 
     public void detenerTransaccionesRecurrentes(Integer codigoComercio) {
         try {
-            // Validar estado del comercio
+            
             Comercio comercio = comercioRepository.findById(codigoComercio)
                     .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
 
@@ -199,7 +191,7 @@ public class TransaccionService {
             LocalDate fechaDetencion = LocalDate.now();
             for (Transaccion transaccion : transaccionesRecurrentes) {
                 transaccion.setEstado(ESTADO_RECHAZADO);
-                transaccion.setFechaFinRecurrencia(fechaDetencion); // Actualizar fecha fin
+                transaccion.setFechaFinRecurrencia(fechaDetencion); 
                 transaccionRepository.save(transaccion);
             }
         } catch (Exception e) {
@@ -215,18 +207,16 @@ public class TransaccionService {
             List<Transaccion> transaccionesEnCurso = transaccionRepository.findByComercioAndEstado(comercio,
                     ESTADO_ENVIADO);
 
-            // Rechazar transacciones en curso
+            
             for (Transaccion transaccion : transaccionesEnCurso) {
                 transaccion.setEstado(ESTADO_RECHAZADO);
                 transaccionRepository.save(transaccion);
             }
 
-            // Detener transacciones recurrentes
             detenerTransaccionesRecurrentes(codigoComercio);
         }
     }
 
-    // Métodos de consulta
     public List<Transaccion> obtenerPorEstado(String estado) {
         return transaccionRepository.findByEstado(estado);
     }
@@ -243,12 +233,11 @@ public class TransaccionService {
         log.info("Iniciando procesamiento de transacción POS: {}", transaccion);
 
         try {
-            // Fase 1: Validación y guardado inicial
+          
             Transaccion transaccionInicial = guardarTransaccionInicial(transaccion);
             log.info("Transacción guardada inicialmente en gateway con ID: {} y estado: {}",
                     transaccionInicial.getCodigo(), transaccionInicial.getEstado());
 
-            // Fase 2: Procesamiento asíncrono con sistema externo
             new Thread(() -> {
                 try {
                     procesarConSistemaExterno(transaccionInicial);
@@ -268,23 +257,23 @@ public class TransaccionService {
 
     @Transactional
     public Transaccion guardarTransaccionInicial(Transaccion transaccion) throws EntityNotFoundException {
-        // Validar y obtener comercio
+       
         Comercio comercio = comercioRepository.findById(transaccion.getComercio().getCodigo())
                 .orElseThrow(() -> new EntityNotFoundException("Comercio no encontrado"));
         log.info("Comercio encontrado: {}", comercio);
 
-        // Validar y obtener facturación
+       
         FacturacionComercio facturacion = facturacionComercioRepository
                 .findById(transaccion.getFacturacionComercio().getCodigo())
                 .orElseThrow(() -> new EntityNotFoundException("Facturación no encontrada"));
         log.info("Facturación encontrada: {}", facturacion);
 
-        // Establecer relaciones y estado inicial
+        
         transaccion.setComercio(comercio);
         transaccion.setFacturacionComercio(facturacion);
         transaccion.setEstado(ESTADO_ENVIADO);
 
-        // Guardar transacción inmediatamente
+       
         return transaccionRepository.save(transaccion);
     }
 
@@ -293,7 +282,7 @@ public class TransaccionService {
         try {
             ValidacionTransaccionDTO validacionDTO = prepararValidacionDTO(transaccion);
 
-            // Loguear el JSON que se enviará
+          
             try {
                 String jsonRequest = objectMapper.writeValueAsString(validacionDTO);
                 log.info("JSON a enviar al sistema externo: {}", jsonRequest);
@@ -307,17 +296,15 @@ public class TransaccionService {
                 log.info("Respuesta del sistema externo - Status: {}, Body: {}",
                         respuesta.getStatusCode(), respuesta.getBody());
 
-                // Si el código es 202, esperar a recibir una respuesta con 201 o 400
                 if (respuesta.getStatusCode().value() == 202) {
                     log.info("Transacción en proceso de validación, esperando confirmación...");
 
                     while (respuesta.getStatusCode().value() == 202) {
-                        // Espera de 5 segundos entre verificaciones (ajustar según sea necesario)
+                        
                         Thread.sleep(5000);
                         respuesta = validacionTransaccionClient.validarTransaccion(validacionDTO);
                     }
 
-                    // Después de recibir una respuesta con código 201 o 400, actualizamos el estado
                     if (respuesta.getStatusCode().value() == 201) {
                         transaccion.setEstado(ESTADO_AUTORIZADO);
                         String mensaje = respuesta.getBody() != null ? respuesta.getBody().getMensaje()
@@ -341,16 +328,16 @@ public class TransaccionService {
                     log.info("Transacción rechazada por sistema externo");
                 }
 
-                // Guardar la actualización del estado
+                
                 transaccion = transaccionRepository.save(transaccion);
                 log.info("Estado de transacción actualizado en gateway a: {}",
                         transaccion.getEstado());
 
-                // Notificar al POS
+                
                 notificarActualizacionAlPOS(transaccion, "Estado actualizado a: " + transaccion.getEstado());
 
             } catch (feign.FeignException.BadRequest e) {
-                // Manejar específicamente el error 400
+                
                 log.info("Transacción rechazada por el sistema externo con código 400");
                 transaccion.setEstado(ESTADO_RECHAZADO);
                 transaccion = transaccionRepository.save(transaccion);
@@ -389,7 +376,7 @@ public class TransaccionService {
 
         dto.setCodigoBanco(1);
 
-        // Configurar datos de la transacción
+        
         dto.setMonto(transaccion.getMonto().doubleValue());
         dto.setModalidad(transaccion.getTipo());
         dto.setCodigoMoneda("USD");
@@ -399,13 +386,13 @@ public class TransaccionService {
         dto.setNumeroTarjeta(datosTarjeta.getCardNumber());
         dto.setDireccionTarjeta(datosTarjeta.getDireccionTarjeta());
         dto.setCvv(datosTarjeta.getCvv());
-        dto.setPais("EC"); // Valor quemado
-        dto.setNumeroCuenta("00000003"); // Valor quemado
+        dto.setPais("EC"); 
+        dto.setNumeroCuenta("00000003"); 
         dto.setCodigoUnicoTransaccion(transaccion.getCodigoUnicoTransaccion());
-        dto.setGtwComision("0"); // Valor quemado
-        dto.setGtwCuenta("00000002"); // Valor quemado
+        dto.setGtwComision("0"); 
+        dto.setGtwCuenta("00000002"); 
 
-        // Configurar datos de diferido
+        
         dto.setInteresDiferido(transaccion.getInteresDiferido());
         dto.setCuotas(transaccion.getCuotas());
 
