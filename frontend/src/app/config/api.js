@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8082';
+const API_BASE_URL = 'http://ec2-18-119-106-182.us-east-2.compute.amazonaws.com';
 
 export const DEFAULT_HEADERS = {
     'Content-Type': 'application/json',
@@ -26,20 +26,15 @@ export const API_URLS = {
     // POS Comercio endpoints
     POS_COMERCIO: {
         BASE: `${API_BASE_URL}/v1/pos-comercio`,
-        GET_BY_ID: (codigoPos, tipo) => `${API_BASE_URL}/v1/pos-comercio/${codigoPos}/${tipo}`,
-        ACTIVATE: (codigoPos, tipo) => `${API_BASE_URL}/v1/pos-comercio/${codigoPos}/${tipo}/activar`,
-        INACTIVATE: (codigoPos, tipo) => `${API_BASE_URL}/v1/pos-comercio/${codigoPos}/${tipo}/inactivar`,
-        UPDATE_LAST_USE: (codigoPos, tipo) => `${API_BASE_URL}/v1/pos-comercio/${codigoPos}/${tipo}/ultimo-uso`,
-        CHANGE_COMERCIO: (codigoPos, tipo, nuevoCodigoComercio) => 
-            `${API_BASE_URL}/v1/pos-comercio/${codigoPos}/${tipo}/comercio/${nuevoCodigoComercio}`,
-        GET_CONFIG: (codigoPos, tipo) => `${API_BASE_URL}/v1/pos-comercio/configuracion/${codigoPos}/${tipo}`,
-        UPDATE_CONFIG: `${API_BASE_URL}/v1/pos-comercio/configuracion`,
+        GET_BY_ID: (codigoPos, modelo) => `${API_BASE_URL}/v1/pos-comercio/${codigoPos}/${modelo}`,
+        CREATE: `${API_BASE_URL}/v1/pos-comercio`,
     },
 
     // Comision endpoints
     COMISION: {
         BASE: `${API_BASE_URL}/v1/comisiones`,
         GET_BY_ID: (codigo) => `${API_BASE_URL}/v1/comisiones/${codigo}`,
+        CREATE: `${API_BASE_URL}/v1/comisiones`,
     },
 
     // Comision Segmento endpoints

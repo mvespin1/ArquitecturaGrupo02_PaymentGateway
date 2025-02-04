@@ -1,29 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { API_URLS } from "../../config/api";
+import { API_URLS, fetchWithConfig } from "../../config/api";
 import "../../Css/general.css";
 
 const CreateComercio = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [comisiones, setComisiones] = useState([]);
   const [formData, setFormData] = useState({
     codigoInterno: "",
     ruc: "",
     razonSocial: "",
     nombreComercial: "",
-    pagosAceptados: "",
-    estado: "ACT",
+    pagosAceptados: "SIM",
+    numeroCuenta: "",
+    comision: {
+      codigo: ""
+    }
   });
+
+  useEffect(() => {
+    const fetchComisiones = async () => {
+      try {
+        const response = await fetchWithConfig(API_URLS.COMISION.BASE);
+        const data = await response.json();
+        setComisiones(data);
+      } catch (err) {
+        console.error("Error al cargar comisiones:", err);
+      }
+    };
+    fetchComisiones();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (name === "codigoComision") {
+      setFormData(prev => ({
+        ...prev,
+        comision: { codigo: value }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -32,12 +56,9 @@ const CreateComercio = () => {
     setError(null);
 
     try {
-      const response = await fetch(API_URLS.COMERCIO.BASE, {
+      const response = await fetchWithConfig(API_URLS.COMERCIO.BASE, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
 
       if (!response.ok) {
@@ -73,6 +94,7 @@ const CreateComercio = () => {
             value={formData.codigoInterno}
             onChange={handleChange}
             required
+            maxLength="10"
             className="form-input"
           />
         </div>
@@ -86,6 +108,9 @@ const CreateComercio = () => {
             value={formData.ruc}
             onChange={handleChange}
             required
+            maxLength="13"
+            pattern="[0-9]{13}"
+            title="El RUC debe tener 13 dígitos numéricos"
             className="form-input"
           />
         </div>
@@ -99,6 +124,7 @@ const CreateComercio = () => {
             value={formData.razonSocial}
             onChange={handleChange}
             required
+            maxLength="100"
             className="form-input"
           />
         </div>
@@ -112,17 +138,33 @@ const CreateComercio = () => {
             value={formData.nombreComercial}
             onChange={handleChange}
             required
+            maxLength="50"
             className="form-input"
           />
         </div>
 
         <div className="form-group">
           <label htmlFor="pagosAceptados">Pagos Aceptados:</label>
-          <input
-            type="text"
+          <select
             id="pagosAceptados"
             name="pagosAceptados"
             value={formData.pagosAceptados}
+            onChange={handleChange}
+            required
+            className="form-select"
+          >
+            <option value="SIM">Simulación</option>
+            <option value="REA">Real</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="numeroCuenta">Número de Cuenta:</label>
+          <input
+            type="number"
+            id="numeroCuenta"
+            name="numeroCuenta"
+            value={formData.numeroCuenta}
             onChange={handleChange}
             required
             className="form-input"
@@ -130,17 +172,21 @@ const CreateComercio = () => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="estado">Estado:</label>
+          <label htmlFor="codigoComision">Comisión:</label>
           <select
-            id="estado"
-            name="estado"
-            value={formData.estado}
+            id="codigoComision"
+            name="codigoComision"
+            value={formData.comision.codigo}
             onChange={handleChange}
+            required
             className="form-select"
           >
-            <option value="ACT">Activo</option>
-            <option value="INA">Inactivo</option>
-            <option value="SUS">Suspendido</option>
+            <option value="">Seleccione una comisión</option>
+            {comisiones.map(comision => (
+              <option key={comision.codigo} value={comision.codigo}>
+                {`${comision.tipo} - ${comision.montoBase}${comision.tipo === 'POR' ? '%' : ' USD'}`}
+              </option>
+            ))}
           </select>
         </div>
 
